@@ -1,9 +1,10 @@
 "use client";
 
 import { Check } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { setShoppingItemChecked } from "@/app/app/shopping/actions";
 import { buildShoppingItemKey } from "@/lib/services/shoppingService";
+import { getSupabaseBrowser } from "@/lib/supabase/client";
 
 export type ShoppingListItem = {
   category: string;
@@ -20,12 +21,14 @@ export type ShoppingListGroup = {
 export function ShoppingList({
   groups,
   initialCheckedKeys,
+  listId,
   weekIndex,
   weekStart,
   loadError = false,
 }: {
   groups: ShoppingListGroup[];
   initialCheckedKeys: string[];
+  listId: string | null;
   weekIndex: number;
   weekStart: string;
   loadError?: boolean;
@@ -35,6 +38,37 @@ export function ShoppingList({
   const [error, setError] = useState(loadError ? "チェック状態を読み込めませんでした。" : "");
   const totalCount = groups.reduce((total, group) => total + group.items.length, 0);
   const checkedCount = checkedKeys.size;
+
+  useEffect(() => {
+    const supabase = getSupabaseBrowser();
+    if (!supabase || !listId) return;
+    let cancelled = false;
+
+    const channel = supabase.channel(`shopping-list:${listId}`, {
+      config: { private: true },
+    });
+
+    void supabase.realtime.setAuth().then(() => {
+      if (cancelled) return;
+      channel
+        .on("broadcast", { event: "*" }, (payload) => {
+          const row = getShoppingBroadcastRecord(payload);
+          if (!row) return;
+          const itemKey = buildShoppingItemKey(row.category, row.name);
+          setCheckedKeys((current) => updateSet(current, itemKey, row.checked));
+        })
+        .subscribe((status) => {
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            setError("家族との自動同期が一時停止しています。保存は続けられます。");
+          }
+        });
+    });
+
+    return () => {
+      cancelled = true;
+      void supabase.removeChannel(channel);
+    };
+  }, [listId]);
 
   async function toggleItem(item: ShoppingListItem) {
     const itemKey = buildShoppingItemKey(item.category, item.name);
@@ -119,4 +153,11 @@ function updateSet(current: Set<string>, key: string, included: boolean): Set<st
   if (included) next.add(key);
   else next.delete(key);
   return next;
+}
+
+function getShoppingBroadcastRecord(payload: unknown): { category: string; name: string; checked: boolean } | null {
+  const message = payload as { payload?: { record?: { category?: unknown; name?: unknown; checked?: unknown } } };
+  const record = message.payload?.record;
+  if (typeof record?.category !== "string" || typeof record.name !== "string" || typeof record.checked !== "boolean") return null;
+  return { category: record.category, name: record.name, checked: record.checked };
 }
