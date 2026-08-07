@@ -1,4 +1,7 @@
 import type { MenuData, ShoppingByCategory } from "@/types/domain";
+import { addDays, startOfDay } from "date-fns";
+import { toDateKey } from "@/lib/dates";
+import { findTodayPlan } from "@/lib/services/planService";
 
 export const shoppingCategoryOrder = [
   "肉",
@@ -51,4 +54,25 @@ export function orderShoppingEntries(shopping: ShoppingByCategory): Array<[strin
     if (bi === -1) return -1;
     return ai - bi;
   });
+}
+
+export function getCurrentShoppingWeekIndex(menu: MenuData, today = new Date()): number {
+  return Math.floor(findTodayPlan(menu, today).dayIndex / 7);
+}
+
+export function getShoppingCycle(menu: MenuData, shoppingDay: number, today = new Date()): { weekIndex: number; weekStart: string } {
+  const normalizedShoppingDay = Math.min(Math.max(Math.trunc(shoppingDay), 0), 6);
+  const daysSinceShoppingDay = (today.getDay() - normalizedShoppingDay + 7) % 7;
+  const latestShoppingDay = addDays(startOfDay(today), -daysSinceShoppingDay);
+  const daysUntilSunday = (7 - normalizedShoppingDay) % 7;
+  const targetWeekStart = addDays(latestShoppingDay, daysUntilSunday);
+
+  return {
+    weekIndex: getCurrentShoppingWeekIndex(menu, targetWeekStart),
+    weekStart: toDateKey(targetWeekStart),
+  };
+}
+
+export function buildShoppingItemKey(category: string, name: string): string {
+  return `${category}\u001f${name}`;
 }

@@ -1,16 +1,21 @@
 import { Settings } from "lucide-react";
 import Link from "next/link";
 import { PlansPreview } from "@/components/features/plans/PlansPreview";
-import { ShoppingPreview } from "@/components/features/shopping/ShoppingPreview";
+import { ShoppingSummaryLink } from "@/components/features/shopping/ShoppingSummaryLink";
 import { TodayBoard } from "@/components/features/today/TodayBoard";
 import { formatFamilyLabel, formatShoppingDay } from "@/lib/family/servings";
 import { getCurrentHouseholdPreferences } from "@/lib/family/server";
+import { menuData } from "@/lib/menuData";
+import { getShoppingCycle } from "@/lib/services/shoppingService";
 
 export default async function AppHomePage({ searchParams }: { searchParams: Promise<{ mealFeedback?: string; notice?: string }> }) {
   const params = await searchParams;
   const preferences = await getCurrentHouseholdPreferences();
   const familySize = { adultCount: preferences.adultCount, childCount: preferences.childCount };
   const shoppingDayLabel = formatShoppingDay(preferences.shoppingDay);
+  const shoppingCycle = getShoppingCycle(menuData, preferences.shoppingDay);
+  const shoppingWeek = menuData.weeks[shoppingCycle.weekIndex];
+  const shoppingItemCount = Object.values(shoppingWeek.shopping).reduce((total, items) => total + items.length, 0);
   return (
     <main className="mx-auto min-h-dvh w-full max-w-[560px] px-4 pb-24 pt-5">
       <header className="mb-4 flex items-start justify-between gap-3">
@@ -18,7 +23,7 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
         <div className="flex gap-2"><Link href="/pricing" className="inline-flex min-h-11 items-center rounded-lg bg-kondate-accentSoft px-3 text-xs font-black text-kondate-accent">家族プラン</Link><Link href="/account" aria-label="アカウント設定" title="アカウント設定" className="grid size-11 place-items-center rounded-lg border border-kondate-line bg-white text-kondate-muted"><Settings size={19} /></Link></div>
       </header>
       {params.notice === "family-joined" ? <p role="status" className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-bold text-emerald-900">家族グループに参加しました。</p> : null}
-      <div className="space-y-8"><TodayBoard familySize={familySize} feedbackStatus={params.mealFeedback} /><PlansPreview familySize={familySize} /><ShoppingPreview familySize={familySize} shoppingDay={preferences.shoppingDay} /></div>
+      <div className="space-y-8"><TodayBoard familySize={familySize} feedbackStatus={params.mealFeedback} /><ShoppingSummaryLink shoppingDayLabel={shoppingDayLabel} itemCount={shoppingItemCount} /><PlansPreview familySize={familySize} /></div>
     </main>
   );
 }
