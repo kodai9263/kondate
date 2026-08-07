@@ -1,12 +1,13 @@
-import { AlertTriangle, ArrowLeft, CalendarDays, CreditCard, LogOut, MessageSquare, Save, Send, UserRound, Users } from "lucide-react";
+import { AlertTriangle, ArrowLeft, CalendarDays, CreditCard, Link2, LogOut, MessageSquare, Save, Send, UserRound, Users } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PortalButton } from "@/components/features/billing/PortalButton";
 import { getSupabaseServer, isSupabaseConfigured } from "@/lib/supabase/server";
-import { signOut, updateAccount } from "@/app/account/actions";
+import { createFamilyInvite, signOut, updateAccount } from "@/app/account/actions";
 import { commonAllergens, getCustomAllergies, normalizeAllergies } from "@/lib/family/allergies";
 import { defaultShoppingDay, formatServingLabel, normalizeFamilySize, normalizeShoppingDay, shoppingWeekdays } from "@/lib/family/servings";
 import { submitAppFeedback } from "@/app/feedback/actions";
+import { buildInviteUrl, normalizeInviteToken } from "@/lib/family/invites";
 
 export const dynamic = "force-dynamic";
 
@@ -14,9 +15,15 @@ const errorMessages: Record<string, string> = {
   invalid: "入力内容を確認してください。",
   profile: "アカウント情報を読み込めませんでした。",
   update: "変更を保存できませんでした。時間をおいて再度お試しください。",
+  invite: "招待リンクを作成できませんでした。時間をおいて再度お試しください。",
 };
 
-export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string; success?: string; feedback?: string }> }) {
+const successMessages: Record<string, string> = {
+  invite: "招待リンクを作成しました。",
+  updated: "変更を保存しました。",
+};
+
+export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string; success?: string; feedback?: string; invite?: string }> }) {
   if (!isSupabaseConfigured()) redirect("/login?error=setup");
   const params = await searchParams;
   const supabase = await getSupabaseServer();
@@ -27,10 +34,12 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const { data: profile } = await supabase.from("profiles").select("display_name, household_id").eq("id", user.id).single();
   if (!profile) redirect("/login?error=profile");
 
-  const [{ data: household }, { data: subscription }, { data: settings }] = await Promise.all([
+  const [{ data: household }, { data: subscription }, { data: settings }, { data: invites }, { data: members }] = await Promise.all([
     supabase.from("households").select("name").eq("id", profile.household_id).single(),
     supabase.from("household_subscriptions").select("plan_id, status, current_period_end, cancel_at_period_end").eq("household_id", profile.household_id).maybeSingle(),
     supabase.from("household_settings").select("adult_count, child_count, shopping_day, allergies").eq("household_id", profile.household_id).maybeSingle(),
+    supabase.from("household_invites").select("invite_token, expires_at, accepted_at").eq("household_id", profile.household_id).is("accepted_at", null).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }).limit(3),
+    supabase.from("profiles").select("id, display_name, created_at").eq("household_id", profile.household_id).order("created_at", { ascending: true }),
   ]);
   const paid = subscription?.status === "active" || subscription?.status === "trialing";
   const familySize = normalizeFamilySize(settings ? { adultCount: settings.adult_count, childCount: settings.child_count } : null);
@@ -38,6 +47,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const allergies = normalizeAllergies(settings?.allergies);
   const selectedAllergies = new Set(allergies);
   const customAllergies = getCustomAllergies(allergies);
+  const createdInviteToken = normalizeInviteToken(params.invite);
+  const createdInviteUrl = createdInviteToken ? buildInviteUrl(createdInviteToken) : null;
 
   return (
     <main className="mx-auto min-h-dvh w-full max-w-[560px] px-4 pb-16 pt-5">
@@ -45,7 +56,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       <div className="mb-6"><p className="flex items-center gap-2 text-sm font-black text-kondate-accent"><UserRound size={18} />アカウント</p><h1 className="mt-1 text-2xl font-black">家族と契約の設定</h1></div>
 
       {params.error ? <p role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-800">{errorMessages[params.error] ?? errorMessages.update}</p> : null}
-      {params.success ? <p role="status" className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-bold text-emerald-900">変更を保存しました。</p> : null}
+      {params.success ? <p role="status" className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-bold text-emerald-900">{successMessages[params.success] ?? successMessages.updated}</p> : null}
 
       <section className="rounded-lg border border-kondate-line bg-white p-5">
         <h2 className="font-black">基本情報</h2>
@@ -70,6 +81,24 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       <section className="mt-4 rounded-lg border border-kondate-line bg-white p-5">
         <div className="flex items-start justify-between gap-3"><div><p className="flex items-center gap-2 font-black"><CreditCard size={18} />契約プラン</p><p className="mt-1 text-sm text-kondate-muted">{paid ? "家族プランを利用中" : "無料プラン"}</p></div><span className="rounded-lg bg-kondate-sage px-3 py-1 text-xs font-black text-[#285b35]">{paid ? "有効" : "無料"}</span></div>
         {paid ? <div className="mt-4"><PortalButton /></div> : <Link href="/pricing" className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-kondate-accent font-black text-kondate-accent">家族プランを見る</Link>}
+      </section>
+
+      <section className="mt-4 rounded-lg border border-kondate-line bg-white p-5">
+        <div className="flex items-start justify-between gap-3"><div><p className="flex items-center gap-2 font-black"><Users size={18} />家族共有</p><p className="mt-1 text-sm leading-6 text-kondate-muted">招待リンクは7日間だけ有効です。参加後は同じ家族グループとして、献立・買い物・設定を継続して共有できます。</p></div><span className="rounded-lg bg-kondate-sage px-3 py-1 text-xs font-black text-[#285b35]">参加後は継続</span></div>
+        <div className="mt-4 rounded-lg border border-kondate-line bg-kondate-bg p-3">
+          <p className="text-xs font-black text-kondate-muted">参加済みメンバー</p>
+          <div className="mt-3 space-y-2">
+            {(members?.length ? members : [{ id: user.id, display_name: profile.display_name, created_at: "" }]).map((member) => (
+              <div key={member.id} className="flex min-h-11 items-center justify-between gap-3 rounded-lg bg-white px-3">
+                <span className="truncate text-sm font-black text-kondate-ink">{member.display_name}{member.id === user.id ? "（あなた）" : ""}</span>
+                <span className="shrink-0 text-xs font-bold text-kondate-muted">{member.created_at ? `${new Date(member.created_at).toLocaleDateString("ja-JP")} 参加` : "参加中"}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        {createdInviteUrl ? <div className="mt-4 rounded-lg border border-kondate-line bg-kondate-bg p-3"><p className="text-xs font-black text-kondate-muted">作成した招待リンク</p><input readOnly value={createdInviteUrl} className="mt-2 min-h-11 w-full rounded-lg border border-kondate-line bg-white px-3 text-sm font-bold text-kondate-ink" /></div> : null}
+        {invites?.length ? <div className="mt-4 space-y-2">{invites.map((invite) => <div key={invite.invite_token} className="rounded-lg border border-kondate-line p-3"><p className="truncate text-sm font-bold">{buildInviteUrl(invite.invite_token)}</p><p className="mt-1 text-xs font-bold text-kondate-muted">期限: {new Date(invite.expires_at).toLocaleDateString("ja-JP")}</p></div>)}</div> : null}
+        <form action={createFamilyInvite} className="mt-4"><button type="submit" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-kondate-ink px-4 font-black text-white"><Link2 size={18} />招待リンクを作成</button></form>
       </section>
 
       <section className="mt-4 border border-kondate-line bg-white p-5">

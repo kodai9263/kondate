@@ -53,3 +53,21 @@ export async function updateAccount(formData: FormData) {
   if (profileError || householdError || settingsError) redirect("/account?error=update");
   redirect("/account?success=updated");
 }
+
+export async function createFamilyInvite() {
+  const supabase = await getSupabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: profile } = await supabase.from("profiles").select("household_id").eq("id", user.id).single();
+  if (!profile) redirect("/account?error=profile");
+
+  const { data, error } = await supabase
+    .from("household_invites")
+    .insert({ household_id: profile.household_id, created_by: user.id })
+    .select("invite_token")
+    .single();
+
+  if (error || !data?.invite_token) redirect("/account?error=invite");
+  redirect(`/account?success=invite&invite=${data.invite_token}`);
+}

@@ -78,12 +78,61 @@ export type Database = {
         };
         Relationships: [];
       };
+      household_invites: {
+        Row: {
+          id: string;
+          household_id: string;
+          invite_token: string;
+          created_by: string | null;
+          accepted_by: string | null;
+          expires_at: string;
+          accepted_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          household_id: string;
+          invite_token?: string;
+          created_by?: string | null;
+          accepted_by?: string | null;
+          expires_at?: string;
+          accepted_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          household_id?: string;
+          invite_token?: string;
+          created_by?: string | null;
+          accepted_by?: string | null;
+          expires_at?: string;
+          accepted_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
+      accept_household_invite: {
+        Args: {
+          invite_token_input: string;
+        };
+        Returns: string;
+      };
       ensure_current_user_household: {
         Args: Record<PropertyKey, never>;
         Returns: string;
+      };
+      get_household_invite: {
+        Args: {
+          invite_token_input: string;
+        };
+        Returns: {
+          household_name: string;
+          expires_at: string;
+          accepted_at: string | null;
+        }[];
       };
     };
     Enums: Record<string, never>;

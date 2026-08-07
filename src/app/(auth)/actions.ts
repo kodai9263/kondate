@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getAppUrl } from "@/lib/billing/stripe";
+import { normalizeInviteToken } from "@/lib/family/invites";
 import { getSupabaseServer, isSupabaseConfigured } from "@/lib/supabase/server";
 
 const emailSchema = z.string().trim().email();
@@ -17,11 +18,18 @@ function authReady(destination: "/login" | "/signup" | "/forgot-password" | "/re
   }
 }
 
+async function joinInviteIfPresent(supabase: Awaited<ReturnType<typeof getSupabaseServer>>, inviteToken: string | null) {
+  if (!inviteToken) return false;
+  const { error } = await supabase.rpc("accept_household_invite", { invite_token_input: inviteToken });
+  return !error;
+}
+
 export async function login(formData: FormData) {
   authReady("/login");
   const parsed = z
     .object({ email: emailSchema, password: passwordSchema })
     .safeParse({ email: formData.get("email"), password: formData.get("password") });
+  const inviteToken = normalizeInviteToken(formData.get("inviteToken"));
 
   if (!parsed.success) redirect("/login?error=invalid");
 
@@ -30,6 +38,7 @@ export async function login(formData: FormData) {
   if (error) redirect("/login?error=credentials");
 
   await supabase.rpc("ensure_current_user_household");
+  if (await joinInviteIfPresent(supabase, inviteToken)) redirect("/app?notice=family-joined");
   redirect("/app");
 }
 
@@ -46,6 +55,7 @@ export async function signup(formData: FormData) {
       email: formData.get("email"),
       password: formData.get("password"),
     });
+  const inviteToken = normalizeInviteToken(formData.get("inviteToken"));
 
   if (!parsed.success) redirect("/signup?error=invalid");
 
@@ -55,7 +65,7 @@ export async function signup(formData: FormData) {
     password: parsed.data.password,
     options: {
       data: { display_name: parsed.data.displayName },
-      emailRedirectTo: `${getAppUrl()}/auth/callback?next=/app`,
+      emailRedirectTo: `${getAppUrl()}/auth/callback?next=${inviteToken ? `/invite/${inviteToken}` : "/app"}`,
     },
   });
 
@@ -63,6 +73,7 @@ export async function signup(formData: FormData) {
   if (!data.session) redirect("/signup?success=check-email");
 
   await supabase.rpc("ensure_current_user_household");
+  if (await joinInviteIfPresent(supabase, inviteToken)) redirect("/app?notice=family-joined");
   redirect("/app");
 }
 
