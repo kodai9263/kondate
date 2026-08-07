@@ -28,8 +28,8 @@ describe("shoppingService", () => {
   });
 
   it("設定した買い物曜日に翌週分へ切り替える", () => {
-    expect(getShoppingCycle(menuData, 6, new Date("2026-08-07T12:00:00+09:00"))).toEqual({ weekIndex: 1, weekStart: "2026-08-02" });
-    expect(getShoppingCycle(menuData, 6, new Date("2026-08-08T00:00:00+09:00"))).toEqual({ weekIndex: 2, weekStart: "2026-08-09" });
+    expect(getShoppingCycle(menuData, 6, new Date("2026-08-07T14:59:59Z"))).toEqual({ weekIndex: 1, weekStart: "2026-08-02" });
+    expect(getShoppingCycle(menuData, 6, new Date("2026-08-07T15:00:00Z"))).toEqual({ weekIndex: 2, weekStart: "2026-08-09" });
     expect(getShoppingCycle(menuData, 0, new Date("2026-08-09T00:00:00+09:00"))).toEqual({ weekIndex: 2, weekStart: "2026-08-09" });
   });
 

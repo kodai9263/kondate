@@ -3,6 +3,13 @@ import { addDays, startOfDay } from "date-fns";
 import { toDateKey } from "@/lib/dates";
 import { findTodayPlan } from "@/lib/services/planService";
 
+const tokyoDateFormatter = new Intl.DateTimeFormat("en-US", {
+  timeZone: "Asia/Tokyo",
+  year: "numeric",
+  month: "numeric",
+  day: "numeric",
+});
+
 export const shoppingCategoryOrder = [
   "肉",
   "魚",
@@ -62,8 +69,9 @@ export function getCurrentShoppingWeekIndex(menu: MenuData, today = new Date()):
 
 export function getShoppingCycle(menu: MenuData, shoppingDay: number, today = new Date()): { weekIndex: number; weekStart: string } {
   const normalizedShoppingDay = Math.min(Math.max(Math.trunc(shoppingDay), 0), 6);
-  const daysSinceShoppingDay = (today.getDay() - normalizedShoppingDay + 7) % 7;
-  const latestShoppingDay = addDays(startOfDay(today), -daysSinceShoppingDay);
+  const tokyoCalendarDate = toTokyoCalendarDate(today);
+  const daysSinceShoppingDay = (tokyoCalendarDate.getDay() - normalizedShoppingDay + 7) % 7;
+  const latestShoppingDay = addDays(startOfDay(tokyoCalendarDate), -daysSinceShoppingDay);
   const daysUntilSunday = (7 - normalizedShoppingDay) % 7;
   const targetWeekStart = addDays(latestShoppingDay, daysUntilSunday);
 
@@ -75,4 +83,12 @@ export function getShoppingCycle(menu: MenuData, shoppingDay: number, today = ne
 
 export function buildShoppingItemKey(category: string, name: string): string {
   return `${category}\u001f${name}`;
+}
+
+function toTokyoCalendarDate(date: Date): Date {
+  const parts = tokyoDateFormatter.formatToParts(date);
+  const year = Number(parts.find((part) => part.type === "year")?.value);
+  const month = Number(parts.find((part) => part.type === "month")?.value);
+  const day = Number(parts.find((part) => part.type === "day")?.value);
+  return new Date(year, month - 1, day);
 }
