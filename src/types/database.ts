@@ -111,6 +111,66 @@ export type Database = {
         };
         Relationships: [];
       };
+      shopping_lists: {
+        Row: {
+          id: string;
+          household_id: string;
+          week_start: string;
+          generated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          household_id: string;
+          week_start: string;
+          generated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          household_id?: string;
+          week_start?: string;
+          generated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      shopping_items: {
+        Row: {
+          id: string;
+          list_id: string;
+          name: string;
+          quantity: number | null;
+          unit: string | null;
+          category: string;
+          source: "auto" | "manual";
+          checked: boolean;
+          checked_by: string | null;
+          position: number;
+        };
+        Insert: {
+          id?: string;
+          list_id: string;
+          name: string;
+          quantity?: number | null;
+          unit?: string | null;
+          category?: string;
+          source?: "auto" | "manual";
+          checked?: boolean;
+          checked_by?: string | null;
+          position?: number;
+        };
+        Update: {
+          id?: string;
+          list_id?: string;
+          name?: string;
+          quantity?: number | null;
+          unit?: string | null;
+          category?: string;
+          source?: "auto" | "manual";
+          checked?: boolean;
+          checked_by?: string | null;
+          position?: number;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -133,6 +193,16 @@ export type Database = {
           expires_at: string;
           accepted_at: string | null;
         }[];
+      };
+      set_shopping_item_checked: {
+        Args: {
+          target_week_start: string;
+          target_category: string;
+          target_name: string;
+          target_position: number;
+          target_checked: boolean;
+        };
+        Returns: boolean;
       };
     };
     Enums: Record<string, never>;
