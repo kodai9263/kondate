@@ -1,0 +1,24 @@
+flowchart TD
+    Login[S0 ログイン] --> Check{初回?}
+    Check -- はい --> Welcome[S1 オンボーディング<br>家族人数 → アレルギー → テンプレ選択]
+    Check -- いいえ --> Today
+    Welcome --> Today[S2 今日 ホーム<br>★起動時は常にここ]
+
+    subgraph tabs [ボトムナビ 4タブ]
+        Today
+        Plans[S3 献立 週/月]
+        Shopping[S5 買い物リスト]
+        Misc[その他]
+    end
+
+    Today -- メニュー名タップ --> RecipeDetail[S7 レシピ詳細]
+    Today -- 「今日は無理」 --> Swap[S4 献立差し替えモーダル<br>楽メニュー / 外食 / 明日と交換]
+    Plans -- 日付タップ --> DaySheet[日別詳細シート]
+    DaySheet --> RecipeDetail
+    DaySheet -- 差し替え --> Swap
+    Swap -- 決定 --> Plans
+    Misc --> Recipes[S6 レシピ一覧]
+    Misc --> Settings[S8 設定]
+    Recipes --> RecipeDetail
+
+    style Today fill:#fff3bf,stroke:#f59f00,stroke-width:2px

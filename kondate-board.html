@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4週間献立ボード</title>
+<style>
+  :root{
+    --bg:#faf6f0; --card:#ffffff; --ink:#2d2a26; --sub:#8a8178;
+    --accent:#e8590c; --accent-soft:#fdeee3;
+    --line:#efe8df; --done:#b8b0a6;
+    --morning:#fff8e6; --morning-ink:#9a6700;
+    --evening:#eef2fb; --evening-ink:#3b5bad;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+    background:var(--bg);color:var(--ink);font-size:15px;line-height:1.6}
+  .wrap{max-width:560px;margin:0 auto;padding:0 14px 80px}
+  header{padding:22px 2px 10px}
+  header h1{font-size:20px;font-weight:800}
+  header p{color:var(--sub);font-size:12.5px;margin-top:2px}
+  /* tabs */
+  .tabs{position:sticky;top:0;z-index:10;background:var(--bg);display:flex;gap:6px;
+    padding:10px 0;overflow-x:auto}
+  .tab{flex:1;min-width:64px;border:none;background:var(--card);color:var(--sub);
+    padding:9px 0;border-radius:999px;font-size:13.5px;font-weight:700;cursor:pointer;
+    border:1px solid var(--line)}
+  .tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .view{display:none}.view.on{display:block}
+  /* month view */
+  .mweek{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:6px 14px;margin:12px 0}
+  .mweek h2{font-size:13px;color:var(--accent);padding:8px 0 2px;font-weight:800}
+  .mrow{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line);cursor:pointer}
+  .mrow:first-of-type{border-top:none}
+  .dow{width:26px;height:26px;border-radius:8px;background:var(--bg);color:var(--sub);
+    font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none}
+  .dow.sun{background:var(--accent-soft);color:var(--accent)}
+  .dow.sat{background:var(--evening);color:var(--evening-ink)}
+  .mname{flex:1;font-weight:600;font-size:14.5px}
+  .mmeta{font-size:11.5px;color:var(--sub);flex:none}
+  /* week view */
+  .shopbox{background:var(--card);border:1px solid var(--line);border-radius:16px;margin:12px 0;overflow:hidden}
+  .shophead{width:100%;border:none;background:none;display:flex;align-items:center;gap:8px;
+    padding:14px 16px;font-size:15px;font-weight:800;cursor:pointer;color:var(--ink)}
+  .shophead .arrow{margin-left:auto;color:var(--sub);transition:transform .2s}
+  .shopbox.open .arrow{transform:rotate(90deg)}
+  .shopbody{display:none;padding:0 16px 14px}
+  .shopbox.open .shopbody{display:block}
+  .cat{font-size:12px;font-weight:800;color:var(--sub);margin:10px 0 4px;letter-spacing:.04em}
+  .item{display:flex;align-items:center;gap:10px;padding:7px 2px;cursor:pointer;border-radius:8px}
+  .box{width:22px;height:22px;border:2px solid #d8cfc4;border-radius:7px;flex:none;
+    display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff}
+  .item.ck .box{background:var(--accent);border-color:var(--accent)}
+  .item.ck .txt{color:var(--done);text-decoration:line-through}
+  .daycard{background:var(--card);border:1px solid var(--line);border-radius:16px;margin:10px 0;overflow:hidden}
+  .dayhead{width:100%;border:none;background:none;text-align:left;display:flex;
+    align-items:center;gap:12px;padding:13px 16px;cursor:pointer;color:var(--ink)}
+  .dayinfo{flex:1;min-width:0}
+  .dayinfo .bf{font-size:11.5px;color:var(--sub);display:block}
+  .dayinfo .dn{font-size:15.5px;font-weight:800}
+  .dayinfo .sd{font-size:11.5px;color:var(--sub)}
+  .times{flex:none;text-align:right;font-size:11px;color:var(--sub);line-height:1.5}
+  .times b{color:var(--ink)}
+  .daybody{display:none;padding:2px 16px 16px;border-top:1px dashed var(--line)}
+  .daycard.open .daybody{display:block}
+  .phase{margin-top:12px}
+  .badge{display:inline-block;font-size:11.5px;font-weight:800;padding:3px 10px;border-radius:999px}
+  .badge.m{background:var(--morning);color:var(--morning-ink)}
+  .badge.e{background:var(--evening);color:var(--evening-ink)}
+  .badge.s{background:#f3eefb;color:#6741d9}
+  .sea{display:flex;gap:8px;padding:6px 2px;font-size:13px;line-height:1.55}
+  .sea::before{content:"·";color:#6741d9;font-weight:800;flex:none}
+  .badge.b{background:var(--accent-soft);color:var(--accent)}
+  .task{display:flex;align-items:center;gap:10px;padding:8px 2px;cursor:pointer}
+  .task .box{border-radius:50%}
+  .task.ck .box{background:#57a05c;border-color:#57a05c}
+  .task.ck .txt{color:var(--done);text-decoration:line-through}
+  .note{background:var(--card);border:1px dashed var(--line);border-radius:14px;
+    padding:12px 16px;font-size:12px;color:var(--sub);margin:16px 0}
+  .fishtag{font-size:11px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>4週間献立ボード <span style="font-size:13px;color:var(--accent);font-weight:800">☀️夏版</span></h1>
+    <p>5人分(大人2+子3)・土曜まとめ買い・魚は火/金・夜は原則25分以内</p>
+  </header>
+
+  <nav class="tabs" id="tabs"></nav>
+  <main id="views"></main>
+
+  <div class="note">
+    朝ごはんは固定ローテ: <b>日/水=納豆</b>・<b>月/木=目玉焼き</b>・<b>火/金=鮭フレーク</b>・<b>土=トースト</b>。<br><br>
+    <b>★照りだれ共通比率</b> = 醤油3 : みりん3 : 酒2 : 砂糖1(大さじ)。鶏照り焼き・ぶり・かじき・手羽中はぜんぶ同じたれ。この比率だけ覚えれば献立の1/4が作れます。<br>
+    <b>味噌汁の基本(5人分)</b> = 水900ml + 顆粒だし小さじ1 + 味噌大さじ4。<br><br>
+    <b>☀️夏の差し替え(6品)</b>: 焼きうどん→冷やしぶっかけうどん / カレー→夏野菜カレー / クリームシチュー→豚しゃぶサラダ / 鮭のちゃんちゃん焼き→あじの開き / ハヤシライス→タコライス / ナポリタン→肉味噌そうめん。涼しくなったら元に戻します。<br><br>
+    調味料・米・乾物は常備前提(買い物リスト末尾に在庫確認欄あり)。チェックはこのボードでは保存されません(アプリ版で保存対応)。
+  </div>
+</div>
+
+<script>
+const DATA = {"meta": {"name": "基本の4週間テンプレート v1.1(夏版)", "servings": "5人分(大人2+子ども3)", "weekStart": "日曜(土曜まとめ買い)", "policy": ["朝はごはん固定ローテ4パターン", "魚は週2回(火・金)", "子ども優先メニュー多め", "夜は原則25分以内", "調味料・米は常備前提"], "seasoningNote": "★照りだれ共通比率 = 醤油3:みりん3:酒2:砂糖1(大さじ)。味噌汁の基本(5人分) = 水900ml+顆粒だし小さじ1+味噌大さじ4。", "season": "夏", "seasonalSwaps": ["週1木 焼きうどん → 冷やしぶっかけうどん", "週1土・週4土 カレー → 夏野菜カレー", "週2土 クリームシチュー → 豚しゃぶサラダ", "週3火 鮭のちゃんちゃん焼き → あじの開き", "週3土 ハヤシライス → タコライス", "週4木 ナポリタン → 肉味噌そうめん"]}, "breakfasts": {"A": {"name": "ごはん・味噌汁・納豆・バナナ", "minutes": 10, "tasks": ["ご飯を温める", "味噌汁を温める", "納豆を出す", "バナナを切る"]}, "B": {"name": "ごはん・味噌汁・目玉焼き・ミニトマト", "minutes": 12, "tasks": ["ご飯を温める", "味噌汁を温める", "目玉焼きを焼く", "ミニトマトを洗う"]}, "C": {"name": "ごはん・味噌汁・鮭フレーク・ヨーグルト", "minutes": 10, "tasks": ["ご飯を温める", "味噌汁を温める", "鮭フレークを出す", "ヨーグルトを出す"]}, "D": {"name": "トースト・チーズ・ヨーグルト・果物", "minutes": 10, "tasks": ["パンを焼く", "チーズをのせる", "ヨーグルトを出す", "果物を切る"]}}, "breakfastRotation": {"日": "A", "月": "B", "火": "C", "水": "A", "木": "B", "金": "C", "土": "D"}, "weeks": [{"label": "週1", "days": [{"dow": "日", "dinner": "ハンバーグ", "side": "ブロッコリー・豆腐とわかめの味噌汁", "fish": false, "kids": true, "prepMin": 15, "cookMin": 20, "morning": ["玉ねぎをみじん切りして炒め、冷ましておく", "タネをこねて成形し、冷蔵庫へ"], "evening": ["ハンバーグを焼く(蓋をして蒸し焼き)", "ケチャップ+ソースでたれを作る", "ブロッコリーをレンジ加熱", "味噌汁を作る"], "seasonings": ["【タネ】合いびき肉500g・玉ねぎ1個・卵1個・パン粉1/2カップ・牛乳大さじ2・塩小さじ1/2・こしょう少々", "【ソース】ケチャップ大さじ4・中濃ソース大さじ4・バター10g", "【味噌汁】水900ml・顆粒だし小さじ1・味噌大さじ4"]}, {"dow": "月", "dinner": "豚こまの甘辛丼", "side": "豆腐と油揚げの味噌汁", "fish": false, "kids": true, "prepMin": 5, "cookMin": 15, "morning": ["豚こまと玉ねぎをタレ(醤油・みりん・砂糖)に漬ける"], "evening": ["漬けた具をフライパンで炒める", "ごはんに乗せて小ねぎを散らす", "味噌汁を作る"], "seasonings": ["【漬けだれ】醤油大さじ3・みりん大さじ3・砂糖大さじ1・おろし生姜小さじ1", "【味噌汁】水900ml・顆粒だし小さじ1・味噌大さじ4"]}, {"dow": "火", "dinner": "鮭の塩焼き", "side": "大根おろし・具だくさん味噌汁", "fish": true, "kids": false, "prepMin": 10, "cookMin": 15, "morning": ["鮭に塩をふって冷蔵庫へ", "味噌汁の野菜を切って鍋にセット"], "evening": ["鮭を焼く", "味噌汁を火にかけて味噌を溶く", "大根をおろす"], "seasonings": ["【下味】鮭5切れに塩小さじ1(朝ふる)", "【具だくさん味噌汁】水1L・顆粒だし小さじ1強・味噌大さじ4強"]}, {"dow": "水", "dinner": "鶏の照り焼き", "side": "キャベツ千切り・ミニトマト・味噌汁", "fish": false, "kids": true, "prepMin": 5, "cookMin": 20, "morning": ["鶏ももをタレに漬ける"], "evening": ["フライパンを温める", "鶏肉を焼く", "タレを絡める", "キャベツとトマトを添える", "味噌汁を作る"], "seasonings": ["【照りだれ★】醤油大さじ3・みりん大さじ3・酒大さじ2・砂糖大さじ1", "【味噌汁】水900ml・顆粒だし小さじ1・味噌大さじ4"]}, {"dow": "木", "dinner": "冷やしぶっかけうどん", "side": "温玉・ツナ・きゅうり・天かす", "fish": false, "kids": true, "prepMin": 5, "cookMin": 15, "morning": ["きゅうりを切っておく", "めんつゆを水で割って冷蔵庫で冷やす"], "evening": ["うどんを茹でて冷水でしめる", "温玉・ツナ・きゅうり・天かすをのせる", "冷たいつゆをかける"], "seasonings": ["【つゆ】めんつゆ(3倍濃縮)を水1:2で割って冷やす", "【トッピング】ツナ缶2・温泉卵5個(市販でも)・天かす・きゅうり"]}, {"dow": "金", "dinner": "さばの味噌煮", "side": "きゅうりの浅漬け・豆腐の味噌汁", "fish": true, "kids": false, "prepMin": 5, "cookMin": 20, "morning": ["きゅうりを切って浅漬けの素に漬ける"], "evening": ["さばを調味料で煮る(約15分)", "味噌汁を作る"], "seasonings": ["【煮汁】味噌大さじ3・砂糖大さじ2・みりん大さじ2・酒大さじ3・水150ml・生姜スライス5枚", "【浅漬け】きゅうり2本+浅漬けの素(袋の表示どおり)"]}, {"dow": "土", "dinner": "夏野菜カレー", "side": "なす・ピーマンのせ・レタスサラダ", "fish": false, "kids": true, "prepMin": 10, "cookMin": 30, "morning": ["野菜と肉を切っておく", "なす・ピーマンも切っておく"], "evening": ["具を炒めて煮る", "ルーを溶かして煮込む", "なすとピーマンをごま油で焼いてのせる", "サラダを盛る"], "seasonings": ["【カレー】カレールー1箱の2/3(8〜10皿分)・水は箱の表示どおり", "【夏野菜トッピング】なす2本・ピーマン2個をごま油大さじ1で焼く", "【サラダ】お好みのドレッシング"]}], "shopping": {"肉": ["合いびき肉 500g", "豚こま 900g", "鶏もも 600g"], "魚": ["生鮭 5切れ", "さば 5切れ"], "野菜・果物": ["玉ねぎ 7個", "にんじん 3本", "じゃがいも 6個", "キャベツ 1/4個", "大根 1/2本", "長ねぎ 1本", "小ねぎ 1袋", "きゅうり 3本", "なす 2本", "ピーマン 2個", "ブロッコリー 1株", "レタス 1個", "ミニトマト 2パック", "生姜 1かけ", "バナナ 2房"], "豆腐・卵・乳": ["豆腐 3丁", "油揚げ 2枚", "卵 1パック", "牛乳 2本", "ヨーグルト 大1"], "麺・パン": ["冷凍うどん 5玉", "食パン 1斤"], "朝ごはん定番": ["納豆 6パック", "鮭フレーク 1瓶", "スライスチーズ 1袋"], "調味料(在庫確認)": ["パン粉", "カレールー", "福神漬け", "浅漬けの素", "めんつゆ(3倍濃縮)", "味噌", "醤油・みりん・酒・砂糖"], "冷凍・缶詰": ["ツナ缶 2缶", "天かす 1袋", "温泉卵 5個(自作なら不要)"]}}, {"label": "週2", "days": [{"dow": "日", "dinner": "唐揚げ", "side": "レタス・ミニトマト・春雨スープ", "fish": false, "kids": true, "prepMin": 10, "cookMin": 25, "morning": ["鶏ももを切って下味(醤油・生姜・にんにく)に漬ける"], "evening": ["片栗粉をまぶす", "揚げ焼きにする", "スープを作る"], "seasonings": ["【下味】醤油大さじ3・酒大さじ2・おろし生姜小さじ1・おろしにんにく小さじ1", "【衣】片栗粉適量 /【揚げ焼き油】フライパンに1cm", "【春雨スープ】鶏がらスープの素小さじ2・水900ml・醤油小さじ1・ごま油少々"]}, {"dow": "月", "dinner": "親子丼", "side": "味噌汁", "fish": false, "kids": true, "prepMin": 5, "cookMin": 15, "morning": ["鶏肉と玉ねぎを切っておく"], "evening": ["割り下で鶏と玉ねぎを煮る", "卵でとじてごはんに乗せる", "味噌汁を作る"], "seasonings": ["【割り下】めんつゆ(3倍濃縮)大さじ5・水250ml・砂糖小さじ2", "(めんつゆがなければ: 醤油大さじ3・みりん大さじ3・砂糖大さじ1・だし汁250ml)", "【味噌汁】水900ml・顆粒だし小さじ1・味噌大さじ4"]}, {"dow": "火", "dinner": "ぶりの照り焼き", "side": "大根サラダ・味噌汁", "fish": true, "kids": false, "prepMin": 5, "cookMin": 15, "morning": ["ぶりをタレに漬ける"], "evening": ["ぶりを焼いてタレを絡める", "大根サラダを作る", "味噌汁を作る"], "seasonings": ["【照りだれ★】醤油大さじ3・みりん大さじ3・酒大さじ2・砂糖大さじ1", "【大根サラダ】マヨネーズ大さじ2・ポン酢大さじ1・かつお節", "【味噌汁】水900ml・顆粒だし小さじ1・味噌大さじ4"]}, {"dow": "水", "dinner": "鶏むねの甘辛スティック", "side": "無限ピーマン・味噌汁", "fish": false, "kids": true, "prepMin": 10, "cookMin": 20, "morning": ["鶏むねをスティック状に切り、酒+醤油で下味", "ピーマンを切っておく"], "evening": ["片栗粉をまぶして焼く", "甘辛だれを絡める", "無限ピーマンをレンジで作る", "味噌汁を作る"], "seasonings": ["【下味】酒大さじ1・醤油小さじ1 → 焼く前に片栗粉大さじ3をまぶす", "【甘辛だれ】醤油大さじ2・みりん大さじ2・砂糖大さじ1・ケチャップ小さじ2", "【無限ピーマン】ツナ缶1・鶏がらスープの素小さじ1・ごま油小さじ2"]}, {"dow": "木", "dinner": "ミートソーススパゲッティ", "side": "コーンスープ", "fish": false, "kids": true, "prepMin": 10, "cookMin": 15, "morning": ["ミートソースを作って冷蔵(約10分)"], "evening": ["パスタを茹でる", "ソースを温めて和える", "スープを用意する"], "seasonings": ["【ソース】カットトマト缶2・ケチャップ大さじ3・中濃ソース大さじ1・コンソメ1個・砂糖小さじ1・塩こしょう", "仕上げに粉チーズ"]}, {"dow": "金", "dinner": "たらのムニエル", "side": "ポテトサラダ・コンソメスープ", "fish": true, "kids": true, "prepMin": 15, "cookMin": 15, "morning": ["ポテトサラダを作って冷蔵"], "evening": ["たらに塩と小麦粉をつけてバターで焼く", "スープを作る"], "seasonings": ["【下味】塩小さじ1/2・こしょう少々 → 小麦粉適量", "【焼き】バター20g・仕上げにレモン", "【ポテトサラダ】マヨネーズ大さじ4・酢小さじ1・塩こしょう"]}, {"dow": "土", "dinner": "豚しゃぶサラダ", "side": "ごはん・枝豆", "fish": false, "kids": true, "prepMin": 10, "cookMin": 15, "morning": ["レタス・きゅうり・トマトを切って冷蔵庫で冷やす", "ごまだれを混ぜておく(市販でも)"], "evening": ["豚肉をさっと茹でて冷水にとる", "冷やした野菜にのせてごまだれをかける", "枝豆をレンジで温める"], "seasonings": ["【ごまだれ】市販ごまだれ or 練りごま大さじ2+醤油大さじ2+砂糖大さじ1+酢大さじ1+ごま油小さじ1", "【豚しゃぶ】茹でるお湯に酒大さじ1(臭み消し)"]}], "shopping": {"肉": ["鶏もも 1.1kg", "鶏むね 600g", "豚ロース薄切り(しゃぶしゃぶ用) 500g", "合いびき肉 400g", "ハム 1パック"], "魚": ["ぶり 5切れ", "生たら 5切れ"], "野菜・果物": ["玉ねぎ 4個", "にんじん 1本", "じゃがいも 3個", "ピーマン 4個", "大根 1/2本", "きゅうり 2本", "トマト 2個", "レタス 1個", "ミニトマト 2パック", "レモン 1個", "バナナ 2房"], "豆腐・卵・乳": ["卵 2パック", "豆腐 2丁", "バター 1箱", "粉チーズ", "牛乳 2本", "ヨーグルト 大1"], "麺・パン": ["スパゲッティ 500g", "食パン 1斤"], "冷凍・缶詰": ["カットトマト缶 2缶", "コーンスープの素 1箱", "春雨スープ 1袋", "冷凍枝豆 1袋"], "朝ごはん定番": ["納豆 6パック", "スライスチーズ 1袋"], "調味料(在庫確認)": ["ごまだれ(または練りごま)", "片栗粉", "小麦粉", "コンソメ"]}}, {"label": "週3", "days": [{"dow": "日", "dinner": "餃子(家族で包む日)", "side": "ごはん・中華スープ", "fish": false, "kids": true, "prepMin": 15, "cookMin": 30, "morning": ["タネを作って冷蔵庫へ"], "evening": ["家族みんなで包む", "焼く(2回転)", "スープを作る"], "seasonings": ["【タネ】豚ひき肉500g・キャベツ1/4個(みじん切り+塩もみ)・にら1束・おろし生姜小さじ1・おろしにんにく小さじ1・醤油大さじ1・ごま油大さじ1・鶏がらスープの素小さじ1", "【たれ】酢+醤油(1:1)・お好みでラー油", "【中華スープ】鶏がらスープの素小さじ2・水900ml・ごま油少々"]}, {"dow": "月", "dinner": "三色そぼろ丼", "side": "味噌汁", "fish": false, "kids": true, "prepMin": 15, "cookMin": 10, "morning": ["鶏そぼろと炒り卵を作って冷蔵(夜は盛るだけ)"], "evening": ["ごはんにそぼろ・卵・いんげんを乗せる", "味噌汁を作る"], "seasonings": ["【鶏そぼろ】醤油大さじ3・砂糖大さじ2・みりん大さじ2・おろし生姜小さじ1", "【炒り卵】卵4個・砂糖大さじ1・塩少々", "【味噌汁】水900ml・顆粒だし小さじ1・味噌大さじ4"]}, {"dow": "火", "dinner": "あじの開き", "side": "冷奴・焼きとうもろこし・味噌汁", "fish": true, "kids": false, "prepMin": 3, "cookMin": 15, "morning": ["とうもろこしを切っておく(仕込みほぼゼロの日)"], "evening": ["あじの開きを焼く", "とうもろこしをレンジ→グリルで焼き目", "冷奴に小ねぎとかつお節をのせる", "味噌汁を作る"], "seasonings": ["【冷奴】醤油・かつお節・小ねぎ", "【とうもろこし】仕上げに醤油少々(香ばしさUP)", "【味噌汁】水900ml・顆粒だし小さじ1・味噌大さじ4"]}, {"dow": "水", "dinner": "手羽中の甘辛焼き", "side": "マカロニサラダ・味噌汁", "fish": false, "kids": true, "prepMin": 15, "cookMin": 20, "morning": ["手羽中をタレに漬ける", "マカロニサラダを作って冷蔵"], "evening": ["手羽中を焼いて白ごまをふる", "味噌汁を作る"], "seasonings": ["【照りだれ★】醤油大さじ3・みりん大さじ3・砂糖大さじ1.5・おろしにんにく小さじ1/2・白ごま", "【マカロニサラダ】マヨネーズ大さじ4・塩こしょう", "【味噌汁】水900ml・顆粒だし小さじ1・味噌大さじ4"]}, {"dow": "木", "dinner": "焼きそば", "side": "青のり・かつお節", "fish": false, "kids": true, "prepMin": 5, "cookMin": 15, "morning": ["野菜と豚肉を切って袋にまとめる"], "evening": ["具を炒める", "麺とソースを加えて炒め合わせる"], "seasonings": ["【味付け】付属の粉ソース+ウスターソース大さじ1(コク出し)", "仕上げに青のり・かつお節"]}, {"dow": "金", "dinner": "さばの塩焼き+豚汁", "side": "豚汁が主役の日", "fish": true, "kids": false, "prepMin": 10, "cookMin": 20, "morning": ["豚汁の具を切って鍋にセット", "さばに塩をふる"], "evening": ["豚汁を煮て味噌を溶く", "さばを焼く"], "seasonings": ["【下味】さば5切れに塩小さじ1(朝ふる)", "【豚汁】水1.2L・顆粒だし小さじ1強・味噌大さじ5・仕上げにごま油小さじ1"]}, {"dow": "土", "dinner": "タコライス", "side": "レタス・トマト・チーズ", "fish": false, "kids": true, "prepMin": 8, "cookMin": 15, "morning": ["レタスを切って冷やす", "トマトを切っておく"], "evening": ["ひき肉を炒めてタコミートの味付け", "ごはんにレタス・タコミート・トマト・チーズをのせる"], "seasonings": ["【タコミート】合いびき肉500g・ケチャップ大さじ4・中濃ソース大さじ2・カレー粉小さじ1・おろしにんにく小さじ1・塩こしょう(子ども仕様・辛くしない)"]}], "shopping": {"肉": ["豚ひき肉 500g", "鶏ひき肉 400g", "合いびき肉 500g", "手羽中 800g", "豚こま 500g", "ハム 1パック"], "魚": ["あじの開き 5枚", "さば 5切れ"], "野菜・果物": ["キャベツ 1/2個", "にら 1束", "もやし 1袋", "にんじん 1本", "大根 1/3本", "長ねぎ 1本", "玉ねぎ 1個", "とうもろこし 2本", "トマト 2個", "きゅうり 1本", "こんにゃく 1枚", "小ねぎ 1袋", "レタス 1個", "ミニトマト 2パック", "バナナ 2房"], "豆腐・卵・乳": ["卵 1パック", "豆腐 3丁", "ピザ用チーズ 1袋", "ヨーグルト 大1", "牛乳 2本"], "麺・パン": ["餃子の皮 50枚", "蒸し麺 5玉", "マカロニ 1袋", "食パン 1斤"], "冷凍・缶詰": ["冷凍いんげん 1袋"], "朝ごはん定番": ["納豆 6パック", "鮭フレーク 1瓶", "スライスチーズ 1袋"], "調味料(在庫確認)": ["カレー粉", "白ごま", "ごま油", "ケチャップ・中濃ソース"]}}, {"label": "週4", "days": [{"dow": "日", "dinner": "豚の生姜焼き", "side": "キャベツ千切り・味噌汁", "fish": false, "kids": true, "prepMin": 5, "cookMin": 15, "morning": ["豚肉を生姜だれに漬ける", "キャベツを千切りにする"], "evening": ["豚肉を焼く", "キャベツを添える", "味噌汁を作る"], "seasonings": ["【たれ】醤油大さじ3・みりん大さじ2・酒大さじ2・砂糖小さじ2・おろし生姜大さじ1", "【味噌汁】水900ml・顆粒だし小さじ1・味噌大さじ4"]}, {"dow": "月", "dinner": "牛丼", "side": "味噌汁", "fish": false, "kids": true, "prepMin": 5, "cookMin": 15, "morning": ["玉ねぎをスライスしておく"], "evening": ["割り下で牛肉と玉ねぎを煮る", "ごはんに乗せる", "味噌汁を作る"], "seasonings": ["【割り下】醤油大さじ4・みりん大さじ4・酒大さじ2・砂糖大さじ1・水200ml・顆粒だし小さじ1/2", "仕上げに紅生姜", "【味噌汁】水900ml・顆粒だし小さじ1・味噌大さじ4"]}, {"dow": "火", "dinner": "かじきの照り焼き", "side": "ほうれん草のおひたし・味噌汁", "fish": true, "kids": true, "prepMin": 5, "cookMin": 15, "morning": ["めかじきをタレに漬ける"], "evening": ["焼いてタレを絡める", "おひたしをレンジで作る", "味噌汁を作る"], "seasonings": ["【照りだれ★】醤油大さじ3・みりん大さじ3・酒大さじ2・砂糖大さじ1", "【おひたし】めんつゆ(3倍)大さじ1・かつお節", "【味噌汁】水900ml・顆粒だし小さじ1・味噌大さじ4"]}, {"dow": "水", "dinner": "チキンピカタ", "side": "コールスロー・スープ", "fish": false, "kids": true, "prepMin": 10, "cookMin": 20, "morning": ["鶏むねをそぎ切りして塩こしょう", "コールスローを作って冷蔵"], "evening": ["卵+粉チーズの衣をつけて焼く", "ケチャップを添える", "スープを作る"], "seasonings": ["【下味】塩小さじ1/2・こしょう → 小麦粉適量", "【衣】卵2個・粉チーズ大さじ3", "【コールスロー】マヨネーズ大さじ3・酢小さじ2・砂糖小さじ1・塩少々", "食べるときにケチャップ"]}, {"dow": "木", "dinner": "肉味噌そうめん", "side": "きゅうり・ミニトマト", "fish": false, "kids": true, "prepMin": 10, "cookMin": 15, "morning": ["肉味噌を作って冷蔵(そぼろに甘味噌を絡める)", "きゅうりを切っておく"], "evening": ["そうめんを茹でて冷水でしめる", "肉味噌ときゅうりをのせる", "冷たいめんつゆを添える"], "seasonings": ["【肉味噌】豚ひき肉300g・味噌大さじ2・砂糖大さじ1.5・みりん大さじ1・醤油小さじ2・おろし生姜小さじ1", "【つゆ】めんつゆ(3倍濃縮)を水で割って冷やす"]}, {"dow": "金", "dinner": "鮭のバター醤油焼き", "side": "じゃがバター・味噌汁", "fish": true, "kids": true, "prepMin": 5, "cookMin": 15, "morning": ["鮭に塩をふる", "じゃがいもを洗って切っておく"], "evening": ["鮭をバター醤油で焼く", "じゃがいもをレンジ→バター", "味噌汁を作る"], "seasonings": ["【下味】鮭5切れに塩少々", "【焼き】バター20g・醤油大さじ1.5", "【じゃがバター】バター15g・塩少々", "【味噌汁】水900ml・顆粒だし小さじ1・味噌大さじ4"]}, {"dow": "土", "dinner": "夏野菜カレー", "side": "なす・ピーマンのせ・レタスサラダ", "fish": false, "kids": true, "prepMin": 10, "cookMin": 30, "morning": ["野菜と肉を切っておく", "なす・ピーマンも切っておく"], "evening": ["具を炒めて煮る", "ルーを溶かして煮込む", "なすとピーマンをごま油で焼いてのせる", "サラダを盛る"], "seasonings": ["【カレー】カレールー1箱の2/3(8〜10皿分)・水は箱の表示どおり", "【夏野菜トッピング】なす2本・ピーマン2個をごま油大さじ1で焼く", "【サラダ】お好みのドレッシング"]}], "shopping": {"肉": ["豚ロース(生姜焼き用) 600g", "牛こま 500g", "鶏むね 600g", "豚ひき肉 300g", "豚こま 500g"], "魚": ["めかじき 5切れ", "生鮭 5切れ"], "野菜・果物": ["玉ねぎ 6個", "キャベツ 1/2個", "ピーマン 2個", "なす 2本", "じゃがいも 7個", "にんじん 2本", "きゅうり 2本", "レタス 1個", "ミニトマト 2パック", "生姜 1かけ", "バナナ 2房"], "豆腐・卵・乳": ["卵 2パック", "豆腐 2丁", "バター(在庫確認)", "粉チーズ(在庫確認)", "牛乳 2本", "ヨーグルト 大1"], "麺・パン": ["そうめん 500g", "食パン 1斤"], "冷凍・缶詰": ["冷凍ほうれん草 1袋", "コーン缶 1缶"], "朝ごはん定番": ["納豆 6パック", "スライスチーズ 1袋", "紅生姜 1袋"], "調味料(在庫確認)": ["カレールー", "福神漬け", "ケチャップ", "めんつゆ(3倍濃縮)"]}}]};
+
+const $ = (h)=>{const t=document.createElement('template');t.innerHTML=h.trim();return t.content.firstChild};
+const esc = (s)=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const tabsEl = document.getElementById('tabs');
+const viewsEl = document.getElementById('views');
+
+/* ---- tabs ---- */
+const tabNames = ['月間', ...DATA.weeks.map(w=>w.label)];
+tabNames.forEach((name,i)=>{
+  const b = $(`<button class="tab${i===0?' on':''}">${esc(name)}</button>`);
+  b.onclick = ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+    b.classList.add('on');
+    document.getElementById('view'+i).classList.add('on');
+    window.scrollTo({top:0});
+  };
+  tabsEl.appendChild(b);
+});
+
+/* ---- month view ---- */
+const month = $(`<section class="view on" id="view0"></section>`);
+DATA.weeks.forEach((w,wi)=>{
+  const sec = $(`<div class="mweek"><h2>${esc(w.label)}</h2></div>`);
+  w.days.forEach(d=>{
+    const cls = d.dow==='日'?'sun':d.dow==='土'?'sat':'';
+    const row = $(`<div class="mrow">
+      <span class="dow ${cls}">${esc(d.dow)}</span>
+      <span class="mname">${esc(d.dinner)} ${d.fish?'<span class="fishtag">🐟</span>':''}</span>
+      <span class="mmeta">夜${d.cookMin}分</span>
+    </div>`);
+    row.onclick = ()=>{ // jump to week tab, open that day
+      document.querySelectorAll('.tab')[wi+1].click();
+      const card = document.querySelector(`#view${wi+1} .daycard[data-dow="${d.dow}"]`);
+      if(card){ card.classList.add('open'); card.scrollIntoView({behavior:'smooth',block:'center'}); }
+    };
+    sec.appendChild(row);
+  });
+  month.appendChild(sec);
+});
+viewsEl.appendChild(month);
+
+/* ---- week views ---- */
+DATA.weeks.forEach((w,wi)=>{
+  const view = $(`<section class="view" id="view${wi+1}"></section>`);
+
+  // shopping list
+  const shop = $(`<div class="shopbox">
+    <button class="shophead">🛒 土曜の買い物リスト<span class="arrow">›</span></button>
+    <div class="shopbody"></div></div>`);
+  shop.querySelector('.shophead').onclick = ()=>shop.classList.toggle('open');
+  const body = shop.querySelector('.shopbody');
+  Object.entries(w.shopping).forEach(([cat,items])=>{
+    body.appendChild($(`<div class="cat">${esc(cat)}</div>`));
+    items.forEach(it=>{
+      const el = $(`<div class="item"><span class="box">✓</span><span class="txt">${esc(it)}</span></div>`);
+      el.onclick = ()=>el.classList.toggle('ck');
+      body.appendChild(el);
+    });
+  });
+  view.appendChild(shop);
+
+  // day cards
+  w.days.forEach(d=>{
+    const bf = DATA.breakfasts[DATA.breakfastRotation[d.dow]];
+    const cls = d.dow==='日'?'sun':d.dow==='土'?'sat':'';
+    const card = $(`<div class="daycard" data-dow="${esc(d.dow)}">
+      <button class="dayhead">
+        <span class="dow ${cls}">${esc(d.dow)}</span>
+        <span class="dayinfo">
+          <span class="bf">朝: ${esc(bf.name)}</span>
+          <span class="dn">${esc(d.dinner)} ${d.fish?'🐟':''}</span>
+          <span class="sd">${esc(d.side)}</span>
+        </span>
+        <span class="times">朝仕込 <b>${d.prepMin}分</b><br>夜 <b>${d.cookMin}分</b></span>
+      </button>
+      <div class="daybody"></div>
+    </div>`);
+    card.querySelector('.dayhead').onclick = ()=>card.classList.toggle('open');
+    const bd = card.querySelector('.daybody');
+
+    const addPhase = (label, cls2, tasks)=>{
+      const ph = $(`<div class="phase"><span class="badge ${cls2}">${esc(label)}</span></div>`);
+      tasks.forEach(t=>{
+        const el = $(`<div class="task"><span class="box">✓</span><span class="txt">${esc(t)}</span></div>`);
+        el.onclick = ()=>el.classList.toggle('ck');
+        ph.appendChild(el);
+      });
+      bd.appendChild(ph);
+    };
+    addPhase(`朝ごはん(${bf.minutes}分)`, 'b', bf.tasks);
+    if(d.seasonings){
+      const ph = $(`<div class="phase"><span class="badge s">調味料・分量(5人分)</span></div>`);
+      d.seasonings.forEach(t=>ph.appendChild($(`<div class="sea">${esc(t)}</div>`)));
+      bd.appendChild(ph);
+    }
+    addPhase(`朝の仕込み(${d.prepMin}分)`, 'm', d.morning);
+    addPhase(`夜の手順(${d.cookMin}分)`, 'e', d.evening);
+    view.appendChild(card);
+  });
+
+  viewsEl.appendChild(view);
+});
+</script>
+</body>
+</html>
