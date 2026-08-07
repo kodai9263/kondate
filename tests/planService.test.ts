@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { menuData } from "@/lib/menuData";
-import { buildRotationPlan } from "@/lib/services/planService";
+import { buildRotationPlan, findTodayPlan } from "@/lib/services/planService";
 
 describe("buildRotationPlan", () => {
   it("日曜始まりで28日分を展開する", () => {
@@ -17,5 +17,21 @@ describe("buildRotationPlan", () => {
     expect(plan[0].breakfast.name).toContain("納豆");
     expect(plan[1].breakfast.name).toContain("目玉焼き");
     expect(plan[2].breakfast.name).toContain("鮭フレーク");
+  });
+
+  it("基準日からの経過日数で今日の献立を選ぶ", () => {
+    expect(findTodayPlan(menuData, new Date("2026-08-07T12:00:00+09:00"))).toMatchObject({
+      date: "2026-08-07",
+      dayIndex: 12,
+      dow: "金",
+      dinner: { dinner: "たらのムニエル" },
+    });
+  });
+
+  it("4週間を越えた日付は先頭から繰り返す", () => {
+    expect(findTodayPlan(menuData, new Date("2026-08-23T12:00:00+09:00"))).toMatchObject({
+      date: "2026-07-26",
+      dayIndex: 0,
+    });
   });
 });

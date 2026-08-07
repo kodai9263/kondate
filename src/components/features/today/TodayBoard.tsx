@@ -68,10 +68,6 @@ export function TodayBoard({ familySize, feedbackStatus }: { familySize: FamilyS
       />
 
       <MealFeedbackForm servedOn={today.date} recipeName={today.dinner.dinner} status={feedbackStatus} />
-
-      <button className="min-h-12 w-full rounded-lg border border-kondate-accent bg-kondate-accentSoft px-4 font-black text-kondate-accent">
-        今日は無理
-      </button>
     </section>
   );
 }
