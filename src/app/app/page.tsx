@@ -5,11 +5,17 @@ import { TodayBoard } from "@/components/features/today/TodayBoard";
 import { formatFamilyLabel, formatShoppingDay } from "@/lib/family/servings";
 import { getCurrentHouseholdPreferences } from "@/lib/family/server";
 import { menuData } from "@/lib/menuData";
+import { findTodayPlan } from "@/lib/services/planService";
 import { getShoppingCycle } from "@/lib/services/shoppingService";
+import { getTodayTaskBindings } from "@/lib/today/server";
 
 export default async function AppHomePage({ searchParams }: { searchParams: Promise<{ mealFeedback?: string; notice?: string }> }) {
   const params = await searchParams;
-  const preferences = await getCurrentHouseholdPreferences();
+  const today = findTodayPlan(menuData);
+  const [preferences, taskBindings] = await Promise.all([
+    getCurrentHouseholdPreferences(),
+    getTodayTaskBindings(today),
+  ]);
   const familySize = { adultCount: preferences.adultCount, childCount: preferences.childCount };
   const shoppingDayLabel = formatShoppingDay(preferences.shoppingDay);
   const shoppingCycle = getShoppingCycle(menuData, preferences.shoppingDay);
@@ -22,7 +28,7 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
         <div className="flex gap-2"><Link href="/pricing" className="inline-flex min-h-11 items-center rounded-lg bg-kondate-accentSoft px-3 text-xs font-black text-kondate-accent">家族プラン</Link><Link href="/account" aria-label="アカウント設定" title="アカウント設定" className="grid size-11 place-items-center rounded-lg border border-kondate-line bg-white text-kondate-muted"><Settings size={19} /></Link></div>
       </header>
       {params.notice === "family-joined" ? <p role="status" className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-bold text-emerald-900">家族グループに参加しました。</p> : null}
-      <div className="space-y-8"><TodayBoard familySize={familySize} feedbackStatus={params.mealFeedback} /><ShoppingSummaryLink shoppingDayLabel={shoppingDayLabel} itemCount={shoppingItemCount} /></div>
+      <div className="space-y-8"><TodayBoard familySize={familySize} feedbackStatus={params.mealFeedback} today={today} initialTaskBindings={taskBindings} /><ShoppingSummaryLink shoppingDayLabel={shoppingDayLabel} itemCount={shoppingItemCount} /></div>
     </main>
   );
 }

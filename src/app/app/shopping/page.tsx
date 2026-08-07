@@ -34,6 +34,7 @@ export default async function ShoppingPage() {
         <ShoppingList
           groups={groups}
           initialCheckedKeys={savedState.checkedKeys}
+          listId={savedState.listId}
           weekIndex={weekIndex}
           weekStart={weekStart}
           loadError={savedState.loadError}
@@ -43,16 +44,28 @@ export default async function ShoppingPage() {
   );
 }
 
-async function getSavedShoppingState(weekStart: string): Promise<{ checkedKeys: string[]; loadError: boolean }> {
+async function getSavedShoppingState(weekStart: string): Promise<{ checkedKeys: string[]; listId: string | null; loadError: boolean }> {
   const supabase = await getSupabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { checkedKeys: [], listId: null, loadError: true };
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("household_id")
+    .eq("id", user.id)
+    .single();
+  if (profileError || !profile?.household_id) return { checkedKeys: [], listId: null, loadError: true };
+
   const { data: list, error: listError } = await supabase
     .from("shopping_lists")
+    .upsert(
+      { household_id: profile.household_id, week_start: weekStart },
+      { onConflict: "household_id,week_start" },
+    )
     .select("id")
-    .eq("week_start", weekStart)
-    .maybeSingle();
+    .single();
 
-  if (listError) return { checkedKeys: [], loadError: true };
-  if (!list) return { checkedKeys: [], loadError: false };
+  if (listError || !list) return { checkedKeys: [], listId: null, loadError: true };
 
   const { data: items, error: itemsError } = await supabase
     .from("shopping_items")
@@ -60,9 +73,10 @@ async function getSavedShoppingState(weekStart: string): Promise<{ checkedKeys: 
     .eq("list_id", list.id)
     .eq("checked", true);
 
-  if (itemsError) return { checkedKeys: [], loadError: true };
+  if (itemsError) return { checkedKeys: [], listId: list.id, loadError: true };
   return {
     checkedKeys: (items ?? []).map((item) => buildShoppingItemKey(item.category, item.name)),
+    listId: list.id,
     loadError: false,
   };
 }
