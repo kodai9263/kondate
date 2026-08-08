@@ -3,18 +3,35 @@ import { officialNutritionRecipes } from "@/lib/nutrition/catalog";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { filterRecipesForAllergies } from "@/lib/family/allergies";
 import { getCurrentHouseholdPreferences } from "@/lib/family/server";
+import { getMonthDateRange, parsePlannerMonth } from "@/lib/nutrition/month";
 import type { NutritionRecipe, ProteinSource } from "@/types/nutrition";
 
-export default async function PlannerPage() {
+export default async function PlannerPage({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
   const now = new Date();
+  const { month: monthParam } = await searchParams;
+  const { year, month } = parsePlannerMonth(monthParam, now);
+  const { firstDate, lastDate } = getMonthDateRange(year, month);
   const preferences = await getCurrentHouseholdPreferences();
   const supabase = await getSupabaseServer();
-  const [{ data: rows }, { data: feedbackRows }] = await Promise.all([
+  const [{ data: rows }, { data: officialRows }, { data: feedbackRows }, { data: savedRows }] = await Promise.all([
     supabase.from("recipes").select("id,name,cook_minutes,image_url,protein_source,meta,recipe_nutrition(energy_kcal,protein_g,fat_g,carbs_g,fiber_g,salt_g,vegetables_g)").not("household_id", "is", null),
+    supabase.from("recipes").select("id,name,meta").is("household_id", null),
     supabase.from("meal_preferences").select("recipe_name,rating,updated_at").order("updated_at", { ascending: false }).limit(500),
+    supabase.from("plan_entries").select("date,recipe_id,locked").eq("meal_type", "dinner").gte("date", firstDate).lte("date", lastDate),
   ]);
   const custom = (rows ?? []).flatMap((row: Record<string, unknown>) => mapCustomRecipe(row));
-  const recipes = [...officialNutritionRecipes, ...custom];
+  const officialIdsByKey = new Map<string, string>();
+  const officialIdsByName = new Map<string, string>();
+  for (const row of officialRows ?? []) {
+    const meta = row.meta && typeof row.meta === "object" ? row.meta as Record<string, unknown> : {};
+    if (typeof meta.nutrition_catalog_id === "string") officialIdsByKey.set(meta.nutrition_catalog_id, row.id);
+    officialIdsByName.set(row.name, row.id);
+  }
+  const official = officialNutritionRecipes.flatMap((recipe) => {
+    const databaseId = officialIdsByKey.get(recipe.id) ?? officialIdsByName.get(recipe.name);
+    return databaseId ? [{ ...recipe, id: databaseId }] : [];
+  });
+  const recipes = [...official, ...custom];
   const filtered = filterRecipesForAllergies(recipes, preferences.allergies);
   const latestRatings = new Map<string, string>();
   for (const row of feedbackRows ?? []) {
@@ -24,7 +41,15 @@ export default async function PlannerPage() {
   const availableRecipes = preferenceAllowed.length > 0 ? preferenceAllowed : filtered.allowed;
   const preferredRecipeIds = availableRecipes.filter((recipe) => latestRatings.get(recipe.name) === "love").map((recipe) => recipe.id);
   const preferenceExcludedCount = filtered.allowed.length - availableRecipes.length;
-  return <MonthlyPlanner recipes={availableRecipes} initialYear={now.getFullYear()} initialMonth={now.getMonth() + 1} familySize={preferences} allergies={preferences.allergies} excludedRecipeCount={filtered.excluded.length} preferredRecipeIds={preferredRecipeIds} preferenceExcludedCount={preferenceExcludedCount} />;
+  const availableRecipeIds = new Set(availableRecipes.map((recipe) => recipe.id));
+  const initialRecipeIds: Record<string, string> = {};
+  const initialLockedRecipeIds: Record<string, string> = {};
+  for (const row of savedRows ?? []) {
+    if (!availableRecipeIds.has(row.recipe_id)) continue;
+    initialRecipeIds[row.date] = row.recipe_id;
+    if (row.locked) initialLockedRecipeIds[row.date] = row.recipe_id;
+  }
+  return <MonthlyPlanner key={`${year}-${month}`} recipes={availableRecipes} initialYear={year} initialMonth={month} familySize={preferences} allergies={preferences.allergies} excludedRecipeCount={filtered.excluded.length} preferredRecipeIds={preferredRecipeIds} preferenceExcludedCount={preferenceExcludedCount} initialRecipeIds={initialRecipeIds} initialLockedRecipeIds={initialLockedRecipeIds} />;
 }
 
 function mapCustomRecipe(row: Record<string, unknown>): NutritionRecipe[] {
