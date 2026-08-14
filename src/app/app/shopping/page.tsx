@@ -33,6 +33,7 @@ export default async function ShoppingPage() {
       <div className="mt-5">
         <ShoppingList
           groups={groups}
+          initialManualItems={savedState.manualItems}
           initialCheckedKeys={savedState.checkedKeys}
           listId={savedState.listId}
           weekIndex={weekIndex}
@@ -44,17 +45,24 @@ export default async function ShoppingPage() {
   );
 }
 
-async function getSavedShoppingState(weekStart: string): Promise<{ checkedKeys: string[]; listId: string | null; loadError: boolean }> {
+type SavedShoppingState = {
+  checkedKeys: string[];
+  manualItems: Array<{ id: string; category: string; name: string; position: number; checked: boolean; source: "manual" }>;
+  listId: string | null;
+  loadError: boolean;
+};
+
+async function getSavedShoppingState(weekStart: string): Promise<SavedShoppingState> {
   const supabase = await getSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { checkedKeys: [], listId: null, loadError: true };
+  if (!user) return { checkedKeys: [], manualItems: [], listId: null, loadError: true };
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("household_id")
     .eq("id", user.id)
     .single();
-  if (profileError || !profile?.household_id) return { checkedKeys: [], listId: null, loadError: true };
+  if (profileError || !profile?.household_id) return { checkedKeys: [], manualItems: [], listId: null, loadError: true };
 
   const { data: list, error: listError } = await supabase
     .from("shopping_lists")
@@ -65,17 +73,17 @@ async function getSavedShoppingState(weekStart: string): Promise<{ checkedKeys: 
     .select("id")
     .single();
 
-  if (listError || !list) return { checkedKeys: [], listId: null, loadError: true };
+  if (listError || !list) return { checkedKeys: [], manualItems: [], listId: null, loadError: true };
 
   const { data: items, error: itemsError } = await supabase
     .from("shopping_items")
-    .select("category, name")
-    .eq("list_id", list.id)
-    .eq("checked", true);
+    .select("id, category, name, position, checked, source")
+    .eq("list_id", list.id);
 
-  if (itemsError) return { checkedKeys: [], listId: list.id, loadError: true };
+  if (itemsError) return { checkedKeys: [], manualItems: [], listId: list.id, loadError: true };
   return {
-    checkedKeys: (items ?? []).map((item) => buildShoppingItemKey(item.category, item.name)),
+    checkedKeys: (items ?? []).filter((item) => item.checked).map((item) => buildShoppingItemKey(item.category, item.name)),
+    manualItems: (items ?? []).filter((item) => item.source === "manual").map((item) => ({ ...item, source: "manual" as const })),
     listId: list.id,
     loadError: false,
   };
