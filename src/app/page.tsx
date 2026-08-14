@@ -8,7 +8,7 @@ import { findTodayPlan } from "@/lib/services/planService";
 const features = [
   { number: "01", icon: Clock3, title: "今日だけ見れば、動ける", body: "朝の仕込みと夜の手順を、やる順番に。レシピを何度も読み返さなくて済みます。" },
   { number: "02", icon: ListChecks, title: "献立は、4週間まとめて", body: "家族向けに組んだローテーションから始めるので、毎日の献立会議がなくなります。" },
-  { number: "03", icon: ShoppingBasket, title: "買うものまで、ひと続き", body: "一週間の献立から食材をまとめて、売り場ごとに確認。買ったらその場でチェックできます。" },
+  { number: "03", icon: ShoppingBasket, title: "買うものまで、ひと続き", body: "定番献立の買い物目安を売り場ごとに確認。足りないものを追加し、その場でチェックできます。" },
 ];
 
 export default async function LandingPage() {

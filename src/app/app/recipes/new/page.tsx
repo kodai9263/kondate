@@ -1,7 +1,10 @@
 import { ArrowLeft, Info, Salad } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createRecipe } from "@/app/app/recipes/new/actions";
 import { PendingButton } from "@/components/ui/PendingButton";
+import { isActiveSubscriptionStatus } from "@/lib/billing/entitlements";
+import { getSupabaseServer } from "@/lib/supabase/server";
 
 const errors: Record<string, string> = {
   invalid: "入力内容を確認してください。必須項目と数値を見直せます。",
@@ -11,6 +14,15 @@ const errors: Record<string, string> = {
 
 export default async function NewRecipePage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const { error } = await searchParams;
+  const supabase = await getSupabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const { data: profile } = await supabase.from("profiles").select("household_id").eq("id", user.id).maybeSingle();
+  if (!profile?.household_id) redirect("/app/recipes");
+  const { data: subscription } = await supabase.from("household_subscriptions").select("status,current_period_end").eq("household_id", profile.household_id).maybeSingle();
+  if (!subscription || !isActiveSubscriptionStatus(subscription.status, subscription.current_period_end)) {
+    redirect("/pricing?required=custom_recipes");
+  }
   return (
     <main className="mx-auto min-h-dvh w-full max-w-3xl px-4 pb-28 pt-5 sm:px-6">
       <Link href="/app/recipes" className="inline-flex min-h-11 items-center gap-2 text-sm font-black text-kondate-muted"><ArrowLeft size={18} />メニュー一覧</Link>

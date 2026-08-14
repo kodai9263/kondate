@@ -15,8 +15,8 @@ export const billingPlans: BillingPlan[] = [
     id: "free",
     name: "無料",
     priceLabel: "0円",
-    description: "まず家庭で回るか試すためのプラン",
-    features: ["4週間テンプレート1本", "公式メニューで月間生成デモ", "今日・買い物画面"],
+    description: "ひとりで献立管理を試すプラン",
+    features: ["月間献立の作成・保存", "今日の段取り", "週の買い物目安と手動追加"],
   },
   {
     id: "family_monthly",
@@ -25,7 +25,7 @@ export const billingPlans: BillingPlan[] = [
     description: "夫婦・家族で毎日の夕飯運営を共有するプラン",
     stripePriceEnv: "STRIPE_PRICE_FAMILY_MONTHLY",
     highlighted: true,
-    features: ["栄養バランス献立の自動生成", "マイメニューと料理写真の保存", "家族共有・買い物同期", "季節テンプレート"],
+    features: ["無料プランの全機能", "家族の招待と継続共有", "家族間のチェック同期", "わが家のメニュー登録"],
   },
   {
     id: "family_yearly",
@@ -33,7 +33,7 @@ export const billingPlans: BillingPlan[] = [
     priceLabel: "年4,800円",
     description: "2か月分お得に、家庭の定番運用として使うプラン",
     stripePriceEnv: "STRIPE_PRICE_FAMILY_YEARLY",
-    features: ["月払いの全機能", "年払い割引", "テンプレート改善の先行利用"],
+    features: ["月払いの全機能", "2か月分お得", "1契約で家族全員が利用可能"],
   },
 ];
 

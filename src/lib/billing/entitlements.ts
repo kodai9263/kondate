@@ -10,7 +10,7 @@ export const premiumFeatureKeys = [
 
 export type PremiumFeatureKey = (typeof premiumFeatureKeys)[number];
 
-const activeStatuses = new Set(["active", "trialing", "checkout_completed"]);
+const activeStatuses = new Set(["active", "trialing"]);
 
 export function isActiveSubscriptionStatus(status: string, currentPeriodEnd?: string | null): boolean {
   if (!activeStatuses.has(status)) return false;
@@ -27,4 +27,9 @@ export function getEntitlements(input: { status: string; currentPeriodEnd?: stri
     },
     {} as Record<PremiumFeatureKey, boolean>,
   );
+}
+
+export function canAccessHousehold(input: { userId: string; firstMemberId?: string | null; status?: string | null; currentPeriodEnd?: string | null }): boolean {
+  if (input.status && isActiveSubscriptionStatus(input.status, input.currentPeriodEnd)) return true;
+  return !input.firstMemberId || input.firstMemberId === input.userId;
 }
