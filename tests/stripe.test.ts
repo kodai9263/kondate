@@ -1,0 +1,22 @@
+import { describe, expect, it } from "vitest";
+import { getSubscriptionCurrentPeriodEnd } from "@/lib/billing/stripe";
+
+describe("getSubscriptionCurrentPeriodEnd", () => {
+  it("従来APIの購読本体にある終了日時を使う", () => {
+    expect(getSubscriptionCurrentPeriodEnd({ current_period_end: 1_800_000_000 })).toBe("2027-01-15T08:00:00.000Z");
+  });
+
+  it("新APIの購読アイテムにある終了日時を使う", () => {
+    expect(
+      getSubscriptionCurrentPeriodEnd({
+        items: {
+          data: [{ current_period_end: 1_800_000_000 }],
+        },
+      }),
+    ).toBe("2027-01-15T08:00:00.000Z");
+  });
+
+  it("有効な終了日時がない場合はnullを返す", () => {
+    expect(getSubscriptionCurrentPeriodEnd({ items: { data: [{ current_period_end: null }] } })).toBeNull();
+  });
+});
