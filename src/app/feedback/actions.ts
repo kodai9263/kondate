@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getSupabaseServer } from "@/lib/supabase/server";
+import { sendFeedbackEmail } from "@/lib/notifications/feedbackEmail";
 
 const mealFeedbackSchema = z.object({
   servedOn: z.string().date(),
@@ -59,7 +60,11 @@ export async function submitAppFeedback(formData: FormData) {
     message: parsed.data.message,
   });
 
-  redirect(error ? "/account?feedback=error" : "/account?feedback=thanks");
+  if (error) redirect("/account?feedback=error");
+
+  const notified = await sendFeedbackEmail(parsed.data);
+  if (!notified) console.error("Feedback notification could not be delivered");
+  redirect("/account?feedback=thanks");
 }
 
 async function getFeedbackContext() {

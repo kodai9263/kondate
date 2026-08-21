@@ -4,9 +4,16 @@ import { CheckoutButton } from "@/components/features/billing/CheckoutButton";
 import { PortalButton } from "@/components/features/billing/PortalButton";
 import Link from "next/link";
 
-export function PricingSection({ isAuthenticated = false }: { isAuthenticated?: boolean }) {
+const requiredMessages: Record<string, string> = {
+  family_sharing: "家族を招待するには家族プランが必要です。",
+  family_access: "この家族グループを複数人で使うには家族プランが必要です。データはそのまま保持されています。",
+  custom_recipes: "わが家のメニュー登録には家族プランが必要です。",
+};
+
+export function PricingSection({ isAuthenticated = false, requiredFeature, currentPlanId }: { isAuthenticated?: boolean; requiredFeature?: string; currentPlanId?: string }) {
   return (
     <section className="space-y-4">
+      {requiredFeature && requiredMessages[requiredFeature] ? <p role="status" className="border border-kondate-accent bg-[#fff4ef] p-4 text-sm font-black text-kondate-ink">{requiredMessages[requiredFeature]}</p> : null}
       <div className="rounded-lg border border-kondate-line bg-kondate-surface p-4 shadow-soft">
         <p className="flex items-center gap-2 text-sm font-black text-kondate-accent">
           <Crown size={17} />
@@ -42,7 +49,11 @@ export function PricingSection({ isAuthenticated = false }: { isAuthenticated?: 
                 </li>
               ))}
             </ul>
-            {plan.id !== "free" && isAuthenticated ? (
+            {plan.id !== "free" && currentPlanId === plan.id ? (
+              <p className="mt-4 flex min-h-12 w-full items-center justify-center rounded-lg bg-kondate-sage px-4 font-black text-[#285b35]">現在利用中</p>
+            ) : plan.id !== "free" && currentPlanId ? (
+              <p className="mt-4 flex min-h-12 w-full items-center justify-center rounded-lg border border-kondate-line px-4 text-center text-sm font-black text-kondate-muted">プラン変更は契約管理から</p>
+            ) : plan.id !== "free" && isAuthenticated ? (
               <CheckoutButton planId={plan.id}>{plan.id === "family_yearly" ? "年払いで始める" : "月払いで始める"}</CheckoutButton>
             ) : (
               <Link href={isAuthenticated ? "/app" : "/signup"} className="mt-4 flex min-h-12 w-full items-center justify-center rounded-lg border border-kondate-line px-4 font-black text-kondate-muted">
@@ -53,7 +64,7 @@ export function PricingSection({ isAuthenticated = false }: { isAuthenticated?: 
         ))}
       </div>
 
-      {isAuthenticated ? <div className="rounded-lg border border-kondate-line bg-kondate-surface p-4">
+      {currentPlanId ? <div className="rounded-lg border border-kondate-line bg-kondate-surface p-4">
         <h2 className="mb-2 text-base font-black">すでに契約している方</h2>
         <PortalButton />
       </div> : null}

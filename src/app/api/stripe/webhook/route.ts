@@ -40,7 +40,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   if (!householdId || !session.customer || !session.subscription) return;
 
   const supabase = getSupabaseAdmin();
-  await supabase.from("household_subscriptions").upsert(
+  const { error } = await supabase.from("household_subscriptions").upsert(
     {
       household_id: householdId,
       plan_id: session.metadata?.plan_id ?? "family_monthly",
@@ -51,6 +51,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     },
     { onConflict: "household_id" },
   );
+  if (error) throw error;
 }
 
 async function handleSubscriptionChanged(subscription: Stripe.Subscription) {
@@ -58,7 +59,7 @@ async function handleSubscriptionChanged(subscription: Stripe.Subscription) {
   if (!householdId) return;
 
   const supabase = getSupabaseAdmin();
-  await supabase.from("household_subscriptions").upsert(
+  const { error } = await supabase.from("household_subscriptions").upsert(
     {
       household_id: householdId,
       plan_id: subscription.metadata?.plan_id ?? "family_monthly",
@@ -71,4 +72,5 @@ async function handleSubscriptionChanged(subscription: Stripe.Subscription) {
     },
     { onConflict: "household_id" },
   );
+  if (error) throw error;
 }

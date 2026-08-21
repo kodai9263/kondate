@@ -8,6 +8,7 @@ import { commonAllergens, getCustomAllergies, normalizeAllergies } from "@/lib/f
 import { defaultShoppingDay, formatServingLabel, normalizeFamilySize, normalizeShoppingDay, shoppingWeekdays } from "@/lib/family/servings";
 import { submitAppFeedback } from "@/app/feedback/actions";
 import { buildInviteUrl, normalizeInviteToken } from "@/lib/family/invites";
+import { isActiveSubscriptionStatus } from "@/lib/billing/entitlements";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +42,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
     supabase.from("household_invites").select("invite_token, expires_at, accepted_at").eq("household_id", profile.household_id).is("accepted_at", null).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }).limit(3),
     supabase.from("profiles").select("id, display_name, created_at").eq("household_id", profile.household_id).order("created_at", { ascending: true }),
   ]);
-  const paid = subscription?.status === "active" || subscription?.status === "trialing";
+  const paid = subscription ? isActiveSubscriptionStatus(subscription.status, subscription.current_period_end) : false;
   const familySize = normalizeFamilySize(settings ? { adultCount: settings.adult_count, childCount: settings.child_count } : null);
   const shoppingDay = normalizeShoppingDay(settings?.shopping_day ?? defaultShoppingDay);
   const allergies = normalizeAllergies(settings?.allergies);
@@ -84,7 +85,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       </section>
 
       <section className="mt-4 rounded-lg border border-kondate-line bg-white p-5">
-        <div className="flex items-start justify-between gap-3"><div><p className="flex items-center gap-2 font-black"><Users size={18} />家族共有</p><p className="mt-1 text-sm leading-6 text-kondate-muted">招待リンクは7日間だけ有効です。参加後は同じ家族グループとして、献立・買い物・設定を継続して共有できます。</p></div><span className="rounded-lg bg-kondate-sage px-3 py-1 text-xs font-black text-[#285b35]">参加後は継続</span></div>
+        <div className="flex items-start justify-between gap-3"><div><p className="flex items-center gap-2 font-black"><Users size={18} />家族共有</p><p className="mt-1 text-sm leading-6 text-kondate-muted">招待リンクは7日間だけ有効です。家族プラン利用中は、参加した家族と献立・買い物・設定を共有できます。</p></div><span className="rounded-lg bg-kondate-sage px-3 py-1 text-xs font-black text-[#285b35]">家族プラン</span></div>
         <div className="mt-4 rounded-lg border border-kondate-line bg-kondate-bg p-3">
           <p className="text-xs font-black text-kondate-muted">参加済みメンバー</p>
           <div className="mt-3 space-y-2">
@@ -98,7 +99,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         </div>
         {createdInviteUrl ? <div className="mt-4 rounded-lg border border-kondate-line bg-kondate-bg p-3"><p className="text-xs font-black text-kondate-muted">作成した招待リンク</p><input readOnly value={createdInviteUrl} className="mt-2 min-h-11 w-full rounded-lg border border-kondate-line bg-white px-3 text-sm font-bold text-kondate-ink" /></div> : null}
         {invites?.length ? <div className="mt-4 space-y-2">{invites.map((invite) => <div key={invite.invite_token} className="rounded-lg border border-kondate-line p-3"><p className="truncate text-sm font-bold">{buildInviteUrl(invite.invite_token)}</p><p className="mt-1 text-xs font-bold text-kondate-muted">期限: {new Date(invite.expires_at).toLocaleDateString("ja-JP")}</p></div>)}</div> : null}
-        <form action={createFamilyInvite} className="mt-4"><button type="submit" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-kondate-ink px-4 font-black text-white"><Link2 size={18} />招待リンクを作成</button></form>
+        {paid ? <form action={createFamilyInvite} className="mt-4"><button type="submit" className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-kondate-ink px-4 font-black text-white"><Link2 size={18} />招待リンクを作成</button></form> : <Link href="/pricing?required=family_sharing" className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-kondate-ink px-4 font-black text-white"><CreditCard size={18} />家族プランで招待する</Link>}
       </section>
 
       <section className="mt-4 border border-kondate-line bg-white p-5">

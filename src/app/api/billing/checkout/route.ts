@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getBillingContext } from "@/lib/billing/context";
+import { isActiveSubscriptionStatus } from "@/lib/billing/entitlements";
 import { getPaidPlan } from "@/lib/billing/plans";
 import { getAppUrl, getStripe } from "@/lib/billing/stripe";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
@@ -31,9 +32,12 @@ export async function POST(request: Request) {
   const supabase = getSupabaseAdmin();
   const { data: existingSubscription } = await supabase
     .from("household_subscriptions")
-    .select("stripe_customer_id")
+    .select("stripe_customer_id,status,current_period_end")
     .eq("household_id", context.householdId)
     .maybeSingle();
+  if (existingSubscription && isActiveSubscriptionStatus(existingSubscription.status, existingSubscription.current_period_end)) {
+    return NextResponse.json({ error: "subscription_already_active" }, { status: 409 });
+  }
 
   const appUrl = getAppUrl();
   const stripe = getStripe();
