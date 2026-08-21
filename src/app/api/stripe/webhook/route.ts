@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { getStripe } from "@/lib/billing/stripe";
+import { getStripe, getSubscriptionCurrentPeriodEnd } from "@/lib/billing/stripe";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
@@ -66,7 +66,7 @@ async function handleSubscriptionChanged(subscription: Stripe.Subscription) {
       status: subscription.status,
       stripe_customer_id: String(subscription.customer),
       stripe_subscription_id: subscription.id,
-      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+      current_period_end: getSubscriptionCurrentPeriodEnd(subscription),
       cancel_at_period_end: subscription.cancel_at_period_end,
       updated_at: new Date().toISOString(),
     },
