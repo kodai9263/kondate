@@ -18,6 +18,12 @@ export function getAppUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 }
 
+export function isMissingStripeCustomerError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const stripeError = error as { code?: unknown; param?: unknown };
+  return stripeError.code === "resource_missing" && stripeError.param === "customer";
+}
+
 type SubscriptionPeriodShape = {
   current_period_end?: number | null;
   items?: {
