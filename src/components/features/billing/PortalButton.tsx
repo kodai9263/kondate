@@ -2,6 +2,12 @@
 
 import { useState } from "react";
 
+const portalErrorMessages: Record<string, string> = {
+  unauthenticated: "ログインしてからもう一度お試しください。",
+  stripe_customer_not_found: "契約情報を確認できませんでした。サポートへお問い合わせください。",
+  portal_failed: "契約管理画面を開けませんでした。時間をおいてもう一度お試しください。",
+};
+
 export function PortalButton() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -12,9 +18,9 @@ export function PortalButton() {
 
     try {
       const response = await fetch("/api/billing/portal", { method: "POST" });
-      const payload = (await response.json()) as { url?: string; error?: string };
+      const payload = (await response.json().catch(() => ({}))) as { url?: string; error?: string };
       if (!response.ok || !payload.url) {
-        throw new Error(payload.error ?? "portal_failed");
+        throw new Error(portalErrorMessages[payload.error ?? "portal_failed"] ?? portalErrorMessages.portal_failed);
       }
       window.location.assign(payload.url);
     } catch (caught) {
@@ -33,7 +39,7 @@ export function PortalButton() {
       >
         {loading ? "管理画面を準備中" : "支払い・解約を管理"}
       </button>
-      {error ? <p className="text-xs font-bold text-red-700">購読情報を確認できません: {error}</p> : null}
+      {error ? <p className="text-xs font-bold text-red-700">{error}</p> : null}
     </div>
   );
 }

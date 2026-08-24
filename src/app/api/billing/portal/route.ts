@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getBillingContext } from "@/lib/billing/context";
-import { getAppUrl, getStripe } from "@/lib/billing/stripe";
+import { getAppUrl, getStripe, isMissingStripeCustomerError } from "@/lib/billing/stripe";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 export async function POST() {
@@ -26,10 +26,19 @@ export async function POST() {
   }
 
   const stripe = getStripe();
-  const session = await stripe.billingPortal.sessions.create({
-    customer: data.stripe_customer_id,
-    return_url: `${getAppUrl()}/account`,
-  });
+  let session;
+  try {
+    session = await stripe.billingPortal.sessions.create({
+      customer: data.stripe_customer_id,
+      return_url: `${getAppUrl()}/account`,
+    });
+  } catch (portalError) {
+    if (isMissingStripeCustomerError(portalError)) {
+      return NextResponse.json({ error: "stripe_customer_not_found" }, { status: 404 });
+    }
+    console.error("Stripe Customer Portal session creation failed", portalError);
+    return NextResponse.json({ error: "portal_failed" }, { status: 502 });
+  }
 
   return NextResponse.json({ url: session.url });
 }

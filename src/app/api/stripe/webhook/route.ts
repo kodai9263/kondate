@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   }
 
   if (event.type === "checkout.session.completed") {
-    await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+    await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session, stripe);
   }
 
   if (
@@ -35,23 +35,13 @@ export async function POST(request: Request) {
   return NextResponse.json({ received: true });
 }
 
-async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-  const householdId = session.metadata?.household_id;
-  if (!householdId || !session.customer || !session.subscription) return;
-
-  const supabase = getSupabaseAdmin();
-  const { error } = await supabase.from("household_subscriptions").upsert(
-    {
-      household_id: householdId,
-      plan_id: session.metadata?.plan_id ?? "family_monthly",
-      status: "checkout_completed",
-      stripe_customer_id: String(session.customer),
-      stripe_subscription_id: String(session.subscription),
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "household_id" },
-  );
-  if (error) throw error;
+async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripe: Stripe) {
+  if (!session.subscription) return;
+  const subscription =
+    typeof session.subscription === "string"
+      ? await stripe.subscriptions.retrieve(session.subscription)
+      : session.subscription;
+  await handleSubscriptionChanged(subscription);
 }
 
 async function handleSubscriptionChanged(subscription: Stripe.Subscription) {

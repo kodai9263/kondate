@@ -30,8 +30,16 @@ describe("buildRotationPlan", () => {
 
   it("4週間を越えた日付は先頭から繰り返す", () => {
     expect(findTodayPlan(menuData, new Date("2026-08-23T12:00:00+09:00"))).toMatchObject({
-      date: "2026-07-26",
+      date: "2026-08-23",
       dayIndex: 0,
+    });
+  });
+
+  it("UTC日付ではなく日本時間の当日を表示する", () => {
+    expect(findTodayPlan(menuData, new Date("2026-08-23T15:00:00Z"))).toMatchObject({
+      date: "2026-08-24",
+      dayIndex: 1,
+      dow: "月",
     });
   });
 });
