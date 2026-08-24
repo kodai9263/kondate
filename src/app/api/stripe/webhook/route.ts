@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { getStripe, getSubscriptionCurrentPeriodEnd } from "@/lib/billing/stripe";
+import { getStripe } from "@/lib/billing/stripe";
+import { buildSubscriptionUpsert, resolveCheckoutSubscription } from "@/lib/billing/subscriptionSync";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
@@ -36,30 +37,20 @@ export async function POST(request: Request) {
 }
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripe: Stripe) {
-  if (!session.subscription) return;
-  const subscription =
-    typeof session.subscription === "string"
-      ? await stripe.subscriptions.retrieve(session.subscription)
-      : session.subscription;
+  const subscription = await resolveCheckoutSubscription(session, (subscriptionId) =>
+    stripe.subscriptions.retrieve(subscriptionId),
+  );
+  if (!subscription) return;
   await handleSubscriptionChanged(subscription);
 }
 
 async function handleSubscriptionChanged(subscription: Stripe.Subscription) {
-  const householdId = subscription.metadata?.household_id;
-  if (!householdId) return;
+  const record = buildSubscriptionUpsert(subscription);
+  if (!record) return;
 
   const supabase = getSupabaseAdmin();
   const { error } = await supabase.from("household_subscriptions").upsert(
-    {
-      household_id: householdId,
-      plan_id: subscription.metadata?.plan_id ?? "family_monthly",
-      status: subscription.status,
-      stripe_customer_id: String(subscription.customer),
-      stripe_subscription_id: subscription.id,
-      current_period_end: getSubscriptionCurrentPeriodEnd(subscription),
-      cancel_at_period_end: subscription.cancel_at_period_end,
-      updated_at: new Date().toISOString(),
-    },
+    record,
     { onConflict: "household_id" },
   );
   if (error) throw error;
