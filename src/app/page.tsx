@@ -99,7 +99,7 @@ export default async function LandingPage() {
 
       <section className="bg-kondate-accent px-4 py-14 text-white sm:px-6"><div className="mx-auto flex max-w-6xl flex-col gap-6 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-mincho text-3xl font-black">次のごはんから、迷わない。</p><p className="mt-2 text-sm font-bold text-[#ffe4d8]">{isAuthenticated ? "保存した献立の続きから始められます。" : "カード登録なし。無料版から始められます。"}</p></div><Link href={primaryHref} className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 bg-white px-7 font-black text-kondate-ink">{primaryLabel} <ArrowRight size={18} /></Link></div></section>
 
-      <footer className="border-t-2 border-kondate-ink bg-white px-4 py-8 text-sm text-kondate-muted"><div className="mx-auto flex max-w-6xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><p className="font-black text-kondate-ink">きょうのごはん</p><div className="flex flex-wrap gap-x-5 gap-y-2"><Link href="/pricing">料金</Link><Link href="/terms">利用規約</Link><Link href="/privacy">プライバシー</Link><Link href="/legal">特商法表記</Link></div></div></footer>
+      <footer className="border-t-2 border-kondate-ink bg-white px-4 py-8 text-sm text-kondate-muted"><div className="mx-auto flex max-w-6xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><p className="font-black text-kondate-ink">きょうのごはん</p><div className="flex flex-wrap gap-x-5 gap-y-2"><Link href="/pricing">料金</Link><Link href="/business">運営サービス</Link><Link href="/terms">利用規約</Link><Link href="/privacy">プライバシー</Link><Link href="/legal">特商法表記</Link></div></div></footer>
     </main>
   );
 }
