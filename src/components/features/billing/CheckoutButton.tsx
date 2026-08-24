@@ -8,6 +8,13 @@ type CheckoutButtonProps = {
   children: React.ReactNode;
 };
 
+const checkoutErrorMessages: Record<string, string> = {
+  unauthenticated: "ログインしてからもう一度お試しください。",
+  profile_not_found: "家族情報を確認してからもう一度お試しください。",
+  subscription_already_active: "この家族はすでに家族プランを利用しています。",
+  checkout_failed: "決済画面を開けませんでした。時間をおいてもう一度お試しください。",
+};
+
 export function CheckoutButton({ planId, children }: CheckoutButtonProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,10 +29,10 @@ export function CheckoutButton({ planId, children }: CheckoutButtonProps) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ planId }),
       });
-      const payload = (await response.json()) as { url?: string; error?: string };
+      const payload = (await response.json().catch(() => ({}))) as { url?: string; error?: string };
 
       if (!response.ok || !payload.url) {
-        throw new Error(payload.error ?? "checkout_failed");
+        throw new Error(checkoutErrorMessages[payload.error ?? "checkout_failed"] ?? checkoutErrorMessages.checkout_failed);
       }
 
       window.location.assign(payload.url);
@@ -45,7 +52,7 @@ export function CheckoutButton({ planId, children }: CheckoutButtonProps) {
       >
         {loading ? "Checkoutを準備中" : children}
       </button>
-      {error ? <p className="text-xs font-bold text-red-700">ログインとStripe設定を確認してください: {error}</p> : null}
+      {error ? <p className="text-xs font-bold text-red-700">{error}</p> : null}
     </div>
   );
 }

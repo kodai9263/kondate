@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getSubscriptionCurrentPeriodEnd } from "@/lib/billing/stripe";
+import { getSubscriptionCurrentPeriodEnd, isMissingStripeCustomerError } from "@/lib/billing/stripe";
 
 describe("getSubscriptionCurrentPeriodEnd", () => {
   it("従来APIの購読本体にある終了日時を使う", () => {
@@ -18,5 +18,13 @@ describe("getSubscriptionCurrentPeriodEnd", () => {
 
   it("有効な終了日時がない場合はnullを返す", () => {
     expect(getSubscriptionCurrentPeriodEnd({ items: { data: [{ current_period_end: null }] } })).toBeNull();
+  });
+});
+
+describe("isMissingStripeCustomerError", () => {
+  it("顧客が見つからないStripeエラーだけを判定する", () => {
+    expect(isMissingStripeCustomerError({ code: "resource_missing", param: "customer" })).toBe(true);
+    expect(isMissingStripeCustomerError({ code: "resource_missing", param: "price" })).toBe(false);
+    expect(isMissingStripeCustomerError(new Error("network error"))).toBe(false);
   });
 });

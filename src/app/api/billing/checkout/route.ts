@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getBillingContext } from "@/lib/billing/context";
 import { isActiveSubscriptionStatus } from "@/lib/billing/entitlements";
 import { getPaidPlan } from "@/lib/billing/plans";
-import { getAppUrl, getStripe } from "@/lib/billing/stripe";
+import { getAppUrl, getStripe, isMissingStripeCustomerError } from "@/lib/billing/stripe";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 const checkoutSchema = z.object({
@@ -41,27 +41,44 @@ export async function POST(request: Request) {
 
   const appUrl = getAppUrl();
   const stripe = getStripe();
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    customer: existingSubscription?.stripe_customer_id ?? undefined,
-    customer_email: existingSubscription?.stripe_customer_id ? undefined : context.email,
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${appUrl}/pricing?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${appUrl}/pricing?checkout=cancelled`,
-    allow_promotion_codes: true,
-    client_reference_id: context.householdId,
-    metadata: {
-      household_id: context.householdId,
-      plan_id: parsed.data.planId,
-      user_id: context.userId,
-    },
-    subscription_data: {
+  const createSession = (customerId?: string | null) =>
+    stripe.checkout.sessions.create({
+      mode: "subscription",
+      ...(customerId ? { customer: customerId } : { customer_email: context.email }),
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${appUrl}/pricing?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${appUrl}/pricing?checkout=cancelled`,
+      allow_promotion_codes: true,
+      client_reference_id: context.householdId,
       metadata: {
         household_id: context.householdId,
         plan_id: parsed.data.planId,
+        user_id: context.userId,
       },
-    },
-  });
+      subscription_data: {
+        metadata: {
+          household_id: context.householdId,
+          plan_id: parsed.data.planId,
+        },
+      },
+    });
+
+  let session;
+  try {
+    session = await createSession(existingSubscription?.stripe_customer_id);
+  } catch (error) {
+    if (existingSubscription?.stripe_customer_id && isMissingStripeCustomerError(error)) {
+      try {
+        session = await createSession();
+      } catch (retryError) {
+        console.error("Stripe Checkout session retry failed", retryError);
+        return NextResponse.json({ error: "checkout_failed" }, { status: 502 });
+      }
+    } else {
+      console.error("Stripe Checkout session creation failed", error);
+      return NextResponse.json({ error: "checkout_failed" }, { status: 502 });
+    }
+  }
 
   return NextResponse.json({ url: session.url });
 }
