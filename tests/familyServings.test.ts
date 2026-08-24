@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defaultFamilySize, formatServingLabel, formatShoppingDay, getFamilyScale, normalizeShoppingDay, scaleQuantityText } from "@/lib/family/servings";
+import { defaultFamilySize, formatServingLabel, formatShoppingDay, getAdultEquivalent, getFamilyScale, normalizeShoppingDay, scaleQuantityText } from "@/lib/family/servings";
 
 describe("family servings", () => {
   it("既存の大人2人・子ども3人では数量を変えない", () => {
@@ -16,6 +16,7 @@ describe("family servings", () => {
 
   it("献立内の調味料も人数に合わせる", () => {
     const familySize = { adultCount: 4, childCount: 2 };
+    expect(getAdultEquivalent(familySize)).toBe(5.2);
     expect(scaleQuantityText("醤油大さじ3・水900ml", familySize)).toBe("醤油大さじ4と1/4・水1240ml");
     expect(formatServingLabel(familySize)).toBe("大人4人・子ども2人（5.2人前相当）");
   });

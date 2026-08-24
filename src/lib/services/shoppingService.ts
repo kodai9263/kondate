@@ -1,14 +1,7 @@
 import type { MenuData, ShoppingByCategory } from "@/types/domain";
 import { addDays, startOfDay } from "date-fns";
-import { toDateKey } from "@/lib/dates";
+import { toDateKey, toTokyoCalendarDate } from "@/lib/dates";
 import { findTodayPlan } from "@/lib/services/planService";
-
-const tokyoDateFormatter = new Intl.DateTimeFormat("en-US", {
-  timeZone: "Asia/Tokyo",
-  year: "numeric",
-  month: "numeric",
-  day: "numeric",
-});
 
 export const shoppingCategoryOrder = [
   "肉",
@@ -83,12 +76,4 @@ export function getShoppingCycle(menu: MenuData, shoppingDay: number, today = ne
 
 export function buildShoppingItemKey(category: string, name: string): string {
   return `${category}\u001f${name}`;
-}
-
-function toTokyoCalendarDate(date: Date): Date {
-  const parts = tokyoDateFormatter.formatToParts(date);
-  const year = Number(parts.find((part) => part.type === "year")?.value);
-  const month = Number(parts.find((part) => part.type === "month")?.value);
-  const day = Number(parts.find((part) => part.type === "day")?.value);
-  return new Date(year, month - 1, day);
 }

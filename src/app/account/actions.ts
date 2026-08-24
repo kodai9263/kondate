@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { normalizeAllergies, parseCustomAllergies } from "@/lib/family/allergies";
 import { isActiveSubscriptionStatus } from "@/lib/billing/entitlements";
+import { getAdultEquivalent } from "@/lib/family/servings";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
 export async function signOut() {
@@ -48,7 +49,10 @@ export async function updateAccount(formData: FormData) {
       child_count: parsed.data.childCount,
       shopping_day: parsed.data.shoppingDay,
       allergies: parsed.data.allergies,
-      default_servings: parsed.data.adultCount + parsed.data.childCount,
+      default_servings: Math.ceil(getAdultEquivalent({
+        adultCount: parsed.data.adultCount,
+        childCount: parsed.data.childCount,
+      })),
     }).eq("household_id", profile.household_id),
   ]);
   if (profileError || householdError || settingsError) redirect("/account?error=update");
