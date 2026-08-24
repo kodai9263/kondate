@@ -6,8 +6,8 @@ import { getSupabaseServer, isSupabaseConfigured } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-export default async function PricingPage({ searchParams }: { searchParams: Promise<{ required?: string }> }) {
-  const { required } = await searchParams;
+export default async function PricingPage({ searchParams }: { searchParams: Promise<{ required?: string; checkout?: string }> }) {
+  const { required, checkout } = await searchParams;
   let isAuthenticated = false;
   let currentPlanId: string | undefined;
   if (isSupabaseConfigured()) {
@@ -28,6 +28,16 @@ export default async function PricingPage({ searchParams }: { searchParams: Prom
         <Home size={18} />
         {isAuthenticated ? "今日画面へ" : "トップへ"}
       </Link>
+      {checkout === "success" ? (
+        <p role="status" className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold leading-6 text-emerald-900">
+          お申し込みを受け付けました。契約状態の反映まで少し時間がかかる場合があります。
+        </p>
+      ) : null}
+      {checkout === "cancelled" ? (
+        <p role="status" className="mb-4 rounded-lg border border-kondate-line bg-white p-4 text-sm font-bold leading-6 text-kondate-muted">
+          お申し込みを中断しました。料金は発生していません。
+        </p>
+      ) : null}
       <PricingSection isAuthenticated={isAuthenticated} requiredFeature={required} currentPlanId={currentPlanId} />
     </main>
   );
