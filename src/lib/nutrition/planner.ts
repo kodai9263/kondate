@@ -59,6 +59,20 @@ export function generateMonthlyDinnerPlan({
   return plan;
 }
 
+export function materializeDinnerPlan(
+  generatedPlan: PlannedDinner[],
+  recipes: NutritionRecipe[],
+  changedRecipeIds: Record<string, string>,
+  lockedRecipeIds: Record<string, string>,
+) {
+  const recipeById = new Map(recipes.map((recipe) => [recipe.id, recipe]));
+  return generatedPlan.map((day) => ({
+    ...day,
+    recipe: recipeById.get(changedRecipeIds[day.date]) ?? day.recipe,
+    locked: Boolean(lockedRecipeIds[day.date]),
+  }));
+}
+
 export function isRecipeInSeason(recipe: NutritionRecipe, month: number) {
   return recipe.seasonMonths?.includes(month) ?? false;
 }

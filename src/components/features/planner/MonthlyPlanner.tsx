@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { saveMonthlyDinnerPlan } from "@/app/app/planner/actions";
-import { dinnerNutritionTarget, generateMonthlyDinnerPlan, isRecipeInSeason, rankAlternativeRecipes, summarizeNutrition } from "@/lib/nutrition/planner";
+import { dinnerNutritionTarget, generateMonthlyDinnerPlan, isRecipeInSeason, materializeDinnerPlan, rankAlternativeRecipes, summarizeNutrition } from "@/lib/nutrition/planner";
 import { toSavedDinnerEntries } from "@/lib/nutrition/month";
 import type { NutritionRecipe, PlannedDinner } from "@/types/nutrition";
 import { defaultFamilySize, formatServingLabel, type FamilySize } from "@/lib/family/servings";
@@ -40,8 +40,7 @@ export function MonthlyPlanner({ recipes, initialYear, initialMonth, familySize 
   const [saveStatus, setSaveStatus] = useState<"saved" | "error" | null>(null);
 
   const generatedPlan = useMemo(() => generateMonthlyDinnerPlan({ year, month, recipes, lockedRecipeIds, seed, maxCookMinutes, preferredRecipeIds }), [year, month, recipes, lockedRecipeIds, seed, maxCookMinutes, preferredRecipeIds]);
-  const recipeById = useMemo(() => new Map(recipes.map((recipe) => [recipe.id, recipe])), [recipes]);
-  const plan = useMemo(() => materializePlan(generatedPlan, recipeById, changedRecipeIds, lockedRecipeIds), [changedRecipeIds, generatedPlan, lockedRecipeIds, recipeById]);
+  const plan = useMemo(() => materializeDinnerPlan(generatedPlan, recipes, changedRecipeIds, lockedRecipeIds), [changedRecipeIds, generatedPlan, lockedRecipeIds, recipes]);
   const summary = useMemo(() => summarizeNutrition(plan), [plan]);
   const seasonalDays = useMemo(() => plan.filter((day) => isRecipeInSeason(day.recipe, month)).length, [month, plan]);
   const pickerDay = pickerDate ? plan.find((day) => day.date === pickerDate) : undefined;
@@ -90,7 +89,7 @@ export function MonthlyPlanner({ recipes, initialYear, initialMonth, familySize 
     const previousLocked = lockedRecipeIds;
     const nextChanged = { ...changedRecipeIds, [date]: recipeId };
     const nextLocked = lockedRecipeIds[date] ? { ...lockedRecipeIds, [date]: recipeId } : lockedRecipeIds;
-    const nextPlan = materializePlan(generatedPlan, recipeById, nextChanged, nextLocked);
+    const nextPlan = materializeDinnerPlan(generatedPlan, recipes, nextChanged, nextLocked);
     setChangedRecipeIds(nextChanged);
     setLockedRecipeIds(nextLocked);
     setPickerDate(null);
@@ -105,7 +104,7 @@ export function MonthlyPlanner({ recipes, initialYear, initialMonth, familySize 
     const previous = lockedRecipeIds;
     const next = { ...lockedRecipeIds };
     if (next[date]) delete next[date]; else next[date] = recipeId;
-    const nextPlan = materializePlan(generatedPlan, recipeById, changedRecipeIds, next);
+    const nextPlan = materializeDinnerPlan(generatedPlan, recipes, changedRecipeIds, next);
     setLockedRecipeIds(next);
     if (!await persistPlan(nextPlan)) setLockedRecipeIds(previous);
   }
@@ -114,7 +113,7 @@ export function MonthlyPlanner({ recipes, initialYear, initialMonth, familySize 
     if (isSaving) return;
     const nextSeed = seed + 1;
     const nextGenerated = generateMonthlyDinnerPlan({ year, month, recipes, lockedRecipeIds, seed: nextSeed, maxCookMinutes, preferredRecipeIds });
-    const nextPlan = materializePlan(nextGenerated, recipeById, {}, lockedRecipeIds);
+    const nextPlan = materializeDinnerPlan(nextGenerated, recipes, {}, lockedRecipeIds);
     const previousChanged = changedRecipeIds;
     setSeed(nextSeed);
     setChangedRecipeIds({});
@@ -128,7 +127,7 @@ export function MonthlyPlanner({ recipes, initialYear, initialMonth, familySize 
   async function changeMaxCookMinutes(nextMinutes: number) {
     if (isSaving) return;
     const nextGenerated = generateMonthlyDinnerPlan({ year, month, recipes, lockedRecipeIds, seed, maxCookMinutes: nextMinutes, preferredRecipeIds });
-    const nextPlan = materializePlan(nextGenerated, recipeById, {}, lockedRecipeIds);
+    const nextPlan = materializeDinnerPlan(nextGenerated, recipes, {}, lockedRecipeIds);
     const previous = maxCookMinutes;
     const previousChanged = changedRecipeIds;
     setMaxCookMinutes(nextMinutes);
@@ -199,17 +198,4 @@ function formatDay(date: string) { const [, month, day] = date.split("-"); retur
 function formatWeekday(date: string) {
   const [year, month, day] = date.split("-").map(Number);
   return ["日", "月", "火", "水", "木", "金", "土"][new Date(year, month - 1, day).getDay()];
-}
-
-function materializePlan(
-  generatedPlan: PlannedDinner[],
-  recipeById: Map<string, NutritionRecipe>,
-  changedRecipeIds: Record<string, string>,
-  lockedRecipeIds: Record<string, string>,
-) {
-  return generatedPlan.map((day) => ({
-    ...day,
-    recipe: recipeById.get(changedRecipeIds[day.date]) ?? day.recipe,
-    locked: Boolean(lockedRecipeIds[day.date]),
-  }));
 }
