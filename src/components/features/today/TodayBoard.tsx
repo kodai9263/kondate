@@ -116,7 +116,7 @@ export function TodayBoard({
         onCheckedChange={updateTask}
       />
 
-      <div className="rounded-lg border border-kondate-line bg-kondate-surface p-4">
+      {today.dinner.seasonings.length > 0 ? <div className="rounded-lg border border-kondate-line bg-kondate-surface p-4">
         <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-[#f3eefb] px-3 py-1 text-xs font-black text-[#6741d9]">
           <ChefHat size={14} />
           調味料・分量
@@ -129,9 +129,9 @@ export function TodayBoard({
             </p>
           ))}
         </div>
-      </div>
+      </div> : null}
 
-      <MealBlock
+      {taskBindings.morning.length > 0 ? <MealBlock
         icon={<Clock size={18} />}
         tone="bg-kondate-morning text-[#8b6508]"
         title={`朝の仕込み(${today.dinner.prepMin}分)`}
@@ -139,7 +139,7 @@ export function TodayBoard({
         tasks={taskBindings.morning}
         pendingStepIds={pendingStepIds}
         onCheckedChange={updateTask}
-      />
+      /> : null}
 
       <MealBlock
         icon={<Flame size={18} />}

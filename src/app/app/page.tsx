@@ -2,20 +2,36 @@ import { Settings } from "lucide-react";
 import Link from "next/link";
 import { ShoppingSummaryLink } from "@/components/features/shopping/ShoppingSummaryLink";
 import { TodayBoard } from "@/components/features/today/TodayBoard";
-import { formatFamilyLabel, formatShoppingDay } from "@/lib/family/servings";
-import { getCurrentHouseholdPreferences } from "@/lib/family/server";
+import { formatFamilyLabel, formatShoppingDay, getAdultEquivalent } from "@/lib/family/servings";
 import { menuData } from "@/lib/menuData";
+import { generateMonthlyDinnerPlan, materializeDinnerPlan } from "@/lib/nutrition/planner";
+import { getHouseholdPlannerContext } from "@/lib/nutrition/server";
 import { findTodayPlan } from "@/lib/services/planService";
 import { getShoppingCycle } from "@/lib/services/shoppingService";
-import { getTodayTaskBindings } from "@/lib/today/server";
+import { getTodayPlanState } from "@/lib/today/server";
 
 export default async function AppHomePage({ searchParams }: { searchParams: Promise<{ mealFeedback?: string; notice?: string }> }) {
   const params = await searchParams;
-  const today = findTodayPlan(menuData);
-  const [preferences, taskBindings] = await Promise.all([
-    getCurrentHouseholdPreferences(),
-    getTodayTaskBindings(today),
-  ]);
+  const fallbackToday = findTodayPlan(menuData);
+  const [year, month] = fallbackToday.date.split("-").map(Number);
+  const plannerContext = await getHouseholdPlannerContext(year, month);
+  const generatedPlan = generateMonthlyDinnerPlan({
+    year,
+    month,
+    recipes: plannerContext.recipes,
+    lockedRecipeIds: plannerContext.initialLockedRecipeIds,
+    seed: 1,
+    maxCookMinutes: 30,
+    preferredRecipeIds: plannerContext.preferredRecipeIds,
+  });
+  const monthlyPlan = materializeDinnerPlan(generatedPlan, plannerContext.recipes, plannerContext.initialRecipeIds, plannerContext.initialLockedRecipeIds);
+  const plannedDinner = monthlyPlan.find((day) => day.date === fallbackToday.date);
+  const preferences = plannerContext.preferences;
+  const planState = await getTodayPlanState(fallbackToday, plannedDinner ? {
+    recipeId: plannedDinner.recipe.id,
+    servings: Math.max(1, Math.ceil(getAdultEquivalent(preferences))),
+  } : undefined);
+  const { today, taskBindings } = planState;
   const familySize = { adultCount: preferences.adultCount, childCount: preferences.childCount };
   const shoppingDayLabel = formatShoppingDay(preferences.shoppingDay);
   const shoppingCycle = getShoppingCycle(menuData, preferences.shoppingDay);
