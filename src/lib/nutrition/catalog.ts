@@ -8,6 +8,17 @@ const imageByProteinSource: Record<NutritionRecipe["proteinSource"], string> = {
   noodle: "/images/udon.png",
 };
 
+const ingredientsById: Record<string, string> = {
+  "nikujaga": "牛こま切れ肉 300g\nじゃがいも 4個\n玉ねぎ 1個\nにんじん 1本\nしらたき 200g\nだし汁 400ml\n醤油 大さじ3\nみりん 大さじ2\n砂糖 大さじ2\n酒 大さじ2\n油 大さじ1",
+  "omelet-rice": "温かいごはん 600g\n鶏もも肉 200g\n玉ねぎ 1個\n卵 6個\n牛乳 100ml\nケチャップ 大さじ6\nバター 20g\n塩 小さじ1/2\nこしょう 少々\n油 大さじ1",
+  "vegetable-yakisoba": "蒸し中華麺 4玉\n豚こま切れ肉 250g\nキャベツ 1/4個\nにんじん 1本\nもやし 1袋\nピーマン 2個\n中濃ソース 大さじ5\n醤油 大さじ1\n酒 大さじ2\n油 大さじ1",
+  "salmon-chan-chan": "生鮭 4切れ\nキャベツ 1/4個\n玉ねぎ 1個\nにんじん 1本\nしめじ 1袋\n味噌 大さじ3\nみりん 大さじ2\n酒 大さじ2\n砂糖 大さじ1\nバター 15g",
+  "three-color-soboro-bowl": "温かいごはん 700g\n鶏ひき肉 300g\n卵 4個\n小松菜 1束\n醤油 大さじ3\nみりん 大さじ2\n砂糖 大さじ2\n酒 大さじ2\n塩 少々\n油 小さじ2",
+  "pork-kimchi": "豚こま切れ肉 350g\n白菜キムチ 250g\n玉ねぎ 1個\nにら 1束\nもやし 1袋\n醤油 大さじ1\n酒 大さじ1\nごま油 大さじ1\n白ごま 大さじ1",
+  "mushroom-cream-stew": "鶏もも肉 300g\n玉ねぎ 1個\nじゃがいも 3個\nにんじん 1本\nしめじ 1袋\nまいたけ 1袋\n牛乳 500ml\n小麦粉 大さじ4\nバター 30g\nコンソメ 小さじ2\n塩 小さじ1/2\nこしょう 少々",
+  "atsuage-sweet-savory": "厚揚げ 2枚\n豚ひき肉 250g\n小松菜 1束\n長ねぎ 1本\nにんじん 1/2本\n醤油 大さじ2\nみりん 大さじ2\n砂糖 大さじ1\n酒 大さじ1\nおろし生姜 小さじ1\nごま油 大さじ1",
+};
+
 export const officialNutritionRecipes: NutritionRecipe[] = [
   recipe("salmon", "鮭の塩焼き", "具だくさん味噌汁", 15, "fish", 612, 31, 17, 78, 8.1, 2.1, 145, [9, 10, 11]),
   recipe("chicken-teriyaki", "鶏の照り焼き", "キャベツと豆腐の味噌汁", 20, "meat", 658, 32, 21, 81, 6.8, 2.3, 130),
@@ -73,6 +84,15 @@ export const officialNutritionRecipes: NutritionRecipe[] = [
   recipe("cauliflower-salmon", "鮭とカリフラワーのグラタン", "白菜と豆のスープ", 30, "fish", 666, 33, 22, 79, 9.5, 2.1, 240, [11, 12, 1, 2, 3]),
   recipe("yuzu-chicken", "鶏肉と大根の柚子煮", "春菊と豆腐のごま和え", 30, "meat", 612, 32, 15, 80, 10.7, 1.9, 255, [12, 1, 2]),
   recipe("leek-sukiyaki", "長ねぎと牛肉のすき煮", "かぶの甘酢漬け", 25, "meat", 682, 30, 23, 82, 8.9, 2.3, 210, [11, 12, 1, 2]),
+
+  recipe("nikujaga", "肉じゃが", "ほうれん草のおひたし", 30, "meat", 648, 25, 18, 95, 8.5, 2.2, 180, [10, 11, 12, 1, 2, 3]),
+  recipe("omelet-rice", "ふわとろオムライス", "野菜コンソメスープ", 25, "egg", 690, 25, 24, 91, 6.5, 2.1, 150),
+  recipe("vegetable-yakisoba", "野菜たっぷり焼きそば", "わかめスープ", 20, "noodle", 630, 24, 18, 92, 9.0, 2.3, 220),
+  recipe("salmon-chan-chan", "鮭のちゃんちゃん焼き", "じゃがいものすまし汁", 25, "fish", 620, 34, 19, 76, 9.0, 2.1, 240, [9, 10, 11, 12]),
+  recipe("three-color-soboro-bowl", "鶏そぼろ三色丼", "豆腐とねぎの味噌汁", 20, "meat", 670, 29, 20, 94, 6.8, 2.2, 150),
+  recipe("pork-kimchi", "豚キムチ炒め", "もやしとわかめのスープ", 15, "meat", 650, 30, 22, 78, 7.5, 2.4, 180),
+  recipe("mushroom-cream-stew", "きのこクリームシチュー", "グリーンサラダ", 30, "meat", 680, 29, 25, 82, 9.0, 2.0, 230, [10, 11, 12, 1, 2, 3]),
+  recipe("atsuage-sweet-savory", "厚揚げとひき肉の甘辛炒め", "かきたま汁", 20, "soy", 610, 27, 19, 80, 9.5, 2.0, 200),
 ];
 
 function recipe(
@@ -98,6 +118,7 @@ function recipe(
     proteinSource,
     imageUrl: imageByProteinSource[proteinSource],
     nutrition: { energyKcal, proteinG, fatG, carbsG, fiberG, saltG, vegetablesG },
+    ingredientsText: ingredientsById[id],
     seasonMonths,
   };
 }
