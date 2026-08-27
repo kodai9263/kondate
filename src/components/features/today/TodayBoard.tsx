@@ -6,7 +6,7 @@ import { setTodayTaskChecked } from "@/app/app/actions";
 import { CheckRow } from "@/components/ui/CheckRow";
 import { formatServingLabel, scaleQuantityText, type FamilySize } from "@/lib/family/servings";
 import { MealFeedbackForm } from "@/components/features/feedback/MealFeedbackForm";
-import { countCheckedTasks, type TodayTaskBinding, type TodayTaskBindings, updateTaskBindings } from "@/lib/realtime/taskState";
+import { countCheckedTasks, countTasks, type TodayTaskBinding, type TodayTaskBindings, updateTaskBindings } from "@/lib/realtime/taskState";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
 import type { PlanMeal } from "@/types/domain";
 
@@ -24,10 +24,10 @@ export function TodayBoard({
   const [taskBindings, setTaskBindings] = useState(initialTaskBindings);
   const [pendingStepIds, setPendingStepIds] = useState(() => new Set<string>());
   const [error, setError] = useState("");
-  const totalTasks = today.breakfast.tasks.length + today.dinner.morning.length + today.dinner.evening.length;
+  const totalTasks = countTasks(taskBindings);
   const checkedCount = countCheckedTasks(taskBindings);
   const planEntryIds = useMemo(() => Array.from(new Set(
-    [...initialTaskBindings.breakfast, ...initialTaskBindings.morning, ...initialTaskBindings.evening]
+    [...initialTaskBindings.breakfast, ...initialTaskBindings.seasoning, ...initialTaskBindings.morning, ...initialTaskBindings.evening]
       .map((task) => task.planEntryId)
       .filter((id): id is string => Boolean(id)),
   )), [initialTaskBindings]);
@@ -122,11 +122,16 @@ export function TodayBoard({
           調味料・分量
         </p>
         <p className="mb-3 text-xs font-bold text-kondate-muted">{formatServingLabel(familySize)}</p>
-        <div className="space-y-2">
-          {today.dinner.seasonings.map((item) => (
-            <p key={item} className="pl-3 text-sm leading-6 text-kondate-ink before:mr-2 before:text-[#6741d9] before:content-['・']">
-              {scaleQuantityText(item, familySize)}
-            </p>
+        <div className="space-y-1">
+          {taskBindings.seasoning.map((task) => (
+            <CheckRow
+              key={task.stepId ?? task.text}
+              checked={task.checked}
+              disabled={!task.stepId || pendingStepIds.has(task.stepId)}
+              onCheckedChange={(checked) => updateTask(task, checked)}
+            >
+              {scaleQuantityText(task.text, familySize)}
+            </CheckRow>
           ))}
         </div>
       </div> : null}
