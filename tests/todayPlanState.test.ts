@@ -31,6 +31,8 @@ describe("mergeTodayPlan", () => {
       cook_minutes: 25,
       meta: { side: "冬瓜のすまし汁", ingredients_text: "うなぎ 4枚\nきゅうり 2本" },
       steps: [
+        { id: "seasoning", phase: "seasoning", text: "うなぎ 4枚", checked: false },
+        { id: "seasoning-2", phase: "seasoning", text: "きゅうり 2本", checked: false },
         { id: "evening", phase: "evening", text: "ちらし丼を作る", checked: false },
       ],
     }];

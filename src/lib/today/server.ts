@@ -4,7 +4,7 @@ import { getSupabaseServer } from "@/lib/supabase/server";
 
 type DailyPlanStep = {
   id: string;
-  phase: "morning" | "evening";
+  phase: "morning" | "seasoning" | "evening";
   text: string;
   checked: boolean;
 };
@@ -78,7 +78,8 @@ export function mergeTodayPlan(fallbackToday: PlanMeal, rows: DailyPlanRow[]): P
   const meta = dinner.meta ?? {};
   const morning = getStepTexts(dinner, "morning");
   const evening = getStepTexts(dinner, "evening");
-  const ingredients = typeof meta.ingredients_text === "string"
+  const seasoningSteps = getStepTexts(dinner, "seasoning");
+  const ingredients = seasoningSteps.length > 0 ? seasoningSteps : typeof meta.ingredients_text === "string"
     ? meta.ingredients_text.split("\n").map((item) => item.trim()).filter(Boolean)
     : [];
 
@@ -103,6 +104,7 @@ function buildBindings(today: PlanMeal, rows: DailyPlanRow[]): TodayTaskBindings
 
   return {
     breakfast: bindTasks(today.breakfast.tasks, breakfast, "morning"),
+    seasoning: bindTasks(today.dinner.seasonings, dinner, "seasoning"),
     morning: bindTasks(today.dinner.morning, dinner, "morning"),
     evening: bindTasks(today.dinner.evening, dinner, "evening"),
   };
