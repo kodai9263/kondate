@@ -3,12 +3,20 @@ import { officialNutritionRecipes } from "@/lib/nutrition/catalog";
 import { generateMonthlyDinnerPlan, isRecipeInSeason, rankAlternativeRecipes, summarizeNutrition } from "@/lib/nutrition/planner";
 
 describe("generateMonthlyDinnerPlan", () => {
-  it("公式メニューを60品持ち、旬月が正しい範囲にある", () => {
-    expect(officialNutritionRecipes).toHaveLength(60);
-    expect(new Set(officialNutritionRecipes.map((recipe) => recipe.id)).size).toBe(60);
+  it("公式メニューを68品持ち、旬月が正しい範囲にある", () => {
+    expect(officialNutritionRecipes).toHaveLength(68);
+    expect(new Set(officialNutritionRecipes.map((recipe) => recipe.id)).size).toBe(68);
     for (const recipe of officialNutritionRecipes) {
       expect(recipe.seasonMonths?.every((month) => month >= 1 && month <= 12)).toBe(true);
     }
+  });
+
+  it("追加した定番メニューは材料データを持つ", () => {
+    const stapleIds = ["nikujaga", "omelet-rice", "vegetable-yakisoba", "salmon-chan-chan", "three-color-soboro-bowl", "pork-kimchi", "mushroom-cream-stew", "atsuage-sweet-savory"];
+    const staples = officialNutritionRecipes.filter((recipe) => stapleIds.includes(recipe.id));
+
+    expect(staples).toHaveLength(stapleIds.length);
+    expect(staples.every((recipe) => (recipe.ingredientsText?.split("\n").length ?? 0) >= 9)).toBe(true);
   });
 
   it("指定月の日数分を決定的に生成する", () => {
