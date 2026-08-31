@@ -1,4 +1,5 @@
 import type { NutritionRecipe } from "@/types/nutrition";
+import { officialRecipeDetails } from "@/lib/nutrition/recipeDetails";
 
 const imageByProteinSource: Record<NutritionRecipe["proteinSource"], string> = {
   fish: "/images/family-dinner.png",
@@ -6,17 +7,6 @@ const imageByProteinSource: Record<NutritionRecipe["proteinSource"], string> = {
   soy: "/images/tofu-hamburg.png",
   egg: "/images/tofu-hamburg.png",
   noodle: "/images/udon.png",
-};
-
-const ingredientsById: Record<string, string> = {
-  "nikujaga": "牛こま切れ肉 300g\nじゃがいも 4個\n玉ねぎ 1個\nにんじん 1本\nしらたき 200g\nだし汁 400ml\n醤油 大さじ3\nみりん 大さじ2\n砂糖 大さじ2\n酒 大さじ2\n油 大さじ1",
-  "omelet-rice": "温かいごはん 600g\n鶏もも肉 200g\n玉ねぎ 1個\n卵 6個\n牛乳 100ml\nケチャップ 大さじ6\nバター 20g\n塩 小さじ1/2\nこしょう 少々\n油 大さじ1",
-  "vegetable-yakisoba": "蒸し中華麺 4玉\n豚こま切れ肉 250g\nキャベツ 1/4個\nにんじん 1本\nもやし 1袋\nピーマン 2個\n中濃ソース 大さじ5\n醤油 大さじ1\n酒 大さじ2\n油 大さじ1",
-  "salmon-chan-chan": "生鮭 4切れ\nキャベツ 1/4個\n玉ねぎ 1個\nにんじん 1本\nしめじ 1袋\n味噌 大さじ3\nみりん 大さじ2\n酒 大さじ2\n砂糖 大さじ1\nバター 15g",
-  "three-color-soboro-bowl": "温かいごはん 700g\n鶏ひき肉 300g\n卵 4個\n小松菜 1束\n醤油 大さじ3\nみりん 大さじ2\n砂糖 大さじ2\n酒 大さじ2\n塩 少々\n油 小さじ2",
-  "pork-kimchi": "豚こま切れ肉 350g\n白菜キムチ 250g\n玉ねぎ 1個\nにら 1束\nもやし 1袋\n醤油 大さじ1\n酒 大さじ1\nごま油 大さじ1\n白ごま 大さじ1",
-  "mushroom-cream-stew": "鶏もも肉 300g\n玉ねぎ 1個\nじゃがいも 3個\nにんじん 1本\nしめじ 1袋\nまいたけ 1袋\n牛乳 500ml\n小麦粉 大さじ4\nバター 30g\nコンソメ 小さじ2\n塩 小さじ1/2\nこしょう 少々",
-  "atsuage-sweet-savory": "厚揚げ 2枚\n豚ひき肉 250g\n小松菜 1束\n長ねぎ 1本\nにんじん 1/2本\n醤油 大さじ2\nみりん 大さじ2\n砂糖 大さじ1\n酒 大さじ1\nおろし生姜 小さじ1\nごま油 大さじ1",
 };
 
 export const officialNutritionRecipes: NutritionRecipe[] = [
@@ -110,6 +100,12 @@ function recipe(
   vegetablesG: number,
   seasonMonths: number[] = [],
 ): NutritionRecipe {
+  const detail = officialRecipeDetails[id];
+
+  if (!detail) {
+    throw new Error(`公式献立の詳細がありません: ${id}`);
+  }
+
   return {
     id,
     name,
@@ -118,7 +114,8 @@ function recipe(
     proteinSource,
     imageUrl: imageByProteinSource[proteinSource],
     nutrition: { energyKcal, proteinG, fatG, carbsG, fiberG, saltG, vegetablesG },
-    ingredientsText: ingredientsById[id],
+    ingredientsText: detail.ingredients.join("\n"),
+    eveningSteps: detail.steps,
     seasonMonths,
   };
 }
