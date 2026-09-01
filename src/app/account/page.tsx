@@ -38,12 +38,13 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
   const [{ data: household }, { data: subscription }, { data: settings }, { data: invites }, { data: members }] = await Promise.all([
     supabase.from("households").select("name").eq("id", profile.household_id).single(),
-    supabase.from("household_subscriptions").select("plan_id, status, current_period_end, cancel_at_period_end").eq("household_id", profile.household_id).maybeSingle(),
+    supabase.from("household_subscriptions").select("plan_id, status, current_period_end, cancel_at_period_end, stripe_customer_id").eq("household_id", profile.household_id).maybeSingle(),
     supabase.from("household_settings").select("adult_count, child_count, shopping_day, allergies").eq("household_id", profile.household_id).maybeSingle(),
     supabase.from("household_invites").select("invite_token, expires_at, accepted_at").eq("household_id", profile.household_id).is("accepted_at", null).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }).limit(3),
     supabase.from("profiles").select("id, display_name, created_at").eq("household_id", profile.household_id).order("created_at", { ascending: true }),
   ]);
   const paid = subscription ? isActiveSubscriptionStatus(subscription.status, subscription.current_period_end) : false;
+  const hasStripeCustomer = Boolean(subscription?.stripe_customer_id);
   const familySize = normalizeFamilySize(settings ? { adultCount: settings.adult_count, childCount: settings.child_count } : null);
   const shoppingDay = normalizeShoppingDay(settings?.shopping_day ?? defaultShoppingDay);
   const allergies = normalizeAllergies(settings?.allergies);
@@ -83,7 +84,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
       <section className="mt-4 rounded-lg border border-kondate-line bg-white p-5">
         <div className="flex items-start justify-between gap-3"><div><p className="flex items-center gap-2 font-black"><CreditCard size={18} />契約プラン</p><p className="mt-1 text-sm text-kondate-muted">{paid ? "家族プランを利用中" : "無料プラン"}</p></div><span className="rounded-lg bg-kondate-sage px-3 py-1 text-xs font-black text-[#285b35]">{paid ? "有効" : "無料"}</span></div>
-        {paid ? <div className="mt-4"><PortalButton /></div> : <Link href="/pricing" className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-kondate-accent font-black text-kondate-accent">家族プランを見る</Link>}
+        {paid ? hasStripeCustomer ? <div className="mt-4"><PortalButton /></div> : <p className="mt-4 rounded-lg bg-kondate-bg p-3 text-sm font-bold leading-6 text-kondate-muted">運営者用PROのため、料金は発生していません。</p> : <Link href="/pricing" className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-kondate-accent font-black text-kondate-accent">家族プランを見る</Link>}
       </section>
 
       <section className="mt-4 rounded-lg border border-kondate-line bg-white p-5">

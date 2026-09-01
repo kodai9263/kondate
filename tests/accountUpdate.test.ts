@@ -29,6 +29,12 @@ describe("アカウント設定の一括更新", () => {
     expect(scrollToAccountTopSource).toContain("window.scrollTo({ top: 0");
   });
 
+  it("Stripe契約のない手動PROに課金管理ボタンを表示しない", () => {
+    expect(accountPageSource).toContain("stripe_customer_id");
+    expect(accountPageSource).toContain("const hasStripeCustomer = Boolean(subscription?.stripe_customer_id)");
+    expect(accountPageSource).toContain("運営者用PROのため、料金は発生していません。");
+  });
+
   it("RPCは認証ユーザーの家族だけをトランザクション内で更新する", () => {
     expect(migrationSource).toContain("security definer");
     expect(migrationSource).toContain("set search_path = ''");
