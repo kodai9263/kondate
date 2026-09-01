@@ -19,6 +19,7 @@ export type NutritionRecipe = {
   imageUrl: string;
   nutrition: Nutrition;
   ingredientsText?: string;
+  eveningSteps?: string[];
   seasonMonths?: number[];
   isCustom?: boolean;
 };

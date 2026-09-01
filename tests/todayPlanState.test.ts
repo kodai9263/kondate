@@ -33,7 +33,11 @@ describe("mergeTodayPlan", () => {
       steps: [
         { id: "seasoning", phase: "seasoning", text: "うなぎ 4枚", checked: false },
         { id: "seasoning-2", phase: "seasoning", text: "きゅうり 2本", checked: false },
-        { id: "evening", phase: "evening", text: "ちらし丼を作る", checked: false },
+        { id: "evening-1", phase: "evening", text: "冬瓜を薄切りにし、水・だしと中火で10分煮て、醤油と塩で味を整える", checked: false },
+        { id: "evening-2", phase: "evening", text: "きゅうりを薄切りにして塩少々でもみ、卵は薄焼きにして細切りにする", checked: false },
+        { id: "evening-3", phase: "evening", text: "うなぎを2cm幅に切り、たれをかけてふんわりラップで600W 2分温める", checked: false },
+        { id: "evening-4", phase: "evening", text: "温かいごはんにすし酢を切るように混ぜ、きゅうり・卵・白ごまを混ぜる", checked: false },
+        { id: "evening-5", phase: "evening", text: "うなぎとのりをのせ、冬瓜のすまし汁を添える", checked: false },
       ],
     }];
 
@@ -46,7 +50,13 @@ describe("mergeTodayPlan", () => {
         prepMin: 0,
         cookMin: 25,
         morning: [],
-        evening: ["ちらし丼を作る"],
+        evening: [
+          "冬瓜を薄切りにし、水・だしと中火で10分煮て、醤油と塩で味を整える",
+          "きゅうりを薄切りにして塩少々でもみ、卵は薄焼きにして細切りにする",
+          "うなぎを2cm幅に切り、たれをかけてふんわりラップで600W 2分温める",
+          "温かいごはんにすし酢を切るように混ぜ、きゅうり・卵・白ごまを混ぜる",
+          "うなぎとのりをのせ、冬瓜のすまし汁を添える",
+        ],
         seasonings: ["うなぎ 4枚", "きゅうり 2本"],
       },
     });

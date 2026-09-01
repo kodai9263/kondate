@@ -16,7 +16,7 @@ describe("generateMonthlyDinnerPlan", () => {
     const staples = officialNutritionRecipes.filter((recipe) => stapleIds.includes(recipe.id));
 
     expect(staples).toHaveLength(stapleIds.length);
-    expect(staples.every((recipe) => (recipe.ingredientsText?.split("\n").length ?? 0) >= 9)).toBe(true);
+    expect(staples.every((recipe) => (recipe.ingredientsText?.match(/\d+(?:\/\d+)?/g)?.length ?? 0) >= 9)).toBe(true);
   });
 
   it("指定月の日数分を決定的に生成する", () => {
