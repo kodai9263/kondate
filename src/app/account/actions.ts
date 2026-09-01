@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { normalizeAllergies, parseCustomAllergies } from "@/lib/family/allergies";
 import { isActiveSubscriptionStatus } from "@/lib/billing/entitlements";
-import { getAdultEquivalent } from "@/lib/family/servings";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
 export async function signOut() {
@@ -38,24 +37,18 @@ export async function updateAccount(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase.from("profiles").select("household_id").eq("id", user.id).single();
-  if (!profile) redirect("/account?error=profile");
-
-  const [{ error: profileError }, { error: householdError }, { error: settingsError }] = await Promise.all([
-    supabase.from("profiles").update({ display_name: parsed.data.displayName }).eq("id", user.id),
-    supabase.from("households").update({ name: parsed.data.householdName }).eq("id", profile.household_id),
-    supabase.from("household_settings").update({
-      adult_count: parsed.data.adultCount,
-      child_count: parsed.data.childCount,
-      shopping_day: parsed.data.shoppingDay,
-      allergies: parsed.data.allergies,
-      default_servings: Math.ceil(getAdultEquivalent({
-        adultCount: parsed.data.adultCount,
-        childCount: parsed.data.childCount,
-      })),
-    }).eq("household_id", profile.household_id),
-  ]);
-  if (profileError || householdError || settingsError) redirect("/account?error=update");
+  const { error } = await supabase.rpc("update_current_household_account", {
+    display_name_input: parsed.data.displayName,
+    household_name_input: parsed.data.householdName,
+    adult_count_input: parsed.data.adultCount,
+    child_count_input: parsed.data.childCount,
+    shopping_day_input: parsed.data.shoppingDay,
+    allergies_input: parsed.data.allergies,
+  });
+  if (error) {
+    console.error("Account update failed", { code: error.code, message: error.message });
+    redirect("/account?error=update");
+  }
   redirect("/account?success=updated");
 }
 

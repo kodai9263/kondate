@@ -204,6 +204,17 @@ export type Database = {
         };
         Returns: boolean;
       };
+      update_current_household_account: {
+        Args: {
+          display_name_input: string;
+          household_name_input: string;
+          adult_count_input: number;
+          child_count_input: number;
+          shopping_day_input: number;
+          allergies_input: string[];
+        };
+        Returns: undefined;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
