@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 const actionSource = readFileSync("src/app/account/actions.ts", "utf8");
 const migrationSource = readFileSync("supabase/migrations/202609010022_atomic_account_update.sql", "utf8");
+const schemaRepairSource = readFileSync("supabase/migrations/202609010023_repair_household_settings_schema.sql", "utf8");
 
 describe("アカウント設定の一括更新", () => {
   it("画面からは1つのRPCだけで設定を保存する", () => {
@@ -26,5 +27,15 @@ describe("アカウント設定の一括更新", () => {
     expect(migrationSource).toContain("on conflict (household_id) do update set");
     expect(migrationSource).toContain("revoke all on function");
     expect(migrationSource).toContain("grant execute on function");
+  });
+
+  it("本番DBに不足した家族設定列を既存データを保ったまま補修する", () => {
+    expect(schemaRepairSource).toContain("add column if not exists adult_count");
+    expect(schemaRepairSource).toContain("add column if not exists child_count");
+    expect(schemaRepairSource).toContain("add column if not exists shopping_day");
+    expect(schemaRepairSource).toContain("default 2");
+    expect(schemaRepairSource).toContain("default 3");
+    expect(schemaRepairSource).toContain("default 6");
+    expect(schemaRepairSource).not.toMatch(/drop\s+column/i);
   });
 });
