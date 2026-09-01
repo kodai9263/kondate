@@ -52,7 +52,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const createdInviteUrl = createdInviteToken ? buildInviteUrl(createdInviteToken) : null;
 
   return (
-    <main className="mx-auto min-h-dvh w-full max-w-[560px] px-4 pb-16 pt-5">
+    <main id="account-top" className="mx-auto min-h-dvh w-full max-w-[560px] scroll-mt-4 px-4 pb-16 pt-5">
       <Link href="/app" className="mb-5 inline-flex min-h-11 items-center gap-2 text-sm font-black text-kondate-muted"><ArrowLeft size={18} />今日画面へ</Link>
       <div className="mb-6"><p className="flex items-center gap-2 text-sm font-black text-kondate-accent"><UserRound size={18} />アカウント</p><h1 className="mt-1 text-2xl font-black">家族と契約の設定</h1></div>
 
