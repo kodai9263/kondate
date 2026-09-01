@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 const actionSource = readFileSync("src/app/account/actions.ts", "utf8");
 const accountPageSource = readFileSync("src/app/account/page.tsx", "utf8");
+const scrollToAccountTopSource = readFileSync("src/components/features/account/ScrollToAccountTop.tsx", "utf8");
 const migrationSource = readFileSync("supabase/migrations/202609010022_atomic_account_update.sql", "utf8");
 const schemaRepairSource = readFileSync("supabase/migrations/202609010023_repair_household_settings_schema.sql", "utf8");
 
@@ -21,8 +22,11 @@ describe("アカウント設定の一括更新", () => {
   });
 
   it("保存成功後は完了メッセージが見える設定画面の先頭に戻る", () => {
-    expect(actionSource).toContain('redirect("/account?success=updated#account-top")');
+    expect(actionSource).toContain("/account?success=updated&save=${Date.now()}#account-top");
     expect(accountPageSource).toContain('id="account-top"');
+    expect(accountPageSource).toContain("<ScrollToAccountTop saveId={params.save} />");
+    expect(scrollToAccountTopSource).toContain("window.requestAnimationFrame");
+    expect(scrollToAccountTopSource).toContain("window.scrollTo({ top: 0");
   });
 
   it("RPCは認証ユーザーの家族だけをトランザクション内で更新する", () => {
