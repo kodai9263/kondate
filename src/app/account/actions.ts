@@ -49,7 +49,7 @@ export async function updateAccount(formData: FormData) {
     console.error("Account update failed", { code: error.code, message: error.message });
     redirect("/account?error=update");
   }
-  redirect("/account?success=updated#account-top");
+  redirect(`/account?success=updated&save=${Date.now()}#account-top`);
 }
 
 export async function createFamilyInvite() {

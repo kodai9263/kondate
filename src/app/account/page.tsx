@@ -9,6 +9,7 @@ import { defaultShoppingDay, formatServingLabel, normalizeFamilySize, normalizeS
 import { submitAppFeedback } from "@/app/feedback/actions";
 import { buildInviteUrl, normalizeInviteToken } from "@/lib/family/invites";
 import { isActiveSubscriptionStatus } from "@/lib/billing/entitlements";
+import { ScrollToAccountTop } from "@/components/features/account/ScrollToAccountTop";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,7 @@ const successMessages: Record<string, string> = {
   updated: "変更を保存しました。",
 };
 
-export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string; success?: string; feedback?: string; invite?: string }> }) {
+export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string; success?: string; feedback?: string; invite?: string; save?: string }> }) {
   if (!isSupabaseConfigured()) redirect("/login?error=setup");
   const params = await searchParams;
   const supabase = await getSupabaseServer();
@@ -53,6 +54,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
   return (
     <main id="account-top" className="mx-auto min-h-dvh w-full max-w-[560px] scroll-mt-4 px-4 pb-16 pt-5">
+      <ScrollToAccountTop saveId={params.save} />
       <Link href="/app" className="mb-5 inline-flex min-h-11 items-center gap-2 text-sm font-black text-kondate-muted"><ArrowLeft size={18} />今日画面へ</Link>
       <div className="mb-6"><p className="flex items-center gap-2 text-sm font-black text-kondate-accent"><UserRound size={18} />アカウント</p><h1 className="mt-1 text-2xl font-black">家族と契約の設定</h1></div>
 
