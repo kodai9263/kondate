@@ -30,7 +30,7 @@ export async function saveMonthlyDinnerPlan(input: unknown): Promise<{ ok: boole
   if (!profile?.household_id) return { ok: false, message: "家族情報を確認してください。" };
 
   const recipeIds = [...new Set(parsed.data.entries.map((entry) => entry.recipeId))];
-  const { data: recipes, error: recipeError } = await supabase.from("recipes").select("id").in("id", recipeIds);
+  const { data: recipes, error: recipeError } = await supabase.from("recipes").select("id").in("id", recipeIds).is("archived_at", null);
   if (recipeError || recipes?.length !== recipeIds.length) {
     return { ok: false, message: "保存できないレシピが含まれています。" };
   }
