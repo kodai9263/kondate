@@ -10,7 +10,7 @@ export async function getHouseholdPlannerContext(year: number, month: number) {
   const preferences = await getCurrentHouseholdPreferences();
   const supabase = await getSupabaseServer();
   const [{ data: rows }, { data: officialRows }, { data: feedbackRows }, { data: savedRows }] = await Promise.all([
-    supabase.from("recipes").select("id,name,cook_minutes,image_url,protein_source,meta,recipe_nutrition(energy_kcal,protein_g,fat_g,carbs_g,fiber_g,salt_g,vegetables_g)").not("household_id", "is", null),
+    supabase.from("recipes").select("id,name,cook_minutes,image_url,protein_source,meta,recipe_nutrition(energy_kcal,protein_g,fat_g,carbs_g,fiber_g,salt_g,vegetables_g)").not("household_id", "is", null).is("archived_at", null),
     supabase.from("recipes").select("id,name,meta").is("household_id", null),
     supabase.from("meal_preferences").select("recipe_name,rating,updated_at").order("updated_at", { ascending: false }).limit(500),
     supabase.from("plan_entries").select("date,recipe_id,locked").eq("meal_type", "dinner").gte("date", firstDate).lte("date", lastDate),
