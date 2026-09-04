@@ -33,6 +33,7 @@ export default async function ShoppingPage() {
           groups={groups}
           initialManualItems={savedState.manualItems}
           initialCheckedKeys={savedState.checkedKeys}
+          initialDismissedKeys={savedState.dismissedKeys}
           listId={savedState.listId}
           weekIndex={weekIndex}
           weekStart={weekStart}
@@ -45,6 +46,7 @@ export default async function ShoppingPage() {
 
 type SavedShoppingState = {
   checkedKeys: string[];
+  dismissedKeys: string[];
   manualItems: Array<{ id: string; category: string; name: string; position: number; checked: boolean; source: "manual" }>;
   listId: string | null;
   loadError: boolean;
@@ -53,14 +55,14 @@ type SavedShoppingState = {
 async function getSavedShoppingState(weekStart: string): Promise<SavedShoppingState> {
   const supabase = await getSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { checkedKeys: [], manualItems: [], listId: null, loadError: true };
+  if (!user) return { checkedKeys: [], dismissedKeys: [], manualItems: [], listId: null, loadError: true };
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("household_id")
     .eq("id", user.id)
     .single();
-  if (profileError || !profile?.household_id) return { checkedKeys: [], manualItems: [], listId: null, loadError: true };
+  if (profileError || !profile?.household_id) return { checkedKeys: [], dismissedKeys: [], manualItems: [], listId: null, loadError: true };
 
   const { data: list, error: listError } = await supabase
     .from("shopping_lists")
@@ -71,16 +73,17 @@ async function getSavedShoppingState(weekStart: string): Promise<SavedShoppingSt
     .select("id")
     .single();
 
-  if (listError || !list) return { checkedKeys: [], manualItems: [], listId: null, loadError: true };
+  if (listError || !list) return { checkedKeys: [], dismissedKeys: [], manualItems: [], listId: null, loadError: true };
 
   const { data: items, error: itemsError } = await supabase
     .from("shopping_items")
-    .select("id, category, name, position, checked, source")
+    .select("id, category, name, position, checked, dismissed, source")
     .eq("list_id", list.id);
 
-  if (itemsError) return { checkedKeys: [], manualItems: [], listId: list.id, loadError: true };
+  if (itemsError) return { checkedKeys: [], dismissedKeys: [], manualItems: [], listId: list.id, loadError: true };
   return {
     checkedKeys: (items ?? []).filter((item) => item.checked).map((item) => buildShoppingItemKey(item.category, item.name)),
+    dismissedKeys: (items ?? []).filter((item) => item.dismissed).map((item) => buildShoppingItemKey(item.category, item.name)),
     manualItems: (items ?? []).filter((item) => item.source === "manual").map((item) => ({ ...item, source: "manual" as const })),
     listId: list.id,
     loadError: false,

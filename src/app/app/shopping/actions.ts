@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getCurrentHouseholdPreferences } from "@/lib/family/server";
 import { menuData } from "@/lib/menuData";
-import { getShoppingCycle } from "@/lib/services/shoppingService";
+import { getShoppingCycle, seasoningShoppingCategory } from "@/lib/services/shoppingService";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
 const shoppingItemSchema = z.object({
@@ -26,6 +26,14 @@ const manualItemSchema = z.object({
 const deleteManualItemSchema = z.object({
   weekStart: z.string().date(),
   id: z.string().uuid(),
+});
+
+const dismissSeasoningSchema = z.object({
+  weekIndex: z.number().int().min(0).max(3),
+  weekStart: z.string().date(),
+  category: z.literal(seasoningShoppingCategory),
+  name: z.string().trim().min(1).max(200),
+  position: z.number().int().min(0).max(500),
 });
 
 export async function setShoppingItemChecked(input: unknown): Promise<{ ok: boolean }> {
@@ -83,6 +91,32 @@ export async function deleteManualShoppingItem(input: unknown): Promise<{ ok: bo
 
   const supabase = await getSupabaseServer();
   const { error } = await supabase.rpc("delete_manual_shopping_item", { target_item_id: parsed.data.id });
+  if (error) return { ok: false };
+  revalidatePath("/app/shopping");
+  return { ok: true };
+}
+
+export async function dismissSeasoningShoppingItem(input: unknown): Promise<{ ok: boolean }> {
+  const parsed = dismissSeasoningSchema.safeParse(input);
+  if (!parsed.success) return { ok: false };
+
+  const { weekIndex, weekStart, category, name, position } = parsed.data;
+  const preferences = await getCurrentHouseholdPreferences();
+  const currentCycle = getShoppingCycle(menuData, preferences.shoppingDay);
+  const expectedName = menuData.weeks[weekIndex]?.shopping[category]?.[position];
+  if (currentCycle.weekIndex !== weekIndex || currentCycle.weekStart !== weekStart || expectedName !== name) {
+    return { ok: false };
+  }
+
+  const supabase = await getSupabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+
+  const { error } = await supabase.rpc("dismiss_seasoning_shopping_item", {
+    target_week_start: weekStart,
+    target_name: name,
+    target_position: position,
+  });
   if (error) return { ok: false };
   revalidatePath("/app/shopping");
   return { ok: true };

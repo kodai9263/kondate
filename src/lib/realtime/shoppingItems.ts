@@ -4,6 +4,7 @@ export type ShoppingBroadcastItem = {
   name: string;
   position: number;
   checked: boolean;
+  dismissed?: boolean;
   source: "auto" | "manual";
   eventType: "INSERT" | "UPDATE" | "DELETE";
 };
@@ -47,6 +48,7 @@ export function getShoppingBroadcastRecord(payload: unknown): ShoppingBroadcastI
     name: record.name,
     position,
     checked: record.checked,
+    ...(typeof record.dismissed === "boolean" ? { dismissed: record.dismissed } : {}),
     source: record.source,
     eventType,
   };
