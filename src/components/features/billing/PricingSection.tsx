@@ -14,7 +14,7 @@ export function PricingSection({ isAuthenticated = false, requiredFeature, curre
   return (
     <section className="space-y-4">
       {requiredFeature && requiredMessages[requiredFeature] ? <p role="status" className="border border-kondate-accent bg-[#fff4ef] p-4 text-sm font-black text-kondate-ink">{requiredMessages[requiredFeature]}</p> : null}
-      <div className="rounded-lg border border-kondate-line bg-kondate-surface p-4 shadow-soft">
+      <div className="rounded-lg border border-kondate-line bg-kondate-surface p-4">
         <p className="flex items-center gap-2 text-sm font-black text-kondate-accent">
           <Crown size={17} />
           家族に合うプラン
@@ -31,7 +31,7 @@ export function PricingSection({ isAuthenticated = false, requiredFeature, curre
             key={plan.id}
             className={[
               "rounded-lg border bg-kondate-surface p-4",
-              plan.highlighted ? "border-kondate-accent shadow-soft" : "border-kondate-line",
+              plan.highlighted ? "border-kondate-accent" : "border-kondate-line",
             ].join(" ")}
           >
             <div className="flex items-start justify-between gap-3">

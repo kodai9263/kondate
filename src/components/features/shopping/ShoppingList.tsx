@@ -146,20 +146,20 @@ export function ShoppingList({
       <form onSubmit={addItem} className="flex gap-2" aria-label="買うものを追加">
         <label className="min-w-0 flex-1">
           <span className="sr-only">買うもの</span>
-          <input value={newItemName} onChange={(event) => setNewItemName(event.target.value)} maxLength={200} placeholder="買うものを追加" className="min-h-12 w-full border border-kondate-line bg-white px-3 text-base outline-none focus:border-kondate-ink" />
+          <input value={newItemName} onChange={(event) => setNewItemName(event.target.value)} maxLength={200} placeholder="買うものを追加" className="min-h-12 w-full rounded border border-kondate-line bg-white px-3 text-base outline-none placeholder:text-kondate-faint focus:border-kondate-ink" />
         </label>
-        <button type="submit" aria-label="追加" disabled={isAdding || !newItemName.trim()} className="grid size-12 shrink-0 place-items-center bg-kondate-ink text-white disabled:opacity-40"><Plus size={20} /></button>
+        <button type="submit" aria-label="追加" disabled={isAdding || !newItemName.trim()} className="grid size-12 shrink-0 place-items-center rounded bg-kondate-ink text-white transition-colors hover:bg-kondate-accent disabled:opacity-30"><Plus size={20} /></button>
       </form>
 
-      <section className="border-y border-kondate-line bg-white px-4 py-4" aria-label="買い物の進捗">
+      <section className="border-y border-kondate-line py-4" aria-label="買い物の進捗">
         <div className="flex items-center justify-between gap-4">
-          <p aria-live="polite" className="text-sm font-black">{checkedCount}/{totalCount}品 完了</p>
-          <p className="text-xs font-bold text-kondate-muted">残り {Math.max(totalCount - checkedCount, 0)}品</p>
+          <p aria-live="polite" className="text-sm tabular-nums">{checkedCount}/{totalCount}品 完了</p>
+          <p className="text-xs tabular-nums text-kondate-faint">残り {Math.max(totalCount - checkedCount, 0)}品</p>
         </div>
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-kondate-bg"><div className="h-full rounded-full bg-[#4f9f58] transition-[width] duration-200 motion-reduce:transition-none" style={{ width: totalCount === 0 ? "0%" : `${(checkedCount / totalCount) * 100}%` }} /></div>
+        <div className="mt-3 h-[3px] overflow-hidden rounded-full bg-kondate-line"><div className="h-full rounded-full bg-kondate-done transition-[width] duration-200 motion-reduce:transition-none" style={{ width: totalCount === 0 ? "0%" : `${(checkedCount / totalCount) * 100}%` }} /></div>
       </section>
 
-      {error ? <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-800">{error}</p> : null}
+      {error ? <p role="alert" className="rounded border border-kondate-alert/30 bg-kondate-alertSoft p-3 text-sm text-kondate-alert">{error}</p> : null}
 
       <div className="space-y-7">
         {manualItems.length > 0 ? <ShoppingGroup category="追加したもの" items={manualItems} checkedKeys={checkedKeys} pendingKeys={pendingKeys} onToggle={toggleItem} onDelete={deleteItem} /> : null}
@@ -170,7 +170,7 @@ export function ShoppingList({
 }
 
 function ShoppingGroup({ category, items, checkedKeys, pendingKeys, onToggle, onDelete }: { category: string; items: ShoppingListItem[]; checkedKeys: Set<string>; pendingKeys: Set<string>; onToggle: (item: ShoppingListItem) => void; onDelete?: (item: ManualItem) => void }) {
-  return <section aria-labelledby={`shopping-${category}`}><h2 id={`shopping-${category}`} className="border-b-2 border-kondate-ink pb-2 text-base font-black">{category}<span className="ml-2 text-xs text-kondate-muted">{items.length}品</span></h2><div className="mt-2 divide-y divide-kondate-line">{items.map((item) => { const itemKey = buildShoppingItemKey(item.category, item.name); const checked = checkedKeys.has(itemKey); const pending = pendingKeys.has(itemKey) || (item.id ? pendingKeys.has(item.id) : false); return <div key={item.id ?? itemKey} className="grid grid-cols-[minmax(0,1fr)_44px] items-center"><button type="button" aria-pressed={checked} disabled={pending} onClick={() => onToggle(item)} className="grid min-h-12 w-full cursor-pointer grid-cols-[32px_1fr] items-center gap-3 py-2 text-left transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-kondate-accent disabled:cursor-wait disabled:opacity-60"><span className={["flex size-8 items-center justify-center rounded-full border-2 transition-colors", checked ? "border-[#4f9f58] bg-[#4f9f58] text-white" : "border-[#d9cfc4] bg-white text-transparent"].join(" ")}><Check size={17} strokeWidth={3} aria-hidden="true" /></span><span className={["text-sm font-bold leading-6", checked ? "text-kondate-muted line-through" : "text-kondate-ink"].join(" ")}>{item.label}</span></button>{onDelete && item.id && item.source === "manual" ? <button type="button" aria-label={`${item.name}を削除`} disabled={pending} onClick={() => onDelete(item as ManualItem)} className="grid size-11 place-items-center text-kondate-muted hover:text-red-700 disabled:opacity-40"><Trash2 size={18} /></button> : <span />}</div>; })}</div></section>;
+  return <section aria-labelledby={`shopping-${category}`}><h2 id={`shopping-${category}`} className="border-b border-kondate-line pb-2 text-sm font-semibold">{category}<span className="ml-2 text-xs font-normal tabular-nums text-kondate-faint">{items.length}品</span></h2><div className="mt-2 divide-y divide-kondate-line">{items.map((item) => { const itemKey = buildShoppingItemKey(item.category, item.name); const checked = checkedKeys.has(itemKey); const pending = pendingKeys.has(itemKey) || (item.id ? pendingKeys.has(item.id) : false); return <div key={item.id ?? itemKey} className="grid grid-cols-[minmax(0,1fr)_44px] items-center"><button type="button" aria-pressed={checked} disabled={pending} onClick={() => onToggle(item)} className="grid min-h-12 w-full cursor-pointer grid-cols-[26px_1fr] items-center gap-3 py-2 text-left transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-kondate-ink disabled:cursor-wait disabled:opacity-50"><span className={["flex size-[26px] items-center justify-center rounded-full border transition-colors", checked ? "border-kondate-done bg-kondate-done text-white" : "border-kondate-line bg-white text-transparent"].join(" ")}><Check size={15} strokeWidth={2.5} aria-hidden="true" /></span><span className={["text-[15px] leading-7", checked ? "text-kondate-faint line-through" : "text-kondate-ink"].join(" ")}>{item.label}</span></button>{onDelete && item.id && item.source === "manual" ? <button type="button" aria-label={`${item.name}を削除`} disabled={pending} onClick={() => onDelete(item as ManualItem)} className="grid size-11 place-items-center text-kondate-faint transition-colors hover:text-kondate-alert disabled:opacity-40"><Trash2 size={18} /></button> : <span />}</div>; })}</div></section>;
 }
 
 function updateSet(current: Set<string>, key: string, included: boolean): Set<string> {

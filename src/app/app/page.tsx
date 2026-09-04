@@ -2,7 +2,7 @@ import { Settings } from "lucide-react";
 import Link from "next/link";
 import { ShoppingSummaryLink } from "@/components/features/shopping/ShoppingSummaryLink";
 import { TodayBoard } from "@/components/features/today/TodayBoard";
-import { formatFamilyLabel, formatShoppingDay, getAdultEquivalent } from "@/lib/family/servings";
+import { formatShoppingDay, getAdultEquivalent } from "@/lib/family/servings";
 import { menuData } from "@/lib/menuData";
 import { generateMonthlyDinnerPlan, materializeDinnerPlan } from "@/lib/nutrition/planner";
 import { getHouseholdPlannerContext } from "@/lib/nutrition/server";
@@ -39,11 +39,14 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
   const shoppingItemCount = Object.values(shoppingWeek.shopping).reduce((total, items) => total + items.length, 0);
   return (
     <main className="mx-auto min-h-dvh w-full max-w-[560px] px-4 pb-24 pt-5">
-      <header className="mb-4 flex items-start justify-between gap-3">
-        <div><p className="text-sm font-black text-kondate-accent">きょうのごはん</p><p className="mt-1 text-sm text-kondate-muted">{formatFamilyLabel(familySize)}・日曜始まり・{shoppingDayLabel}曜まとめ買い</p></div>
-        <div className="flex gap-2"><Link href="/pricing" className="inline-flex min-h-11 items-center rounded-lg bg-kondate-accentSoft px-3 text-xs font-black text-kondate-accent">家族プラン</Link><Link href="/account" aria-label="アカウント設定" title="アカウント設定" className="grid size-11 place-items-center rounded-lg border border-kondate-line bg-white text-kondate-muted"><Settings size={19} /></Link></div>
+      <header className="mb-6 flex items-center justify-between gap-3">
+        <p className="text-sm text-kondate-muted">きょうのごはん</p>
+        <div className="flex items-center gap-1">
+          <Link href="/pricing" className="inline-flex min-h-11 items-center px-2 text-sm text-kondate-accent">家族プラン</Link>
+          <Link href="/account" aria-label="アカウント設定" title="アカウント設定" className="grid size-11 place-items-center rounded border border-kondate-line bg-white text-kondate-muted"><Settings size={19} /></Link>
+        </div>
       </header>
-      {params.notice === "family-joined" ? <p role="status" className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-bold text-emerald-900">家族グループに参加しました。</p> : null}
+      {params.notice === "family-joined" ? <p role="status" className="mb-5 rounded border border-kondate-done/30 bg-kondate-doneSoft p-3 text-sm text-kondate-ink">家族グループに参加しました。</p> : null}
       <div className="space-y-8"><TodayBoard familySize={familySize} feedbackStatus={params.mealFeedback} today={today} initialTaskBindings={taskBindings} /><ShoppingSummaryLink shoppingDayLabel={shoppingDayLabel} itemCount={shoppingItemCount} /></div>
     </main>
   );

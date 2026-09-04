@@ -1,6 +1,5 @@
 "use client";
 
-import { CalendarDays, ChefHat, Clock, Flame, Wheat } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { setTodayTaskChecked } from "@/app/app/actions";
 import { CheckRow } from "@/components/ui/CheckRow";
@@ -32,6 +31,10 @@ export function TodayBoard({
       .filter((id): id is string => Boolean(id)),
   )), [initialTaskBindings]);
   const planEntryFilter = planEntryIds.join(",");
+  const seasoningTasks = useMemo(
+    () => taskBindings.seasoning.map((task) => ({ ...task, text: scaleQuantityText(task.text, familySize) })),
+    [familySize, taskBindings.seasoning],
+  );
 
   useEffect(() => {
     const supabase = getSupabaseBrowser();
@@ -86,71 +89,60 @@ export function TodayBoard({
   }
 
   return (
-    <section className="space-y-4">
-      <div className="border-2 border-kondate-ink bg-white p-5"><p className="text-xs font-black text-kondate-accent">今日の夕ごはん</p><p className="font-mincho mt-2 text-2xl font-black">{today.dinner.dinner}</p><p className="mt-2 text-sm text-kondate-muted">{today.dinner.side}</p></div>
-      <div className="rounded-lg border border-kondate-line bg-kondate-surface p-4 shadow-soft">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="flex items-center gap-2 text-sm font-bold text-kondate-accent">
-              <CalendarDays size={16} />
-              今日やること
-            </p>
-            <h1 className="mt-1 text-2xl font-black">{today.date}</h1>
-            <p className="mt-1 text-sm text-kondate-muted">開いて5秒で、次の一手だけを見るための画面です。</p>
-          </div>
-          <div className="grid size-16 place-items-center rounded-full bg-kondate-accentSoft text-center">
-            <span className="text-sm font-black text-kondate-accent">{checkedCount}/{totalTasks}</span>
-          </div>
-        </div>
-      </div>
+    <section className="space-y-8">
+      <header>
+        <p className="text-sm text-kondate-muted">{formatDateLabel(today)}</p>
+        <h1 className="font-mincho mt-1.5 text-[27px] font-bold leading-tight">{today.dinner.dinner}</h1>
+        <p className="mt-1.5 text-[15px] text-kondate-muted">{today.dinner.side}</p>
+        <p className="mt-3 text-xs text-kondate-faint">{formatServingLabel(familySize)}・夜 {today.dinner.cookMin}分</p>
 
-      {error ? <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-800">{error}</p> : null}
+        <div className="mt-5 flex items-center gap-3">
+          <span className="h-[3px] flex-1 overflow-hidden rounded-full bg-kondate-line">
+            <span
+              className="block h-full rounded-full bg-kondate-done transition-[width] duration-200 motion-reduce:transition-none"
+              style={{ width: totalTasks === 0 ? "0%" : `${(checkedCount / totalTasks) * 100}%` }}
+            />
+          </span>
+          <span aria-live="polite" className="shrink-0 text-xs tabular-nums text-kondate-muted">
+            {totalTasks > 0 && checkedCount === totalTasks ? "ぜんぶ完了" : `残り ${totalTasks - checkedCount}`}
+          </span>
+        </div>
+      </header>
+
+      {error ? <p role="alert" className="rounded border border-kondate-alert/30 bg-kondate-alertSoft p-3 text-sm text-kondate-alert">{error}</p> : null}
 
       <MealBlock
-        icon={<Wheat size={18} />}
-        tone="bg-[#fff8df] text-[#8b6508]"
-        title={`朝ごはん(${today.breakfast.minutes}分)`}
+        rule="border-kondate-morningInk"
+        title="朝ごはん"
+        minutes={today.breakfast.minutes}
         subtitle={today.breakfast.name}
         tasks={taskBindings.breakfast}
         pendingStepIds={pendingStepIds}
         onCheckedChange={updateTask}
       />
 
-      {today.dinner.seasonings.length > 0 ? <div className="rounded-lg border border-kondate-line bg-kondate-surface p-4">
-        <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-[#f3eefb] px-3 py-1 text-xs font-black text-[#6741d9]">
-          <ChefHat size={14} />
-          調味料・分量
-        </p>
-        <p className="mb-3 text-xs font-bold text-kondate-muted">{formatServingLabel(familySize)}</p>
-        <div className="space-y-1">
-          {taskBindings.seasoning.map((task) => (
-            <CheckRow
-              key={task.stepId ?? task.text}
-              checked={task.checked}
-              disabled={!task.stepId || pendingStepIds.has(task.stepId)}
-              onCheckedChange={(checked) => updateTask(task, checked)}
-            >
-              {scaleQuantityText(task.text, familySize)}
-            </CheckRow>
-          ))}
-        </div>
-      </div> : null}
-
       {taskBindings.morning.length > 0 ? <MealBlock
-        icon={<Clock size={18} />}
-        tone="bg-kondate-morning text-[#8b6508]"
-        title={`朝の仕込み(${today.dinner.prepMin}分)`}
-        subtitle={today.dinner.dinner}
+        rule="border-kondate-morningInk"
+        title="朝の仕込み"
+        minutes={today.dinner.prepMin}
         tasks={taskBindings.morning}
         pendingStepIds={pendingStepIds}
         onCheckedChange={updateTask}
       /> : null}
 
+      {seasoningTasks.length > 0 ? <MealBlock
+        rule="border-kondate-eveningInk"
+        title="調味料"
+        note={formatServingLabel(familySize)}
+        tasks={seasoningTasks}
+        pendingStepIds={pendingStepIds}
+        onCheckedChange={updateTask}
+      /> : null}
+
       <MealBlock
-        icon={<Flame size={18} />}
-        tone="bg-kondate-evening text-[#3155a4]"
-        title={`夜の手順(${today.dinner.cookMin}分)`}
-        subtitle={`${today.dinner.dinner} / ${today.dinner.side}`}
+        rule="border-kondate-eveningInk"
+        title="夜の手順"
+        minutes={today.dinner.cookMin}
         tasks={taskBindings.evening}
         pendingStepIds={pendingStepIds}
         onCheckedChange={updateTask}
@@ -162,30 +154,33 @@ export function TodayBoard({
 }
 
 function MealBlock({
-  icon,
-  tone,
+  rule,
   title,
+  minutes,
+  note,
   subtitle,
   tasks,
   pendingStepIds,
   onCheckedChange,
 }: {
-  icon: React.ReactNode;
-  tone: string;
+  rule: string;
   title: string;
-  subtitle: string;
+  minutes?: number;
+  note?: string;
+  subtitle?: string;
   tasks: TodayTaskBinding[];
   pendingStepIds: Set<string>;
   onCheckedChange: (task: TodayTaskBinding, checked: boolean) => void;
 }) {
   return (
-    <section className="rounded-lg border border-kondate-line bg-kondate-surface p-4">
-      <p className={`mb-1 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-black ${tone}`}>
-        {icon}
-        {title}
-      </p>
-      <h2 className="mb-3 text-lg font-black leading-snug">{subtitle}</h2>
-      <div className="space-y-1">
+    <section className={`border-l-2 pl-4 ${rule}`}>
+      <div className="flex items-baseline gap-2">
+        <h2 className="text-sm font-semibold">{title}</h2>
+        {typeof minutes === "number" ? <span className="text-xs tabular-nums text-kondate-faint">{minutes}分</span> : null}
+        {note ? <span className="text-xs text-kondate-faint">{note}</span> : null}
+      </div>
+      {subtitle ? <p className="mt-0.5 text-sm text-kondate-muted">{subtitle}</p> : null}
+      <div className="mt-1.5 divide-y divide-kondate-line">
         {tasks.map((task) => (
           <CheckRow
             key={task.stepId ?? task.text}
@@ -199,6 +194,11 @@ function MealBlock({
       </div>
     </section>
   );
+}
+
+function formatDateLabel(meal: PlanMeal) {
+  const [, month, day] = meal.date.split("-");
+  return `${Number(month)}月${Number(day)}日 (${meal.dow})`;
 }
 
 function updateSet(current: Set<string>, key: string, included: boolean): Set<string> {
