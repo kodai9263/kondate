@@ -27,7 +27,7 @@ function ArchiveSubmitButton({ recipeName }: { recipeName: string }) {
       type="submit"
       aria-label={`${recipeName}を一覧から削除`}
       disabled={pending}
-      className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-3 text-xs font-black text-red-700 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-700 disabled:cursor-wait disabled:opacity-50"
+      className="inline-flex min-h-11 items-center gap-1.5 rounded px-3 text-xs text-kondate-faint transition-colors hover:bg-kondate-alertSoft hover:text-kondate-alert focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kondate-ink disabled:cursor-wait disabled:opacity-50"
     >
       <Trash2 size={16} aria-hidden="true" />
       {pending ? "削除中..." : "削除"}

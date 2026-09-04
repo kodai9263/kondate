@@ -15,18 +15,20 @@ export function CheckRow({ children, checked, disabled = false, onCheckedChange 
       type="button"
       aria-pressed={checked}
       disabled={disabled}
-      className="grid min-h-11 w-full grid-cols-[28px_1fr] items-center gap-3 rounded-lg px-1 py-2 text-left transition active:scale-[0.99] disabled:cursor-wait disabled:opacity-60"
+      className="grid min-h-12 w-full grid-cols-[26px_1fr] items-start gap-3 py-2.5 text-left transition-colors hover:bg-kondate-bg disabled:cursor-wait disabled:opacity-50"
       onClick={() => onCheckedChange(!checked)}
     >
       <span
         className={[
-          "flex size-7 items-center justify-center rounded-full border-2 transition",
-          checked ? "border-[#4f9f58] bg-[#4f9f58] text-white" : "border-[#d9cfc4] bg-white text-transparent",
+          "mt-0.5 flex size-[26px] items-center justify-center rounded-full border transition-colors",
+          checked ? "border-kondate-done bg-kondate-done text-white" : "border-kondate-line bg-white text-transparent",
         ].join(" ")}
       >
-        <Check size={16} strokeWidth={3} aria-hidden="true" />
+        <Check size={15} strokeWidth={2.5} aria-hidden="true" />
       </span>
-      <span className={checked ? "text-kondate-muted line-through" : ""}>{children}</span>
+      <span className={["text-[15px] leading-7", checked ? "text-kondate-faint line-through" : "text-kondate-ink"].join(" ")}>
+        {children}
+      </span>
     </button>
   );
 }

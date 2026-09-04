@@ -1,4 +1,3 @@
-import { ShoppingCart } from "lucide-react";
 import { ShoppingList, type ShoppingListGroup } from "@/components/features/shopping/ShoppingList";
 import { formatFamilyLabel, formatShoppingDay, scaleQuantityText } from "@/lib/family/servings";
 import { getCurrentHouseholdPreferences } from "@/lib/family/server";
@@ -25,10 +24,9 @@ export default async function ShoppingPage() {
 
   return (
     <main className="mx-auto min-h-dvh w-full max-w-[640px] px-4 pb-28 pt-5">
-      <header className="border-b-2 border-kondate-ink pb-5">
-        <p className="flex items-center gap-2 text-sm font-black text-kondate-accent"><ShoppingCart size={18} aria-hidden="true" />SHOPPING LIST</p>
-        <h1 className="font-mincho mt-2 text-3xl font-black">基本の買い物リスト</h1>
-        <p className="mt-2 text-sm font-bold text-kondate-muted">{formatShoppingDay(preferences.shoppingDay)}曜向け・{week.label}・{formatFamilyLabel(familySize)}</p>
+      <header className="border-b border-kondate-line pb-5">
+        <h1 className="font-mincho text-[26px] font-bold">基本の買い物リスト</h1>
+        <p className="mt-1.5 text-sm text-kondate-muted">{formatShoppingDay(preferences.shoppingDay)}曜向け・{week.label}・{formatFamilyLabel(familySize)}</p>
       </header>
       <div className="mt-5">
         <ShoppingList

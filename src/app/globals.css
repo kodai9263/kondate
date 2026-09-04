@@ -22,12 +22,17 @@ body {
   background: #f6f7f4;
   color: #20241f;
   font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
-  letter-spacing: 0;
+  /* 台所で流し読みする前提で、行間と字間をやや広く取る */
+  line-height: 1.75;
+  letter-spacing: 0.01em;
+  -webkit-font-smoothing: antialiased;
 }
 
+/* 明朝は料理名とページタイトルだけに使う */
 .font-mincho {
   font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", serif;
-  letter-spacing: 0;
+  letter-spacing: 0.03em;
+  line-height: 1.5;
 }
 
 button,
@@ -47,8 +52,8 @@ a:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 3px solid #20241f;
-  outline-offset: 3px;
+  outline: 2px solid #20241f;
+  outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
