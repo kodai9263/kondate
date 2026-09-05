@@ -3,9 +3,9 @@ import { officialNutritionRecipes } from "@/lib/nutrition/catalog";
 import { officialRecipeDetails } from "@/lib/nutrition/recipeDetails";
 
 describe("公式献立の調理詳細", () => {
-  it("全68献立に材料と4〜7個の個別工程がある", () => {
-    expect(officialNutritionRecipes).toHaveLength(68);
-    expect(Object.keys(officialRecipeDetails)).toHaveLength(68);
+  it("全78献立に材料と4〜7個の個別工程がある", () => {
+    expect(officialNutritionRecipes).toHaveLength(78);
+    expect(Object.keys(officialRecipeDetails)).toHaveLength(78);
 
     officialNutritionRecipes.forEach((recipe) => {
       const detail = officialRecipeDetails[recipe.id];
