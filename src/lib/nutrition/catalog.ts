@@ -83,6 +83,16 @@ export const officialNutritionRecipes: NutritionRecipe[] = [
   recipe("pork-kimchi", "豚キムチ炒め", "もやしとわかめのスープ", 15, "meat", 650, 30, 22, 78, 7.5, 2.4, 180),
   recipe("mushroom-cream-stew", "きのこクリームシチュー", "グリーンサラダ", 30, "meat", 680, 29, 25, 82, 9.0, 2.0, 230, [10, 11, 12, 1, 2, 3]),
   recipe("atsuage-sweet-savory", "厚揚げとひき肉の甘辛炒め", "かきたま汁", 20, "soy", 610, 27, 19, 80, 9.5, 2.0, 200),
+  recipe("basic-curry", "カレーライス", "グリーンサラダ", 30, "meat", 702, 24, 22, 101, 8.2, 2.3, 190),
+  recipe("hamburg", "ハンバーグ", "ブロッコリーとコーンのサラダ", 30, "meat", 688, 31, 25, 83, 7.6, 2.2, 180),
+  recipe("gyudon", "牛丼", "豆腐とわかめの味噌汁", 15, "meat", 716, 28, 23, 98, 6.1, 2.5, 120),
+  recipe("fried-chicken", "鶏のから揚げ", "千切りキャベツ", 25, "meat", 695, 33, 27, 78, 5.8, 2.1, 140),
+  recipe("hoikoro", "豚肉とキャベツの回鍋肉", "わかめと卵のスープ", 20, "meat", 662, 28, 23, 82, 8.4, 2.4, 240),
+  recipe("vegetable-stir-fry", "野菜炒め", "豆腐の味噌汁", 15, "meat", 618, 27, 19, 81, 9.1, 2.2, 250),
+  recipe("fried-rice", "チャーハン", "わかめスープ", 15, "egg", 671, 24, 22, 91, 5.7, 2.4, 110),
+  recipe("napolitan", "ナポリタン", "コーンスープ", 20, "noodle", 654, 22, 18, 100, 7.3, 2.3, 170),
+  recipe("yaki-udon", "焼きうどん", "冷ややっこ", 20, "noodle", 625, 26, 17, 91, 7.8, 2.4, 190),
+  recipe("salt-grilled-mackerel", "さばの塩焼き", "大根おろしと豆腐の味噌汁", 15, "fish", 638, 32, 22, 76, 6.7, 2.2, 145),
 ];
 
 function recipe(
