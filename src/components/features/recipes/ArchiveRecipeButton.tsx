@@ -2,18 +2,25 @@
 
 import { Trash2 } from "lucide-react";
 import { useFormStatus } from "react-dom";
-import { archiveRecipe } from "@/app/app/recipes/actions";
+import { removeRecipe } from "@/app/app/recipes/actions";
 
-export function ArchiveRecipeButton({ recipeId, recipeName }: { recipeId: string; recipeName: string }) {
+type ArchiveRecipeButtonProps = { recipeName: string } & (
+  | { recipeKind: "custom"; recipeId: string }
+  | { recipeKind: "official"; recipeKey: string }
+);
+
+export function ArchiveRecipeButton(props: ArchiveRecipeButtonProps) {
+  const { recipeKind, recipeName } = props;
   return (
     <form
-      action={archiveRecipe}
+      action={removeRecipe}
       onSubmit={(event) => {
         const confirmed = window.confirm(`「${recipeName}」を削除しますか？\nメニュー一覧と今後の献立候補から非表示になります。`);
         if (!confirmed) event.preventDefault();
       }}
     >
-      <input type="hidden" name="recipeId" value={recipeId} />
+      <input type="hidden" name="recipeKind" value={recipeKind} />
+      {recipeKind === "custom" ? <input type="hidden" name="recipeId" value={props.recipeId} /> : <input type="hidden" name="recipeKey" value={props.recipeKey} />}
       <ArchiveSubmitButton recipeName={recipeName} />
     </form>
   );
