@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/Button";
 
 const portalErrorMessages: Record<string, string> = {
   unauthenticated: "ログインしてからもう一度お試しください。",
@@ -31,15 +32,10 @@ export function PortalButton() {
 
   return (
     <div className="space-y-2">
-      <button
-        type="button"
-        className="min-h-11 w-full rounded-lg border border-kondate-line px-4 text-sm font-black text-kondate-muted"
-        disabled={loading}
-        onClick={openPortal}
-      >
+      <Button variant="secondary" fullWidth disabled={loading} onClick={openPortal}>
         {loading ? "管理画面を準備中" : "支払い・解約を管理"}
-      </button>
-      {error ? <p className="text-xs font-bold text-red-700">{error}</p> : null}
+      </Button>
+      {error ? <p className="text-xs text-kondate-alert">{error}</p> : null}
     </div>
   );
 }

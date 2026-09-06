@@ -13,7 +13,7 @@ export default async function ForgotPasswordPage({ searchParams }: { searchParam
         <AuthField id="email" label="メールアドレス" type="email" autoComplete="email" />
         <AuthSubmit>再設定メールを送る</AuthSubmit>
       </form>
-      <Link href="/login" className="mt-5 flex min-h-11 items-center justify-center text-sm font-black text-kondate-accent">ログインへ戻る</Link>
+      <Link href="/login" className="mt-5 flex min-h-11 items-center justify-center border-t border-kondate-line pt-5 text-sm font-semibold text-kondate-accent underline-offset-4 hover:underline">ログインへ戻る</Link>
     </AuthShell>
   );
 }

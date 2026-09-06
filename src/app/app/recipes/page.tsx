@@ -1,5 +1,6 @@
 import { Crown, Plus } from "lucide-react";
 import Link from "next/link";
+import { buttonClass } from "@/components/ui/Button";
 import { ArchiveRecipeButton } from "@/components/features/recipes/ArchiveRecipeButton";
 import { officialNutritionRecipes } from "@/lib/nutrition/catalog";
 import { isActiveSubscriptionStatus } from "@/lib/billing/entitlements";
@@ -15,7 +16,7 @@ export default async function RecipesPage({ searchParams }: { searchParams: Prom
     profile?.household_id ? supabase.from("household_subscriptions").select("status,current_period_end").eq("household_id", profile.household_id).maybeSingle() : Promise.resolve({ data: null }),
   ]);
   const paid = subscription ? isActiveSubscriptionStatus(subscription.status, subscription.current_period_end) : false;
-  return <main className="mx-auto min-h-dvh w-full max-w-5xl px-4 pb-28 pt-5 sm:px-6"><header className="flex items-end justify-between gap-4 border-b border-kondate-line pb-5"><div><h1 className="font-mincho text-[26px] font-bold">メニュー</h1><p className="mt-1.5 text-sm text-kondate-muted">公式レシピと、わが家の料理。</p></div><Link href={paid ? "/app/recipes/new" : "/pricing?required=custom_recipes"} className="inline-flex min-h-12 shrink-0 items-center gap-2 rounded bg-kondate-accent px-4 text-sm font-semibold text-white transition-colors hover:bg-kondate-accentDark">{paid ? <Plus size={18} aria-hidden="true" /> : <Crown size={18} aria-hidden="true" />}{paid ? "登録" : "家族プラン"}</Link></header>
+  return <main className="mx-auto min-h-dvh w-full max-w-5xl px-4 pb-28 pt-5 sm:px-6"><header className="flex items-end justify-between gap-4 border-b border-kondate-line pb-5"><div><h1 className="font-mincho text-[26px] font-bold">メニュー</h1><p className="mt-1.5 text-sm text-kondate-muted">公式レシピと、わが家の料理。</p></div><Link href={paid ? "/app/recipes/new" : "/pricing?required=custom_recipes"} className={buttonClass({ className: "shrink-0 px-4 text-sm" })}>{paid ? <Plus size={18} aria-hidden="true" /> : <Crown size={18} aria-hidden="true" />}{paid ? "登録" : "家族プラン"}</Link></header>
     {created ? <p role="status" className="mt-5 rounded border border-kondate-done/30 bg-kondate-doneSoft p-3 text-sm">新しいメニューを登録しました。次の月間生成から候補に入ります。</p> : null}
     {deleted ? <p role="status" className="mt-5 rounded border border-kondate-done/30 bg-kondate-doneSoft p-3 text-sm">メニューを削除しました。今後の献立候補には入りません。</p> : null}
     {error === "delete" ? <p role="alert" className="mt-5 rounded border border-kondate-alert/30 bg-kondate-alertSoft p-3 text-sm text-kondate-alert">メニューを削除できませんでした。時間をおいて、もう一度お試しください。</p> : null}

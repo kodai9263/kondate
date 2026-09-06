@@ -14,10 +14,10 @@ const successes: Record<string, string> = {
 
 export function AuthMessage({ error, success }: { error?: string; success?: string }) {
   if (error) {
-    return <p role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-bold leading-6 text-red-800">{messages[error] ?? messages.invalid}</p>;
+    return <p role="alert" className="mb-4 rounded-lg border border-kondate-alert/30 bg-kondate-alertSoft px-3 py-2.5 text-sm leading-6 text-kondate-alert">{messages[error] ?? messages.invalid}</p>;
   }
   if (success) {
-    return <p role="status" className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-bold leading-6 text-emerald-900">{successes[success]}</p>;
+    return <p role="status" className="mb-4 rounded-lg border border-kondate-done/30 bg-kondate-doneSoft px-3 py-2.5 text-sm leading-6">{successes[success]}</p>;
   }
   return null;
 }

@@ -3,6 +3,7 @@
 import { Trash2 } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import { archiveRecipe } from "@/app/app/recipes/actions";
+import { Button } from "@/components/ui/Button";
 
 export function ArchiveRecipeButton({ recipeId, recipeName }: { recipeId: string; recipeName: string }) {
   return (
@@ -23,14 +24,9 @@ function ArchiveSubmitButton({ recipeName }: { recipeName: string }) {
   const { pending } = useFormStatus();
 
   return (
-    <button
-      type="submit"
-      aria-label={`${recipeName}を一覧から削除`}
-      disabled={pending}
-      className="inline-flex min-h-11 items-center gap-1.5 rounded px-3 text-xs text-kondate-faint transition-colors hover:bg-kondate-alertSoft hover:text-kondate-alert focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kondate-ink disabled:cursor-wait disabled:opacity-50"
-    >
+    <Button type="submit" variant="danger" size="sm" aria-label={`${recipeName}を一覧から削除`} disabled={pending} className="disabled:cursor-wait">
       <Trash2 size={16} aria-hidden="true" />
       {pending ? "削除中..." : "削除"}
-    </button>
+    </Button>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
+import { Button } from "@/components/ui/Button";
 
 export function AuthField({
   id,
@@ -17,8 +18,8 @@ export function AuthField({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="mb-2 block text-sm font-black">
-        {label} <span className="text-xs text-kondate-muted">（必須）</span>
+      <label htmlFor={id} className="mb-1.5 block text-sm font-semibold">
+        {label} <span className="text-xs font-normal text-kondate-faint">（必須）</span>
       </label>
       <input
         id={id}
@@ -28,10 +29,11 @@ export function AuthField({
         minLength={type === "password" ? 8 : undefined}
         autoComplete={autoComplete}
         aria-describedby={helper ? `${id}-helper` : undefined}
-        className="min-h-12 w-full border-2 border-kondate-ink bg-white px-3 text-base text-kondate-ink outline-none transition focus:border-kondate-accent focus:ring-2 focus:ring-kondate-accentSoft"
+        // 角はボタンと揃えて8px。フォーカスは朱の枠と薄いリングで確実に見えるようにする
+        className="min-h-12 w-full rounded-lg border border-kondate-line bg-white px-3.5 text-base text-kondate-ink outline-none transition-colors focus:border-kondate-accent focus:ring-2 focus:ring-kondate-accent/15"
       />
       {helper ? (
-        <p id={`${id}-helper`} className="mt-1.5 text-xs leading-5 text-kondate-muted">
+        <p id={`${id}-helper`} className="mt-1.5 text-xs leading-6 text-kondate-faint">
           {helper}
         </p>
       ) : null}
@@ -42,12 +44,8 @@ export function AuthField({
 export function AuthSubmit({ children }: { children: React.ReactNode }) {
   const { pending } = useFormStatus();
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="min-h-12 w-full cursor-pointer bg-kondate-accent px-4 font-black text-white transition hover:bg-[#b83f0b] disabled:cursor-wait disabled:bg-kondate-line disabled:text-kondate-muted"
-    >
+    <Button type="submit" disabled={pending} fullWidth className="disabled:cursor-wait">
       {pending ? "処理しています..." : children}
-    </button>
+    </Button>
   );
 }

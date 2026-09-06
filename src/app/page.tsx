@@ -1,6 +1,7 @@
 import { ArrowRight, Check, ChefHat, Clock3, ListChecks, ShoppingBasket, Users } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { buttonClass } from "@/components/ui/Button";
 import { hasAuthenticatedSession } from "@/lib/auth/session";
 import { menuData } from "@/lib/menuData";
 import { findTodayPlan } from "@/lib/services/planService";
@@ -22,14 +23,14 @@ export default async function LandingPage() {
     <main className="min-h-dvh bg-white">
       <header className="border-b-2 border-kondate-ink bg-white">
         <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Link href="/" aria-label="きょうのごはん トップ" className="flex min-h-11 shrink-0 items-center gap-2 font-black">
-            <span className="grid size-9 place-items-center bg-kondate-accent text-white"><ChefHat size={20} aria-hidden="true" /></span>
-            <span className="hidden whitespace-nowrap sm:inline">きょうのごはん</span>
+          <Link href="/" aria-label="きょうのごはん トップ" className="flex min-h-11 shrink-0 items-center gap-2 text-kondate-ink">
+            <ChefHat size={20} className="text-kondate-accent" aria-hidden="true" />
+            <span className="font-mincho hidden whitespace-nowrap text-lg font-bold sm:inline">きょうのごはん</span>
           </Link>
           <nav aria-label="メインナビゲーション" className="flex items-center gap-1 sm:gap-3">
             <Link href="/pricing" className="hidden min-h-11 items-center px-3 text-sm font-black text-kondate-muted sm:inline-flex">料金</Link>
             {!isAuthenticated ? <Link href="/login" className="inline-flex min-h-11 shrink-0 items-center whitespace-nowrap px-3 text-sm font-black text-kondate-ink">ログイン</Link> : null}
-            <Link href={primaryHref} className="inline-flex min-h-11 shrink-0 items-center whitespace-nowrap bg-kondate-ink px-4 text-sm font-black text-white transition hover:bg-kondate-accent">{primaryLabel}</Link>
+            <Link href={primaryHref} className={buttonClass({ variant: "ink", className: "min-h-11 shrink-0 whitespace-nowrap px-4 text-sm" })}>{primaryLabel}</Link>
           </nav>
         </div>
       </header>
@@ -44,8 +45,8 @@ export default async function LandingPage() {
             <p className="font-mincho mt-5 text-xl font-bold leading-9 sm:text-2xl">考えるのは、週に一度。<br className="sm:hidden" />あとは今日の段取りを見るだけ。</p>
           </div>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:pl-7">
-            <Link href={primaryHref} className="inline-flex min-h-12 items-center justify-center gap-2 bg-kondate-accent px-6 font-black text-white transition hover:bg-[#a93b18]">{isAuthenticated ? "献立の続きを開く" : "無料で使ってみる"} <ArrowRight size={18} aria-hidden="true" /></Link>
-            <Link href="/demo/planner" className="inline-flex min-h-12 items-center justify-center border-2 border-white bg-white/95 px-6 font-black text-kondate-ink">献立生成を試す</Link>
+            <Link href={primaryHref} className={buttonClass({ className: "px-6" })}>{isAuthenticated ? "献立の続きを開く" : "無料で使ってみる"} <ArrowRight size={18} aria-hidden="true" /></Link>
+            <Link href="/demo/planner" className={buttonClass({ variant: "secondary", className: "border-white bg-white px-6 text-kondate-ink hover:border-white hover:bg-kondate-bg" })}>献立生成を試す</Link>
           </div>
         </div>
       </section>
@@ -92,14 +93,14 @@ export default async function LandingPage() {
           <div className="flex items-center gap-2 text-sm font-black text-[#285b35]"><Users size={18} aria-hidden="true" />家族プラン</div>
           <div className="mt-4 grid gap-8 border-t-2 border-kondate-ink pt-6 md:grid-cols-[1fr_auto] md:items-end">
             <div><h2 className="font-mincho text-3xl font-black leading-tight sm:text-4xl">「やった」が、家族みんなに伝わる。</h2><p className="mt-4 max-w-2xl leading-7 text-kondate-muted">買ったものも、終わった仕込みもリアルタイムで共有。ひとりに集中していたごはん管理を、家族の共同作業に変えます。</p><ul className="mt-6 flex flex-col gap-3 text-sm font-bold sm:flex-row sm:gap-6">{["献立・買い物共有", "チェック状態の同期", "季節テンプレート"].map(item => <li key={item} className="flex gap-2"><Check size={18} className="shrink-0 text-[#285b35]" />{item}</li>)}</ul></div>
-            <div className="border-l-4 border-kondate-accent pl-5"><p className="text-sm font-black">家族みんなで</p><p className="mt-1 text-4xl font-black">月480円</p><Link href="/pricing" className="mt-5 inline-flex min-h-12 items-center gap-2 bg-kondate-ink px-6 font-black text-white">詳しく見る <ArrowRight size={18} /></Link></div>
+            <div className="border-l-4 border-kondate-accent pl-5"><p className="text-sm font-black">家族みんなで</p><p className="mt-1 text-4xl font-black">月480円</p><Link href="/pricing" className={buttonClass({ variant: "ink", className: "mt-5 px-6" })}>詳しく見る <ArrowRight size={18} /></Link></div>
           </div>
         </div>
       </section>
 
-      <section className="bg-kondate-accent px-4 py-14 text-white sm:px-6"><div className="mx-auto flex max-w-6xl flex-col gap-6 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-mincho text-3xl font-black">次のごはんから、迷わない。</p><p className="mt-2 text-sm font-bold text-[#ffe4d8]">{isAuthenticated ? "保存した献立の続きから始められます。" : "カード登録なし。無料版から始められます。"}</p></div><Link href={primaryHref} className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 bg-white px-7 font-black text-kondate-ink">{primaryLabel} <ArrowRight size={18} /></Link></div></section>
+      <section className="bg-kondate-accent px-4 py-14 text-white sm:px-6"><div className="mx-auto flex max-w-6xl flex-col gap-6 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-mincho text-3xl font-black">次のごはんから、迷わない。</p><p className="mt-2 text-sm font-bold text-[#ffe4d8]">{isAuthenticated ? "保存した献立の続きから始められます。" : "カード登録なし。無料版から始められます。"}</p></div><Link href={primaryHref} className={buttonClass({ variant: "secondary", className: "shrink-0 border-white bg-white px-7 text-kondate-ink hover:border-white hover:bg-kondate-bg" })}>{primaryLabel} <ArrowRight size={18} /></Link></div></section>
 
-      <footer className="border-t-2 border-kondate-ink bg-white px-4 py-8 text-sm text-kondate-muted"><div className="mx-auto flex max-w-6xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><p className="font-black text-kondate-ink">きょうのごはん</p><div className="flex flex-wrap gap-x-5 gap-y-2"><Link href="/pricing">料金</Link><Link href="/business">運営サービス</Link><Link href="/terms">利用規約</Link><Link href="/privacy">プライバシー</Link><Link href="/legal">特商法表記</Link></div></div></footer>
+      <footer className="border-t-2 border-kondate-ink bg-white px-4 py-8 text-sm text-kondate-muted"><div className="mx-auto flex max-w-6xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><p className="font-mincho text-base font-bold text-kondate-ink">きょうのごはん</p><div className="flex flex-wrap gap-x-5 gap-y-2"><Link href="/pricing">料金</Link><Link href="/business">運営サービス</Link><Link href="/terms">利用規約</Link><Link href="/privacy">プライバシー</Link><Link href="/legal">特商法表記</Link></div></div></footer>
     </main>
   );
 }

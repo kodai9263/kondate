@@ -1,5 +1,6 @@
 import { Settings } from "lucide-react";
 import Link from "next/link";
+import { buttonClass } from "@/components/ui/Button";
 import { ShoppingSummaryLink } from "@/components/features/shopping/ShoppingSummaryLink";
 import { TodayBoard } from "@/components/features/today/TodayBoard";
 import { formatShoppingDay, getAdultEquivalent } from "@/lib/family/servings";
@@ -43,7 +44,7 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
         <p className="text-sm text-kondate-muted">きょうのごはん</p>
         <div className="flex items-center gap-1">
           <Link href="/pricing" className="inline-flex min-h-11 items-center px-2 text-sm text-kondate-accent">家族プラン</Link>
-          <Link href="/account" aria-label="アカウント設定" title="アカウント設定" className="grid size-11 place-items-center rounded border border-kondate-line bg-white text-kondate-muted"><Settings size={19} /></Link>
+          <Link href="/account" aria-label="アカウント設定" title="アカウント設定" className={buttonClass({ variant: "secondary", size: "icon" })}><Settings size={19} /></Link>
         </div>
       </header>
       {params.notice === "family-joined" ? <p role="status" className="mb-5 rounded border border-kondate-done/30 bg-kondate-doneSoft p-3 text-sm text-kondate-ink">家族グループに参加しました。</p> : null}

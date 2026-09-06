@@ -1,5 +1,6 @@
 import { ArrowLeft, Users } from "lucide-react";
 import Link from "next/link";
+import { Button, buttonClass } from "@/components/ui/Button";
 import { AuthShell } from "@/components/features/auth/AuthShell";
 import { acceptFamilyInvite } from "@/app/invite/[token]/actions";
 import { normalizeInviteToken } from "@/lib/family/invites";
@@ -57,12 +58,12 @@ export default async function InvitePage({
       {user ? (
         <form action={acceptFamilyInvite} className="mt-5">
           <input type="hidden" name="inviteToken" value={inviteToken} />
-          <button type="submit" className="inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-kondate-accent px-4 font-black text-white">この家族グループに参加</button>
+          <Button type="submit" fullWidth>この家族グループに参加</Button>
         </form>
       ) : (
         <div className="mt-5 grid gap-3">
-          <Link href={`/signup?invite=${inviteToken}`} className="inline-flex min-h-12 items-center justify-center rounded-lg bg-kondate-accent px-4 font-black text-white">無料登録して参加</Link>
-          <Link href={`/login?invite=${inviteToken}`} className="inline-flex min-h-12 items-center justify-center rounded-lg border border-kondate-line bg-white px-4 font-black text-kondate-ink">ログインして参加</Link>
+          <Link href={`/signup?invite=${inviteToken}`} className={buttonClass({ className: "px-4" })}>無料登録して参加</Link>
+          <Link href={`/login?invite=${inviteToken}`} className={buttonClass({ variant: "secondary", className: "px-4" })}>ログインして参加</Link>
         </div>
       )}
     </AuthShell>
