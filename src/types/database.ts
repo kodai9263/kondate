@@ -195,6 +195,20 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: string;
       };
+      reset_recipe_step_customization: {
+        Args: {
+          target_recipe_id: string;
+        };
+        Returns: boolean;
+      };
+      save_recipe_step_customization: {
+        Args: {
+          target_recipe_id: string;
+          morning_steps_text: string;
+          evening_steps_text: string;
+        };
+        Returns: string;
+      };
       get_household_invite: {
         Args: {
           invite_token_input: string;
