@@ -1,4 +1,5 @@
-import { Crown, Plus } from "lucide-react";
+import { ChevronRight, Crown, Plus } from "lucide-react";
+import type { Route } from "next";
 import Link from "next/link";
 import { buttonClass } from "@/components/ui/Button";
 import { ArchiveRecipeButton } from "@/components/features/recipes/ArchiveRecipeButton";
@@ -11,11 +12,17 @@ export default async function RecipesPage({ searchParams }: { searchParams: Prom
   const supabase = await getSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = await supabase.from("profiles").select("household_id").eq("id", user?.id ?? "").maybeSingle();
-  const [{ data: customRecipes }, { data: subscription }, { data: exclusions }] = await Promise.all([
+  const [{ data: customRecipeRows }, { data: subscription }, { data: exclusions }] = await Promise.all([
     supabase.from("recipes").select("id,name,cook_minutes,protein_source,meta").not("household_id", "is", null).is("archived_at", null).order("created_at", { ascending: false }),
     profile?.household_id ? supabase.from("household_subscriptions").select("status,current_period_end").eq("household_id", profile.household_id).maybeSingle() : Promise.resolve({ data: null }),
     supabase.from("household_recipe_exclusions").select("recipe_key"),
   ]);
+  const customRecipes = (customRecipeRows ?? []).filter((recipe) => !isStepCustomization(recipe.meta));
+  const customizedOfficialKeys = new Set((customRecipeRows ?? []).flatMap((recipe) => {
+    if (!isStepCustomization(recipe.meta)) return [];
+    const key = getMetaString(recipe.meta, "nutrition_catalog_id");
+    return key ? [key] : [];
+  }));
   const paid = subscription ? isActiveSubscriptionStatus(subscription.status, subscription.current_period_end) : false;
   const excludedRecipeKeys = new Set((exclusions ?? []).map((row) => row.recipe_key));
   const visibleOfficialRecipes = officialNutritionRecipes.filter((recipe) => !excludedRecipeKeys.has(recipe.id));
@@ -24,16 +31,27 @@ export default async function RecipesPage({ searchParams }: { searchParams: Prom
     {deleted ? <p role="status" className="mt-5 rounded border border-kondate-done/30 bg-kondate-doneSoft p-3 text-sm">メニューを削除しました。今後の献立候補には入りません。</p> : null}
     {error === "delete" ? <p role="alert" className="mt-5 rounded border border-kondate-alert/30 bg-kondate-alertSoft p-3 text-sm text-kondate-alert">メニューを削除できませんでした。時間をおいて、もう一度お試しください。</p> : null}
     {customRecipes && customRecipes.length > 0 ? <section className="mt-8"><h2 className="text-sm font-semibold">わが家のメニュー</h2><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{customRecipes.map((recipe) => <RecipeCard key={recipe.id} id={recipe.id} name={recipe.name} minutes={recipe.cook_minutes} kind="custom" />)}</div></section> : <section className="mt-8 border-y border-kondate-line py-10 text-center"><p className="font-mincho text-lg font-bold">まだ自分のメニューはありません</p><p className="mt-2 text-sm text-kondate-muted">よく作る料理を登録すると、自動献立に混ぜられます。</p></section>}
-    <section className="mt-10"><div className="flex items-baseline justify-between gap-3"><h2 className="text-sm font-semibold">公式バランスメニュー</h2><p className="text-xs tabular-nums text-kondate-faint">{visibleOfficialRecipes.length}品</p></div>{visibleOfficialRecipes.length > 0 ? <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{visibleOfficialRecipes.map((recipe) => <RecipeCard key={recipe.id} recipeKey={recipe.id} name={recipe.name} minutes={recipe.cookMinutes} kind="official" />)}</div> : <p className="mt-4 border-y border-kondate-line py-10 text-center text-sm text-kondate-muted">表示できる公式メニューはありません。</p>}</section>
+    <section className="mt-10"><div className="flex items-baseline justify-between gap-3"><h2 className="text-sm font-semibold">公式バランスメニュー</h2><p className="text-xs tabular-nums text-kondate-faint">{visibleOfficialRecipes.length}品</p></div>{visibleOfficialRecipes.length > 0 ? <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{visibleOfficialRecipes.map((recipe) => <RecipeCard key={recipe.id} recipeKey={recipe.id} name={recipe.name} minutes={recipe.cookMinutes} kind="official" customized={customizedOfficialKeys.has(recipe.id)} />)}</div> : <p className="mt-4 border-y border-kondate-line py-10 text-center text-sm text-kondate-muted">表示できる公式メニューはありません。</p>}</section>
   </main>;
 }
 
 type RecipeCardProps = { name: string; minutes: number } & (
   | { kind: "custom"; id: string }
-  | { kind: "official"; recipeKey: string }
+  | { kind: "official"; recipeKey: string; customized: boolean }
 );
 
 function RecipeCard(props: RecipeCardProps) {
   const { kind, name, minutes } = props;
-  return <article className="grid min-h-18 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded border border-kondate-line bg-white px-4 py-3"><div className="min-w-0"><div className="flex items-start gap-2"><h3 className="font-mincho text-base font-bold leading-snug">{name}</h3>{kind === "custom" ? <span className="shrink-0 rounded-sm bg-kondate-accentSoft px-2 py-0.5 text-xs text-kondate-accent">わが家</span> : null}</div><p className="mt-1 text-xs tabular-nums text-kondate-faint">調理 {minutes}分</p></div>{kind === "custom" ? <ArchiveRecipeButton recipeKind="custom" recipeId={props.id} recipeName={name} /> : <ArchiveRecipeButton recipeKind="official" recipeKey={props.recipeKey} recipeName={name} />}</article>;
+  const href = (kind === "custom" ? `/app/recipes/custom/${props.id}` : `/app/recipes/official/${props.recipeKey}`) as Route;
+  return <article className="grid min-h-18 grid-cols-[minmax(0,1fr)_auto] items-center rounded border border-kondate-line bg-white transition-colors hover:border-kondate-ink"><Link href={href} className="group flex min-w-0 items-center justify-between gap-3 px-4 py-3"><div className="min-w-0"><div className="flex flex-wrap items-start gap-2"><h3 className="font-mincho text-base font-bold leading-snug">{name}</h3>{kind === "custom" ? <span className="shrink-0 rounded-sm bg-kondate-accentSoft px-2 py-0.5 text-xs text-kondate-accent">わが家</span> : props.customized ? <span className="shrink-0 rounded-sm bg-kondate-doneSoft px-2 py-0.5 text-xs text-kondate-done">アレンジ済み</span> : null}</div><p className="mt-1 text-xs tabular-nums text-kondate-faint">調理 {minutes}分</p></div><ChevronRight size={18} aria-hidden="true" className="shrink-0 text-kondate-faint transition-transform group-hover:translate-x-0.5" /></Link><div className="pr-3">{kind === "custom" ? <ArchiveRecipeButton recipeKind="custom" recipeId={props.id} recipeName={name} /> : <ArchiveRecipeButton recipeKind="official" recipeKey={props.recipeKey} recipeName={name} />}</div></article>;
+}
+
+function isStepCustomization(meta: unknown) {
+  return Boolean(meta && typeof meta === "object" && (meta as Record<string, unknown>).step_customization === true);
+}
+
+function getMetaString(meta: unknown, key: string) {
+  if (!meta || typeof meta !== "object") return null;
+  const value = (meta as Record<string, unknown>)[key];
+  return typeof value === "string" ? value : null;
 }
