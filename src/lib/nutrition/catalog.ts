@@ -93,6 +93,22 @@ export const officialNutritionRecipes: NutritionRecipe[] = [
   recipe("napolitan", "ナポリタン", "コーンスープ", 20, "noodle", 654, 22, 18, 100, 7.3, 2.3, 170),
   recipe("yaki-udon", "焼きうどん", "冷ややっこ", 20, "noodle", 625, 26, 17, 91, 7.8, 2.4, 190),
   recipe("salt-grilled-mackerel", "さばの塩焼き", "大根おろしと豆腐の味噌汁", 15, "fish", 638, 32, 22, 76, 6.7, 2.2, 145),
+  recipe("shrimp-mayo-fried-rice", "エビマヨチャーハン", "中華風コーンスープ", 20, "egg", 704, 25, 25, 92, 4.8, 2.5, 105),
+  recipe("napa-cabbage-fried-rice", "白菜チャーハン", "わかめスープ", 18, "egg", 655, 23, 20, 94, 5.9, 2.3, 175),
+  recipe("yurinchi-fried-rice", "油淋鶏チャーハン", "青菜の中華スープ", 30, "meat", 735, 32, 27, 91, 5.6, 2.6, 160),
+  recipe("chinese-bowl", "中華丼", "中華風たまごスープ", 25, "meat", 684, 27, 19, 98, 8.2, 2.5, 245),
+  recipe("black-fried-rice", "ブラックチャーハン", "もやしと卵のスープ", 18, "egg", 677, 24, 22, 93, 5.1, 2.7, 135),
+  recipe("mapo-fried-rice", "麻婆チャーハン", "中華風わかめスープ", 25, "meat", 720, 29, 24, 94, 6.4, 2.8, 180),
+  recipe("pork-ginger-bowl", "豚肉生姜焼き丼", "キャベツと豆腐の味噌汁", 20, "meat", 728, 30, 24, 101, 6.8, 2.5, 170),
+  recipe("tenshin-bowl", "天津丼", "小松菜ときのこの中華スープ", 25, "egg", 676, 25, 19, 102, 5.2, 2.6, 155),
+  recipe("liver-chive-stir-fry", "レバニラ炒め", "ごはんと中華スープ", 20, "meat", 650, 29, 21, 88, 6.7, 2.5, 235),
+  recipe("pork-vegetable-stir-fry", "肉野菜炒め", "ごはんとわかめスープ", 20, "meat", 665, 28, 21, 91, 8.8, 2.4, 275),
+  recipe("restaurant-hoikoro", "ホイコーロー", "ごはんと卵スープ", 20, "meat", 690, 29, 24, 92, 7.8, 2.6, 260),
+  recipe("mapo-bowl", "麻婆丼", "もやしとわかめの中華スープ", 20, "meat", 704, 28, 23, 96, 6.1, 2.8, 175),
+  recipe("pork-wood-ear-egg", "豚肉・きくらげと卵炒め", "ごはんと中華スープ", 20, "meat", 679, 30, 24, 89, 6.5, 2.5, 205),
+  recipe("fried-chicken-black-vinegar", "鶏唐揚げ黒酢あんかけ", "ごはんと中華スープ", 30, "meat", 738, 33, 28, 95, 6.9, 2.7, 225),
+  recipe("chinjao-rosu", "チンジャオロース", "ごはんと中華スープ", 20, "meat", 672, 29, 21, 92, 7.2, 2.5, 245),
+  recipe("beef-pepper-rice", "ビーフペッパーライス", "コーンと卵のスープ", 20, "meat", 748, 29, 28, 97, 4.9, 2.6, 125),
 ];
 
 function recipe(
