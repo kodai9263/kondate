@@ -65,4 +65,5 @@ comment on table public.recipe_steps is
   '朝の仕込み、材料・調味料、夜の調理工程。plan_entries と task_states を通して家族でチェック状態を共有する';
 `;
 
-writeFileSync(resolve("supabase/migrations/202608310021_official_recipe_details.sql"), sql);
+const outputPath = process.argv[2] ?? "supabase/migrations/202608310021_official_recipe_details.sql";
+writeFileSync(resolve(outputPath), sql);

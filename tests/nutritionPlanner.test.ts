@@ -3,9 +3,9 @@ import { officialNutritionRecipes } from "@/lib/nutrition/catalog";
 import { generateMonthlyDinnerPlan, isRecipeInSeason, rankAlternativeRecipes, summarizeNutrition } from "@/lib/nutrition/planner";
 
 describe("generateMonthlyDinnerPlan", () => {
-  it("公式メニューを78品持ち、旬月が正しい範囲にある", () => {
-    expect(officialNutritionRecipes).toHaveLength(78);
-    expect(new Set(officialNutritionRecipes.map((recipe) => recipe.id)).size).toBe(78);
+  it("公式メニューを94品持ち、旬月が正しい範囲にある", () => {
+    expect(officialNutritionRecipes).toHaveLength(94);
+    expect(new Set(officialNutritionRecipes.map((recipe) => recipe.id)).size).toBe(94);
     for (const recipe of officialNutritionRecipes) {
       expect(recipe.seasonMonths?.every((month) => month >= 1 && month <= 12)).toBe(true);
     }
@@ -17,6 +17,10 @@ describe("generateMonthlyDinnerPlan", () => {
       "three-color-soboro-bowl", "pork-kimchi", "mushroom-cream-stew", "atsuage-sweet-savory",
       "basic-curry", "hamburg", "gyudon", "fried-chicken", "hoikoro",
       "vegetable-stir-fry", "fried-rice", "napolitan", "yaki-udon", "salt-grilled-mackerel",
+      "shrimp-mayo-fried-rice", "napa-cabbage-fried-rice", "yurinchi-fried-rice", "chinese-bowl",
+      "black-fried-rice", "mapo-fried-rice", "pork-ginger-bowl", "tenshin-bowl", "liver-chive-stir-fry",
+      "pork-vegetable-stir-fry", "restaurant-hoikoro", "mapo-bowl", "pork-wood-ear-egg",
+      "fried-chicken-black-vinegar", "chinjao-rosu", "beef-pepper-rice",
     ];
     const staples = officialNutritionRecipes.filter((recipe) => stapleIds.includes(recipe.id));
 
