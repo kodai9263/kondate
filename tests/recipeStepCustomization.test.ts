@@ -34,7 +34,9 @@ describe("メニュー工程のアレンジ", () => {
   it("アレンジ版を今日以降の献立と月間候補へ反映する", () => {
     expect(migrationSource).toContain("date >= (timezone('Asia/Tokyo', now()))::date");
     expect(migrationSource).toContain("set recipe_id = customized_recipe_id");
-    expect(plannerServerSource).toContain("stepCustomizations.get(databaseId)");
+    expect(plannerServerSource).toContain("stepCustomizationIds.set(sourceRecipeId, row.id)");
+    expect(plannerServerSource).toContain("stepCustomizationIds.get(databaseId)");
+    expect(plannerServerSource.indexOf("stepCustomizationIds.set")).toBeLessThan(plannerServerSource.indexOf("mapCustomRecipe(row"));
   });
 
   it("カードから編集画面を開き、公式工程へ戻せる", () => {
