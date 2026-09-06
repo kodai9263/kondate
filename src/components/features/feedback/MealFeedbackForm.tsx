@@ -12,9 +12,9 @@ export function MealFeedbackForm({ servedOn, recipeName, status }: { servedOn: s
         <input type="hidden" name="servedOn" value={servedOn} />
         <input type="hidden" name="recipeName" value={recipeName} />
         <div className="grid grid-cols-3 gap-2">
-          <button type="submit" name="rating" value="love" className="flex min-h-12 flex-col items-center justify-center gap-1 rounded border border-kondate-done/40 bg-kondate-doneSoft px-2 text-xs text-kondate-done transition-colors hover:border-kondate-done"><Heart size={17} aria-hidden="true" />家族に好評</button>
-          <button type="submit" name="rating" value="ok" className="flex min-h-12 flex-col items-center justify-center gap-1 rounded border border-kondate-line bg-white px-2 text-xs text-kondate-muted transition-colors hover:border-kondate-ink"><Meh size={17} aria-hidden="true" />普通</button>
-          <button type="submit" name="rating" value="avoid" className="flex min-h-12 flex-col items-center justify-center gap-1 rounded border border-kondate-alert/30 bg-kondate-alertSoft px-2 text-xs text-kondate-alert transition-colors hover:border-kondate-alert"><ThumbsDown size={17} aria-hidden="true" />もう出さない</button>
+          <button type="submit" name="rating" value="love" className="flex min-h-12 flex-col items-center justify-center gap-1 rounded-lg border border-kondate-done/40 bg-kondate-doneSoft px-2 text-xs text-kondate-done transition-colors hover:border-kondate-done"><Heart size={17} aria-hidden="true" />家族に好評</button>
+          <button type="submit" name="rating" value="ok" className="flex min-h-12 flex-col items-center justify-center gap-1 rounded-lg border border-kondate-line bg-white px-2 text-xs text-kondate-muted transition-colors hover:border-kondate-ink"><Meh size={17} aria-hidden="true" />普通</button>
+          <button type="submit" name="rating" value="avoid" className="flex min-h-12 flex-col items-center justify-center gap-1 rounded-lg border border-kondate-alert/30 bg-kondate-alertSoft px-2 text-xs text-kondate-alert transition-colors hover:border-kondate-alert"><ThumbsDown size={17} aria-hidden="true" />もう出さない</button>
         </div>
       </form>
     </section>

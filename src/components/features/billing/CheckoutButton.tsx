@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/Button";
 import type { BillingPlanId } from "@/lib/billing/plans";
 
 type CheckoutButtonProps = {
@@ -44,15 +45,10 @@ export function CheckoutButton({ planId, children }: CheckoutButtonProps) {
 
   return (
     <div className="mt-4 space-y-2">
-      <button
-        type="button"
-        className="min-h-12 w-full rounded-lg bg-kondate-accent px-4 font-black text-white disabled:bg-kondate-line disabled:text-kondate-muted"
-        disabled={loading}
-        onClick={startCheckout}
-      >
+      <Button fullWidth disabled={loading} onClick={startCheckout}>
         {loading ? "Checkoutを準備中" : children}
-      </button>
-      {error ? <p className="text-xs font-bold text-red-700">{error}</p> : null}
+      </Button>
+      {error ? <p className="text-xs text-kondate-alert">{error}</p> : null}
     </div>
   );
 }

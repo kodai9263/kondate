@@ -3,6 +3,7 @@ import { billingPlans } from "@/lib/billing/plans";
 import { CheckoutButton } from "@/components/features/billing/CheckoutButton";
 import { PortalButton } from "@/components/features/billing/PortalButton";
 import Link from "next/link";
+import { buttonClass } from "@/components/ui/Button";
 
 const requiredMessages: Record<string, string> = {
   family_sharing: "家族を招待するには家族プランが必要です。",
@@ -50,13 +51,13 @@ export function PricingSection({ isAuthenticated = false, requiredFeature, curre
               ))}
             </ul>
             {plan.id !== "free" && currentPlanId === plan.id ? (
-              <p className="mt-4 flex min-h-12 w-full items-center justify-center rounded-lg bg-kondate-sage px-4 font-black text-[#285b35]">現在利用中</p>
+              <p className="mt-4 flex min-h-12 w-full items-center justify-center rounded-lg bg-kondate-doneSoft px-4 text-[15px] font-semibold text-kondate-done">現在利用中</p>
             ) : plan.id !== "free" && currentPlanId ? (
-              <p className="mt-4 flex min-h-12 w-full items-center justify-center rounded-lg border border-kondate-line px-4 text-center text-sm font-black text-kondate-muted">プラン変更は契約管理から</p>
+              <p className="mt-4 flex min-h-12 w-full items-center justify-center rounded-lg border border-kondate-line px-4 text-center text-sm text-kondate-muted">プラン変更は契約管理から</p>
             ) : plan.id !== "free" && isAuthenticated ? (
               <CheckoutButton planId={plan.id}>{plan.id === "family_yearly" ? "年払いで始める" : "月払いで始める"}</CheckoutButton>
             ) : (
-              <Link href={isAuthenticated ? "/app" : "/signup"} className="mt-4 flex min-h-12 w-full items-center justify-center rounded-lg border border-kondate-line px-4 font-black text-kondate-muted">
+              <Link href={isAuthenticated ? "/app" : "/signup"} className={buttonClass({ variant: plan.id === "free" ? "secondary" : "primary", fullWidth: true, className: "mt-4 px-4" })}>
                 {plan.id === "free" ? "無料で使い始める" : "ログインして申し込む"}
               </Link>
             )}
