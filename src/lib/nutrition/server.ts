@@ -9,11 +9,12 @@ export async function getHouseholdPlannerContext(year: number, month: number) {
   const { firstDate, lastDate } = getMonthDateRange(year, month);
   const preferences = await getCurrentHouseholdPreferences();
   const supabase = await getSupabaseServer();
-  const [{ data: rows }, { data: officialRows }, { data: feedbackRows }, { data: savedRows }] = await Promise.all([
+  const [{ data: rows }, { data: officialRows }, { data: feedbackRows }, { data: savedRows }, { data: exclusions }] = await Promise.all([
     supabase.from("recipes").select("id,name,cook_minutes,image_url,protein_source,meta,recipe_nutrition(energy_kcal,protein_g,fat_g,carbs_g,fiber_g,salt_g,vegetables_g)").not("household_id", "is", null).is("archived_at", null),
     supabase.from("recipes").select("id,name,meta").is("household_id", null),
     supabase.from("meal_preferences").select("recipe_name,rating,updated_at").order("updated_at", { ascending: false }).limit(500),
     supabase.from("plan_entries").select("date,recipe_id,locked").eq("meal_type", "dinner").gte("date", firstDate).lte("date", lastDate),
+    supabase.from("household_recipe_exclusions").select("recipe_key"),
   ]);
 
   const custom = (rows ?? []).flatMap((row: Record<string, unknown>) => mapCustomRecipe(row));
@@ -25,7 +26,9 @@ export async function getHouseholdPlannerContext(year: number, month: number) {
     officialIdsByName.set(row.name, row.id);
   }
 
+  const excludedOfficialRecipeKeys = new Set((exclusions ?? []).map((row) => row.recipe_key));
   const official = officialNutritionRecipes.flatMap((recipe) => {
+    if (excludedOfficialRecipeKeys.has(recipe.id)) return [];
     const databaseId = officialIdsByKey.get(recipe.id) ?? officialIdsByName.get(recipe.name);
     return databaseId ? [{ ...recipe, id: databaseId }] : [];
   });

@@ -14,6 +14,8 @@ export const shoppingCategoryOrder = [
   "調味料(在庫確認)",
 ];
 
+export const seasoningShoppingCategory = "調味料(在庫確認)";
+
 export type ShoppingItemDraft = {
   category: string;
   name: string;

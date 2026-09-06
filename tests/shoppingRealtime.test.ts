@@ -33,6 +33,15 @@ describe("getShoppingBroadcastRecord", () => {
     });
   });
 
+  it("調味料の非表示状態を読み取る", () => {
+    expect(getShoppingBroadcastRecord({ event: "UPDATE", payload: { record: { ...item, source: "auto", dismissed: true } } })).toEqual({
+      ...item,
+      source: "auto",
+      dismissed: true,
+      eventType: "UPDATE",
+    });
+  });
+
   it("必要な項目がない通知は無視する", () => {
     expect(getShoppingBroadcastRecord({ event: "UPDATE", payload: { record: { name: "牛乳" } } })).toBeNull();
   });

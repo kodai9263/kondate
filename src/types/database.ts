@@ -142,6 +142,7 @@ export type Database = {
           category: string;
           source: "auto" | "manual";
           checked: boolean;
+          dismissed: boolean;
           checked_by: string | null;
           position: number;
         };
@@ -154,6 +155,7 @@ export type Database = {
           category?: string;
           source?: "auto" | "manual";
           checked?: boolean;
+          dismissed?: boolean;
           checked_by?: string | null;
           position?: number;
         };
@@ -166,6 +168,7 @@ export type Database = {
           category?: string;
           source?: "auto" | "manual";
           checked?: boolean;
+          dismissed?: boolean;
           checked_by?: string | null;
           position?: number;
         };
@@ -179,6 +182,14 @@ export type Database = {
           invite_token_input: string;
         };
         Returns: string;
+      };
+      dismiss_seasoning_shopping_item: {
+        Args: {
+          target_week_start: string;
+          target_name: string;
+          target_position: number;
+        };
+        Returns: boolean;
       };
       ensure_current_user_household: {
         Args: Record<PropertyKey, never>;
