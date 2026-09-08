@@ -14,6 +14,12 @@ describe("shoppingService", () => {
     expect(entries.at(-1)?.[0]).toBe("調味料(在庫確認)");
   });
 
+  it("朝食なしなら朝ごはん定番を表示しない", () => {
+    const entries = orderShoppingEntries(getStaticShoppingForTemplateWeek(menuData, 0), false);
+
+    expect(entries.some(([category]) => category === "朝ごはん定番")).toBe(false);
+  });
+
   it("再生成時に手動追加を保持する", () => {
     const items = buildShoppingItemsFromStaticList(getStaticShoppingForTemplateWeek(menuData, 0), [
       { category: "手動", name: "牛乳 追加", source: "manual", checked: true, position: 0 },

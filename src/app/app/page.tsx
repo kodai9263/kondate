@@ -13,9 +13,10 @@ import { getTodayPlanState } from "@/lib/today/server";
 
 export default async function AppHomePage({ searchParams }: { searchParams: Promise<{ mealFeedback?: string; notice?: string }> }) {
   const params = await searchParams;
-  const fallbackToday = findTodayPlan(menuData);
-  const [year, month] = fallbackToday.date.split("-").map(Number);
+  const baseToday = findTodayPlan(menuData);
+  const [year, month] = baseToday.date.split("-").map(Number);
   const plannerContext = await getHouseholdPlannerContext(year, month);
+  const fallbackToday = findTodayPlan(menuData, new Date(), plannerContext.preferences.breakfastChoices);
   const generatedPlan = generateMonthlyDinnerPlan({
     year,
     month,
@@ -37,7 +38,9 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
   const shoppingDayLabel = formatShoppingDay(preferences.shoppingDay);
   const shoppingCycle = getShoppingCycle(menuData, preferences.shoppingDay);
   const shoppingWeek = menuData.weeks[shoppingCycle.weekIndex];
-  const shoppingItemCount = Object.values(shoppingWeek.shopping).reduce((total, items) => total + items.length, 0);
+  const shoppingItemCount = Object.entries(shoppingWeek.shopping).reduce((total, [category, items]) => (
+    category === "朝ごはん定番" && preferences.breakfastChoices.length === 0 ? total : total + items.length
+  ), 0);
   return (
     <main className="mx-auto min-h-dvh w-full max-w-[560px] px-4 pb-24 pt-5">
       <header className="mb-6 flex items-center justify-between gap-3">

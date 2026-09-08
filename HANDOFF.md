@@ -28,7 +28,7 @@ menu_templates(28日×朝/夜)
 | ファイル | 役割 | 扱い |
 |---|---|---|
 | `kondate-requirements.md` | 要件定義書 v1.1(全17章+付録)。画面一覧・遷移図・**DB DDL**・API・状態管理・優先順位・季節対応(§16)・子ども評価(§17) | **仕様の正。実装前に全文を読むこと** |
-| `menu-data.json` | 実データ: 朝食4パターン+夜28食(手順・調味料分量つき)+週別買い物リスト。現在は夏版(6品差し替え済み) | **シードデータの原本**(§5参照) |
+| `menu-data.json` | 実データ: 選択式の朝食10パターン+夜28食(手順・調味料分量つき)+週別買い物リスト。現在は夏版(6品差し替え済み) | **シードデータの原本**(§5参照) |
 | `kondate-board.html` | 動くHTMLプロトタイプ(静的・依存ゼロ) | **UI/UXリファレンス**。今日画面/週表示/買い物リストの見た目・情報密度・文言のトーンはこれに合わせる。コードの流用は不要 |
 | `screen-flow.mermaid` | 画面遷移図 | 参考 |
 
@@ -50,7 +50,7 @@ menu_templates(28日×朝/夜)
 2. スキーマ+RLS: 要件§3のDDLをそのまま `supabase/migrations/` に。RLSは「自分のhouseholdのみ」+「household_id IS NULLの公式データはselectのみ全員可」
 3. シード投入(§5の方針で)
 4. 認証(Supabase Auth: メール+Google)+ オンボーディング3ステップ(家族人数→アレルギー・苦手→テンプレ選択)。完了時にテンプレを今日から28日分展開
-5. **今日画面(ホーム`/`)**: 日付+進捗、朝ごはん/調味料・分量/朝の仕込み/夜の手順の4ブロック、チェック(楽観的更新+rpc `toggle_task`)。時間帯で朝/夜セクションを自動フォーカス
+5. **今日画面(ホーム`/`)**: 日付+進捗、選択した場合のみ朝ごはん、調味料・分量/朝の仕込み/夜の手順、チェック(楽観的更新+rpc `toggle_task`)。朝食候補は`/account`で家庭ごとに選ぶ
 6. 献立週表示(`/plans`)+ レシピ詳細(`/recipes/[id]`、人数±で分量再計算)
 7. テンプレ展開API `POST /api/plans/apply-template`
 
@@ -73,7 +73,7 @@ menu_templates(28日×朝/夜)
 - `morning[]` → recipe_steps(phase='morning'), `evening[]` → recipe_steps(phase='evening')、position順
 - `prepMin/cookMin` → recipes.prep_minutes/cook_minutes、`fish`/`kids` → tags(`{'fish'}`/`{'kids'}`)
 - `seasonings[]` → **recipes.meta.seasonings(jsonb, string[])に格納**して詳細画面に表示
-- `breakfastRotation`+`weeks[].days[]` → menu_templates 1本 + template_entries(day_index 0-27, 日曜始まり)
+- `breakfastRotation`+`weeks[].days[]` → menu_templates 1本 + template_entries(day_index 0-27, 日曜始まり)。実際の朝食は`household_settings.breakfast_choices`で選んだ候補だけを順番に使う
 
 **ギャップ**: `recipe_ingredients`(材料の正規化データ)は**未作成**。したがって要件§6の「材料自動集計による買い物リスト生成」はまだ動かせない。MVPでは次のフォールバックを実装する:
 

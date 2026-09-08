@@ -38,7 +38,7 @@ export type MenuData = {
     seasonalSwaps: string[];
   };
   breakfasts: Record<string, Breakfast>;
-  breakfastRotation: Record<WeekdayJa, string>;
+  breakfastRotation: string[];
   weeks: MenuWeek[];
 };
 
@@ -46,7 +46,7 @@ export type PlanMeal = {
   date: string;
   dayIndex: number;
   dow: WeekdayJa;
-  breakfast: Breakfast;
+  breakfast: Breakfast | null;
   dinner: Dinner;
 };
 

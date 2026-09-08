@@ -11,6 +11,9 @@ import { submitAppFeedback } from "@/app/feedback/actions";
 import { buildInviteUrl, normalizeInviteToken } from "@/lib/family/invites";
 import { isActiveSubscriptionStatus } from "@/lib/billing/entitlements";
 import { ScrollToAccountTop } from "@/components/features/account/ScrollToAccountTop";
+import { breakfastKeys, normalizeBreakfastChoices } from "@/lib/breakfast/preferences";
+import { menuData } from "@/lib/menuData";
+import { BreakfastChoiceFieldset } from "@/components/features/account/BreakfastChoiceFieldset";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +43,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const [{ data: household }, { data: subscription }, { data: settings }, { data: invites }, { data: members }] = await Promise.all([
     supabase.from("households").select("name").eq("id", profile.household_id).single(),
     supabase.from("household_subscriptions").select("plan_id, status, current_period_end, cancel_at_period_end, stripe_customer_id").eq("household_id", profile.household_id).maybeSingle(),
-    supabase.from("household_settings").select("adult_count, child_count, shopping_day, allergies").eq("household_id", profile.household_id).maybeSingle(),
+    supabase.from("household_settings").select("adult_count, child_count, shopping_day, allergies, breakfast_choices").eq("household_id", profile.household_id).maybeSingle(),
     supabase.from("household_invites").select("invite_token, expires_at, accepted_at").eq("household_id", profile.household_id).is("accepted_at", null).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }).limit(3),
     supabase.from("profiles").select("id, display_name, created_at").eq("household_id", profile.household_id).order("created_at", { ascending: true }),
   ]);
@@ -51,6 +54,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const allergies = normalizeAllergies(settings?.allergies);
   const selectedAllergies = new Set(allergies);
   const customAllergies = getCustomAllergies(allergies);
+  const selectedBreakfasts = normalizeBreakfastChoices(settings?.breakfast_choices);
   const createdInviteToken = normalizeInviteToken(params.invite);
   const createdInviteUrl = createdInviteToken ? buildInviteUrl(createdInviteToken) : null;
 
@@ -71,6 +75,10 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           <label className="block text-sm font-semibold">メールアドレス<input value={user.email ?? ""} readOnly className="mt-2 min-h-12 w-full rounded border border-kondate-line bg-kondate-bg px-3 text-base text-kondate-muted" /></label>
           <fieldset className="border-t border-kondate-line pt-5"><legend className="flex items-center gap-2 px-1 font-semibold">家族の人数</legend><div className="mt-4 grid grid-cols-2 gap-3"><label className="text-sm font-semibold">大人<input name="adultCount" type="number" inputMode="numeric" min="1" max="10" required defaultValue={familySize.adultCount} className="mt-2 min-h-12 w-full rounded-lg border border-kondate-line bg-white px-3.5 text-base font-normal outline-none transition-colors focus:border-kondate-accent focus:ring-2 focus:ring-kondate-accent/15" /></label><label className="text-sm font-semibold">子ども<input name="childCount" type="number" inputMode="numeric" min="0" max="10" required defaultValue={familySize.childCount} className="mt-2 min-h-12 w-full rounded-lg border border-kondate-line bg-white px-3.5 text-base font-normal outline-none transition-colors focus:border-kondate-accent focus:ring-2 focus:ring-kondate-accent/15" /></label></div><p className="mt-3 text-xs leading-6 text-kondate-muted">{formatServingLabel(familySize)}。子どもは大人の0.6人前として献立と買い物を調整します。</p></fieldset>
           <label className="block border-t border-kondate-line pt-5 text-sm font-semibold"><span className="flex items-center gap-2">まとめ買いの曜日</span><select name="shoppingDay" defaultValue={shoppingDay} className="mt-3 min-h-12 w-full rounded-lg border border-kondate-line bg-white px-3.5 text-base font-normal outline-none transition-colors focus:border-kondate-accent focus:ring-2 focus:ring-kondate-accent/15">{shoppingWeekdays.map((weekday, index) => <option key={weekday} value={index}>{weekday}曜日</option>)}</select></label>
+          <BreakfastChoiceFieldset
+            initialSelectedKeys={selectedBreakfasts}
+            options={breakfastKeys.map((key) => ({ key, ...menuData.breakfasts[key] }))}
+          />
           <fieldset className="border-t border-kondate-line pt-5">
             <legend className="flex items-center gap-2 px-1 font-semibold">アレルギー・避けたい食材</legend>
             <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
