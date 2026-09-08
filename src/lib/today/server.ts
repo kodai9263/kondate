@@ -103,7 +103,7 @@ function buildBindings(today: PlanMeal, rows: DailyPlanRow[]): TodayTaskBindings
   const dinner = rows.find((row) => row.meal_type === "dinner");
 
   return {
-    breakfast: bindTasks(today.breakfast.tasks, breakfast, "morning"),
+    breakfast: bindTasks(today.breakfast?.tasks ?? [], breakfast, "morning"),
     seasoning: bindTasks(today.dinner.seasonings, dinner, "seasoning"),
     morning: bindTasks(today.dinner.morning, dinner, "morning"),
     evening: bindTasks(today.dinner.evening, dinner, "evening"),

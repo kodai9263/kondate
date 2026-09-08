@@ -77,7 +77,8 @@ menuData.weeks.forEach((week) => {
     }
 
     const dayIndex = menuData.weeks.indexOf(week) * 7 + dayOfWeek;
-    const breakfastName = menuData.breakfasts[menuData.breakfastRotation[day.dow]].name;
+    const breakfastKey = menuData.breakfastRotation[dayIndex];
+    const breakfastName = menuData.breakfasts[breakfastKey].name;
     statements.push(
       `insert into template_entries (template_id, day_index, meal_type, recipe_id) values ('00000000-0000-0000-0000-000000000001', ${dayIndex}, 'breakfast', ${recipeIdByName(
         breakfastName,

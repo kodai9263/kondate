@@ -12,7 +12,7 @@ export default async function ShoppingPage() {
   const savedState = await getSavedShoppingState(weekStart);
   const familySize = { adultCount: preferences.adultCount, childCount: preferences.childCount };
   const week = menuData.weeks[weekIndex];
-  const groups: ShoppingListGroup[] = orderShoppingEntries(week.shopping).map(([category, items]) => ({
+  const groups: ShoppingListGroup[] = orderShoppingEntries(week.shopping, preferences.breakfastChoices.length > 0).map(([category, items]) => ({
     category,
     items: items.map((name, position) => ({
       category,

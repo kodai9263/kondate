@@ -47,8 +47,8 @@ export function buildShoppingItemsFromStaticList(
   return [...autoItems, ...manualItems.filter((item) => item.source === "manual")];
 }
 
-export function orderShoppingEntries(shopping: ShoppingByCategory): Array<[string, string[]]> {
-  return Object.entries(shopping).sort(([a], [b]) => {
+export function orderShoppingEntries(shopping: ShoppingByCategory, includeBreakfast = true): Array<[string, string[]]> {
+  return Object.entries(shopping).filter(([category]) => includeBreakfast || category !== "朝ごはん定番").sort(([a], [b]) => {
     const ai = shoppingCategoryOrder.indexOf(a);
     const bi = shoppingCategoryOrder.indexOf(b);
     if (ai === -1 && bi === -1) return a.localeCompare(b, "ja");

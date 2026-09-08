@@ -14,9 +14,23 @@ describe("buildRotationPlan", () => {
   it("曜日に応じて朝食ローテーションを割り当てる", () => {
     const plan = buildRotationPlan(menuData, "2026-07-26");
 
-    expect(plan[0].breakfast.name).toContain("納豆");
-    expect(plan[1].breakfast.name).toContain("目玉焼き");
-    expect(plan[2].breakfast.name).toContain("鮭フレーク");
+    expect(plan[0].breakfast?.name).toContain("納豆");
+    expect(plan[1].breakfast?.name).toContain("目玉焼き");
+    expect(plan[2].breakfast?.name).toContain("鮭フレーク");
+  });
+
+  it("選んだ朝食だけを順番に割り当てる", () => {
+    const plan = buildRotationPlan(menuData, "2026-07-26", ["D", "I"]);
+
+    expect(plan[0].breakfast?.name).toContain("トースト");
+    expect(plan[1].breakfast?.name).toContain("コーンフレーク");
+    expect(plan[2].breakfast?.name).toContain("トースト");
+  });
+
+  it("朝食を全て外した場合は朝食を返さない", () => {
+    const plan = buildRotationPlan(menuData, "2026-07-26", []);
+
+    expect(plan.every((day) => day.breakfast === null)).toBe(true);
   });
 
   it("基準日からの経過日数で今日の献立を選ぶ", () => {

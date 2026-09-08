@@ -237,6 +237,7 @@ export type Database = {
           child_count_input: number;
           shopping_day_input: number;
           allergies_input: string[];
+          breakfast_choices_input: string[];
         };
         Returns: undefined;
       };

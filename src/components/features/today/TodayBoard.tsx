@@ -111,7 +111,7 @@ export function TodayBoard({
 
       {error ? <p role="alert" className="rounded border border-kondate-alert/30 bg-kondate-alertSoft p-3 text-sm text-kondate-alert">{error}</p> : null}
 
-      <MealBlock
+      {today.breakfast ? <MealBlock
         rule="border-kondate-morningInk"
         title="朝ごはん"
         minutes={today.breakfast.minutes}
@@ -119,7 +119,7 @@ export function TodayBoard({
         tasks={taskBindings.breakfast}
         pendingStepIds={pendingStepIds}
         onCheckedChange={updateTask}
-      />
+      /> : null}
 
       {taskBindings.morning.length > 0 ? <MealBlock
         rule="border-kondate-morningInk"
