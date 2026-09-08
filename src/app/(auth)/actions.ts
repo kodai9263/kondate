@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getAppUrl } from "@/lib/billing/stripe";
 import { normalizeInviteToken } from "@/lib/family/invites";
+import { normalizeSignupSource } from "@/lib/marketing/signupSource";
 import { getSupabaseServer, isSupabaseConfigured } from "@/lib/supabase/server";
 
 const emailSchema = z.string().trim().email();
@@ -44,6 +45,7 @@ export async function login(formData: FormData) {
 
 export async function signup(formData: FormData) {
   authReady("/signup");
+  const signupSource = normalizeSignupSource(formData.get("signupSource"));
   const parsed = z
     .object({
       displayName: z.string().trim().min(1).max(40),
@@ -64,7 +66,10 @@ export async function signup(formData: FormData) {
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
-      data: { display_name: parsed.data.displayName },
+      data: {
+        display_name: parsed.data.displayName,
+        ...(signupSource ? { signup_source: signupSource } : {}),
+      },
       emailRedirectTo: `${getAppUrl()}/auth/callback?next=${inviteToken ? `/invite/${inviteToken}` : "/app"}`,
     },
   });

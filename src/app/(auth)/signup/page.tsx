@@ -5,17 +5,20 @@ import { AuthMessage } from "@/components/features/auth/AuthMessage";
 import { AuthShell } from "@/components/features/auth/AuthShell";
 import { redirectIfAuthenticated } from "@/lib/auth/session";
 import { normalizeInviteToken } from "@/lib/family/invites";
+import { normalizeSignupSource } from "@/lib/marketing/signupSource";
 
-export default async function SignupPage({ searchParams }: { searchParams: Promise<{ error?: string; success?: string; invite?: string }> }) {
+export default async function SignupPage({ searchParams }: { searchParams: Promise<{ error?: string; success?: string; invite?: string; source?: string }> }) {
   await redirectIfAuthenticated();
-  const { error, success, invite } = await searchParams;
+  const { error, success, invite, source } = await searchParams;
   const inviteToken = normalizeInviteToken(invite);
+  const signupSource = normalizeSignupSource(source);
   return (
     <AuthShell title="無料で始める" description="まずは4週間の献立を試せます。カード登録は不要です。">
       <AuthMessage error={error} success={success} />
       {inviteToken ? <p className="mb-4 rounded-lg border border-kondate-line bg-kondate-bg p-3 text-sm text-kondate-muted">家族グループへの招待を受けて登録します。</p> : null}
       <form action={signup} className="space-y-4">
         {inviteToken ? <input type="hidden" name="inviteToken" value={inviteToken} /> : null}
+        {signupSource ? <input type="hidden" name="signupSource" value={signupSource} /> : null}
         <AuthField id="displayName" label="お名前" autoComplete="name" />
         <AuthField id="email" label="メールアドレス" type="email" autoComplete="email" />
         <AuthField id="password" label="パスワード" type="password" autoComplete="new-password" helper="8文字以上で設定してください。" />
