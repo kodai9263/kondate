@@ -58,7 +58,7 @@ alter table public.household_settings
     and breakfast_choices <@ array['A','B','C','D','E','F','G','H','I','J']::text[]
   );
 
-create function public.update_current_household_account(
+create or replace function public.update_current_household_account(
   display_name_input text,
   household_name_input text,
   adult_count_input integer,
