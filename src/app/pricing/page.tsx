@@ -10,6 +10,7 @@ export default async function PricingPage({ searchParams }: { searchParams: Prom
   const { required, checkout } = await searchParams;
   let isAuthenticated = false;
   let currentPlanId: string | undefined;
+  let canManageSubscription = false;
   if (isSupabaseConfigured()) {
     const supabase = await getSupabaseServer();
     const { data: { user } } = await supabase.auth.getUser();
@@ -17,8 +18,11 @@ export default async function PricingPage({ searchParams }: { searchParams: Prom
     if (user) {
       const { data: profile } = await supabase.from("profiles").select("household_id").eq("id", user.id).maybeSingle();
       if (profile?.household_id) {
-        const { data: subscription } = await supabase.from("household_subscriptions").select("plan_id,status,current_period_end").eq("household_id", profile.household_id).maybeSingle();
-        if (subscription && isActiveSubscriptionStatus(subscription.status, subscription.current_period_end)) currentPlanId = subscription.plan_id;
+        const { data: subscription } = await supabase.from("household_subscriptions").select("plan_id,status,current_period_end,stripe_customer_id").eq("household_id", profile.household_id).maybeSingle();
+        if (subscription && isActiveSubscriptionStatus(subscription.status, subscription.current_period_end)) {
+          currentPlanId = subscription.plan_id;
+          canManageSubscription = Boolean(subscription.stripe_customer_id);
+        }
       }
     }
   }
@@ -38,7 +42,7 @@ export default async function PricingPage({ searchParams }: { searchParams: Prom
           お申し込みを中断しました。料金は発生していません。
         </p>
       ) : null}
-      <PricingSection isAuthenticated={isAuthenticated} requiredFeature={required} currentPlanId={currentPlanId} />
+      <PricingSection isAuthenticated={isAuthenticated} requiredFeature={required} currentPlanId={currentPlanId} canManageSubscription={canManageSubscription} />
     </main>
   );
 }
