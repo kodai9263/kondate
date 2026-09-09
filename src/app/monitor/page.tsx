@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
-import { ArrowRight, CalendarDays, Check, ChefHat, Clock3, MessageCircleQuestion, ShoppingBasket, Users } from "lucide-react";
+import { ArrowRight, CalendarDays, Check, ChefHat, Clock3, ListChecks, MessageCircleQuestion, ShoppingBasket, Users } from "lucide-react";
 import Link from "next/link";
 import { TrackedLink } from "@/components/features/analytics/TrackedLink";
 import { buttonClass } from "@/components/ui/Button";
+import { buildMonitorSignupHref } from "@/lib/marketing/campaignParams";
 import { getMonitorCampaignStatus } from "@/lib/marketing/monitorCampaign.server";
+import { menuData } from "@/lib/menuData";
+import { findTodayPlan } from "@/lib/services/planService";
 
 export const dynamic = "force-dynamic";
 
@@ -30,9 +33,13 @@ const faqs = [
   { question: "料理が得意でなくても参加できますか？", answer: "参加できます。特別な材料を使わない、名前を見れば分かる家庭の定番メニューを中心にしています。" },
 ];
 
-export default async function MonitorPage() {
+export default async function MonitorPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const campaignParams = await searchParams;
   const monitorStatus = await getMonitorCampaignStatus();
   const accepting = monitorStatus.isAvailable && monitorStatus.isOpen;
+  const signupHref = buildMonitorSignupHref(campaignParams);
+  const today = findTodayPlan(menuData);
+  const previewDays = menuData.weeks[0].days.slice(0, 3);
   return (
     <main className="min-h-dvh bg-kondate-bg text-kondate-ink">
       <header className="border-b-2 border-kondate-ink bg-white">
@@ -45,28 +52,36 @@ export default async function MonitorPage() {
         </div>
       </header>
 
-      <section className="border-b-2 border-kondate-ink bg-white px-4 py-12 sm:px-6 sm:py-20">
-        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1fr_380px] lg:items-center">
+      <section className="border-b-2 border-kondate-ink bg-white px-4 py-10 sm:px-6 sm:py-16">
+        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(420px,1.1fr)] lg:items-center">
           <div>
             <p className="inline-flex min-h-11 items-center border-2 border-kondate-ink bg-kondate-morning px-4 text-sm font-black">{accepting ? `先着10家庭・残り${monitorStatus.remaining}家庭` : monitorStatus.isAvailable ? "10家庭に達したため受付終了" : "受付状況を確認できません"}</p>
-            <h1 className="font-mincho mt-6 text-[38px] font-black leading-[1.25] sm:text-6xl">平日の夕飯を考える時間を、<br className="hidden sm:block" />週に一度へ。</h1>
-            <p className="mt-6 max-w-2xl text-base leading-8 text-kondate-muted sm:text-lg">「きょうのごはん」は、献立・仕込み・買い物を家族で進める献立Todoアプリです。もっと使いやすくするため、実際の暮らしの中で2週間試してくださるご家庭を募集します。</p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              {accepting ? <TrackedLink href="/signup?source=monitor" eventName="monitor_signup_click" eventParams={{ placement: "hero" }} className={buttonClass({ className: "px-7" })}>14日間の無料モニターに参加 <ArrowRight size={18} aria-hidden="true" /></TrackedLink> : <span className={buttonClass({ variant: "secondary", className: "cursor-not-allowed px-7 text-kondate-muted" })}>無料モニター受付終了</span>}
-              <TrackedLink href="/demo/planner?source=monitor" eventName="monitor_demo_click" eventParams={{ placement: "hero" }} className={buttonClass({ variant: "secondary", className: "px-7" })}>登録前に献立を試す</TrackedLink>
+            <h1 className="font-mincho mt-6 text-[34px] font-black leading-[1.3] sm:text-5xl">夕方の献立決めを、<br />14日間だけ手放してみませんか。</h1>
+            <p className="mt-6 max-w-2xl text-base leading-8 text-kondate-muted sm:text-lg">4週間の献立、今日の段取り、買い物リストまでひと続き。普段の夕飯で試してくださるご家庭を募集しています。</p>
+            <ul className="mt-6 grid gap-2 text-sm font-bold sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+              {["入力は3項目", "カード登録不要", "自動課金なし"].map((item) => <li key={item} className="flex items-center gap-2"><Check size={17} className="shrink-0 text-kondate-accent" aria-hidden="true" />{item}</li>)}
+            </ul>
+            <div className="mt-8">
+              {accepting ? <TrackedLink href={signupHref} eventName="monitor_signup_click" eventParams={{ placement: "hero" }} className={buttonClass({ className: "w-full px-7 sm:w-auto" })}>1分で無料モニターを始める <ArrowRight size={18} aria-hidden="true" /></TrackedLink> : <span className={buttonClass({ variant: "secondary", className: "w-full cursor-not-allowed px-7 text-kondate-muted sm:w-auto" })}>無料モニター受付終了</span>}
             </div>
-            <p className="mt-4 text-xs leading-6 text-kondate-faint">家族プランの全機能を14日間無料・カード登録不要・終了後の自動課金なし</p>
+            <p className="mt-4 text-xs leading-6 text-kondate-faint">登録後すぐに、家族プランの全機能を14日間無料で使えます。</p>
           </div>
 
-          <aside className="border-2 border-kondate-ink bg-kondate-sage p-6 sm:p-8" aria-label="モニター概要">
-            <p className="text-xs font-black text-[#285b35]">MONITOR DETAILS</p>
-            <h2 className="font-mincho mt-2 text-2xl font-black">ご協力いただきたいこと</h2>
-            <dl className="mt-6 space-y-4 border-t-2 border-kondate-ink pt-5 text-sm">
-              <div className="grid grid-cols-[88px_1fr] gap-3"><dt className="font-black">対象</dt><dd className="text-kondate-muted">平日の夕飯を用意するご家庭</dd></div>
-              <div className="grid grid-cols-[88px_1fr] gap-3"><dt className="font-black">期間</dt><dd className="text-kondate-muted">利用開始から約2週間</dd></div>
-              <div className="grid grid-cols-[88px_1fr] gap-3"><dt className="font-black">費用</dt><dd className="text-kondate-muted">無料</dd></div>
-              <div className="grid grid-cols-[88px_1fr] gap-3"><dt className="font-black">お願い</dt><dd className="text-kondate-muted">終了後の簡単なアンケート</dd></div>
-            </dl>
+          <aside className="border-2 border-kondate-ink bg-kondate-bg" aria-label="アプリ画面のプレビュー">
+            <div className="grid border-b-2 border-kondate-ink sm:grid-cols-[140px_1fr]">
+              <div className="bg-kondate-ink p-5 text-white"><p className="text-xs font-black">TODAY</p><p className="font-mincho mt-2 text-xl font-black">{today.date}</p><p className="mt-6 text-xs text-[#dce2dc]">夜 {today.dinner.cookMin}分</p></div>
+              <div className="grid grid-cols-2">
+                <div className="border-r border-kondate-ink bg-kondate-morning p-4"><p className="text-xs font-black text-[#765708]">朝の仕込み</p><p className="mt-2 text-sm font-black leading-6">{today.dinner.dinner}</p><p className="mt-2 line-clamp-2 text-xs leading-5 text-kondate-muted">{today.dinner.morning[0]}</p></div>
+                <div className="bg-kondate-evening p-4"><p className="text-xs font-black text-[#3155a4]">夜の手順</p><p className="mt-2 text-sm font-black leading-6">{today.dinner.side}</p><p className="mt-2 line-clamp-2 text-xs leading-5 text-kondate-muted">{today.dinner.evening[0]}</p></div>
+              </div>
+            </div>
+            <div className="p-5">
+              <div className="flex items-center justify-between gap-3"><div><p className="text-xs font-black text-kondate-accent">WEEK 1</p><p className="font-mincho mt-1 text-lg font-black">今週の夕ごはん</p></div><ListChecks size={22} className="text-kondate-accent" aria-hidden="true" /></div>
+              <div className="mt-4 grid grid-cols-3 border-l border-t border-kondate-line">
+                {previewDays.map((day) => <div key={day.dow} className="min-h-28 border-b border-r border-kondate-line bg-white p-3"><p className="text-xs font-black text-kondate-accent">{day.dow}</p><p className="mt-2 text-xs font-black leading-5 sm:text-sm">{day.dinner}</p><p className="mt-1 text-[11px] leading-4 text-kondate-muted">{day.side}</p></div>)}
+              </div>
+              <TrackedLink href="/demo/planner?source=monitor" eventName="monitor_demo_click" eventParams={{ placement: "hero_preview" }} className="mt-4 inline-flex min-h-11 items-center text-sm font-bold text-kondate-accent underline underline-offset-4 hover:text-kondate-accentDark">登録前に献立デモを見る <ArrowRight size={16} aria-hidden="true" /></TrackedLink>
+            </div>
           </aside>
         </div>
       </section>
@@ -131,7 +146,7 @@ export default async function MonitorPage() {
       <section className="bg-kondate-accent px-4 py-14 text-white sm:px-6">
         <div className="mx-auto flex max-w-6xl flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div><p className="font-mincho text-3xl font-black">次のごはんから、試してみませんか。</p><p className="mt-2 text-sm font-bold text-[#ffe4d8]">率直な感想が、これからの「きょうのごはん」をつくります。</p></div>
-          {accepting ? <TrackedLink href="/signup?source=monitor" eventName="monitor_signup_click" eventParams={{ placement: "footer" }} className={buttonClass({ variant: "secondary", className: "shrink-0 border-white bg-white px-7 text-kondate-ink hover:border-white hover:bg-kondate-bg" })}>14日間の無料モニターに参加 <ArrowRight size={18} aria-hidden="true" /></TrackedLink> : <span className={buttonClass({ variant: "secondary", className: "shrink-0 cursor-not-allowed border-white bg-white px-7 text-kondate-muted" })}>無料モニター受付終了</span>}
+          {accepting ? <TrackedLink href={signupHref} eventName="monitor_signup_click" eventParams={{ placement: "footer" }} className={buttonClass({ variant: "secondary", className: "shrink-0 border-white bg-white px-7 text-kondate-ink hover:border-white hover:bg-kondate-bg" })}>1分で無料モニターを始める <ArrowRight size={18} aria-hidden="true" /></TrackedLink> : <span className={buttonClass({ variant: "secondary", className: "shrink-0 cursor-not-allowed border-white bg-white px-7 text-kondate-muted" })}>無料モニター受付終了</span>}
         </div>
       </section>
 
