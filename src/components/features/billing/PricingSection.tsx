@@ -11,7 +11,7 @@ const requiredMessages: Record<string, string> = {
   custom_recipes: "わが家のメニュー登録には家族プランが必要です。",
 };
 
-export function PricingSection({ isAuthenticated = false, requiredFeature, currentPlanId }: { isAuthenticated?: boolean; requiredFeature?: string; currentPlanId?: string }) {
+export function PricingSection({ isAuthenticated = false, requiredFeature, currentPlanId, canManageSubscription = false }: { isAuthenticated?: boolean; requiredFeature?: string; currentPlanId?: string; canManageSubscription?: boolean }) {
   return (
     <section className="space-y-4">
       {requiredFeature && requiredMessages[requiredFeature] ? <p role="status" className="border border-kondate-accent bg-[#fff4ef] p-4 text-sm font-black text-kondate-ink">{requiredMessages[requiredFeature]}</p> : null}
@@ -65,7 +65,7 @@ export function PricingSection({ isAuthenticated = false, requiredFeature, curre
         ))}
       </div>
 
-      {currentPlanId ? <div className="rounded-lg border border-kondate-line bg-kondate-surface p-4">
+      {currentPlanId && canManageSubscription ? <div className="rounded-lg border border-kondate-line bg-kondate-surface p-4">
         <h2 className="mb-2 text-base font-black">すでに契約している方</h2>
         <PortalButton />
       </div> : null}

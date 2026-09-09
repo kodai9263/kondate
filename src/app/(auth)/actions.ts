@@ -5,6 +5,7 @@ import { z } from "zod";
 import { getAppUrl } from "@/lib/billing/stripe";
 import { normalizeInviteToken } from "@/lib/family/invites";
 import { normalizeSignupSource } from "@/lib/marketing/signupSource";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { getSupabaseServer, isSupabaseConfigured } from "@/lib/supabase/server";
 
 const emailSchema = z.string().trim().email();
@@ -23,6 +24,31 @@ async function joinInviteIfPresent(supabase: Awaited<ReturnType<typeof getSupaba
   if (!inviteToken) return false;
   const { error } = await supabase.rpc("accept_household_invite", { invite_token_input: inviteToken });
   return !error;
+}
+
+async function reserveMonitorTrialSlot(reservationToken: string): Promise<"claimed" | "full" | "unavailable"> {
+  try {
+    const admin = getSupabaseAdmin();
+    const { data: claimed, error } = await admin.rpc("claim_monitor_trial_slot", { reservation_token: reservationToken });
+    if (error) {
+      console.error("Monitor trial claim failed", { code: error.code, message: error.message });
+      return "unavailable";
+    }
+    return claimed ? "claimed" : "full";
+  } catch (error) {
+    console.error("Monitor trial claim unavailable", error);
+    return "unavailable";
+  }
+}
+
+async function releaseMonitorTrialSlot(reservationToken: string) {
+  try {
+    const admin = getSupabaseAdmin();
+    const { error } = await admin.rpc("release_monitor_trial_slot", { reservation_token: reservationToken });
+    if (error) console.error("Monitor trial release failed", { code: error.code, message: error.message });
+  } catch (error) {
+    console.error("Monitor trial release unavailable", error);
+  }
 }
 
 export async function login(formData: FormData) {
@@ -62,6 +88,13 @@ export async function signup(formData: FormData) {
   if (!parsed.success) redirect("/signup?error=invalid");
 
   const supabase = await getSupabaseServer();
+  const monitorClaimToken = signupSource === "monitor" ? crypto.randomUUID() : null;
+  if (monitorClaimToken) {
+    const reservation = await reserveMonitorTrialSlot(monitorClaimToken);
+    if (reservation === "full") redirect("/signup?source=monitor&error=monitor-full");
+    if (reservation === "unavailable") redirect("/signup?source=monitor&error=monitor-unavailable");
+  }
+
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
@@ -69,12 +102,16 @@ export async function signup(formData: FormData) {
       data: {
         display_name: parsed.data.displayName,
         ...(signupSource ? { signup_source: signupSource } : {}),
+        ...(monitorClaimToken ? { monitor_claim_token: monitorClaimToken } : {}),
       },
       emailRedirectTo: `${getAppUrl()}/auth/callback?next=${inviteToken ? `/invite/${inviteToken}` : "/app"}`,
     },
   });
 
-  if (error) redirect("/signup?error=signup");
+  if (error) {
+    if (monitorClaimToken) await releaseMonitorTrialSlot(monitorClaimToken);
+    redirect(`/signup?${signupSource === "monitor" ? "source=monitor&" : ""}error=signup`);
+  }
   if (!data.session) redirect("/signup?success=check-email");
 
   await supabase.rpc("ensure_current_user_household");

@@ -51,6 +51,7 @@ export type Database = {
           stripe_subscription_id: string | null;
           current_period_end: string | null;
           cancel_at_period_end: boolean;
+          monitor_started_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -62,6 +63,7 @@ export type Database = {
           stripe_subscription_id?: string | null;
           current_period_end?: string | null;
           cancel_at_period_end?: boolean;
+          monitor_started_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -73,6 +75,7 @@ export type Database = {
           stripe_subscription_id?: string | null;
           current_period_end?: string | null;
           cancel_at_period_end?: boolean;
+          monitor_started_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -194,6 +197,27 @@ export type Database = {
       ensure_current_user_household: {
         Args: Record<PropertyKey, never>;
         Returns: string;
+      };
+      claim_monitor_trial_slot: {
+        Args: {
+          reservation_token: string;
+        };
+        Returns: boolean;
+      };
+      release_monitor_trial_slot: {
+        Args: {
+          reservation_token: string;
+        };
+        Returns: boolean;
+      };
+      get_monitor_campaign_status: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          capacity: number;
+          claimed: number;
+          remaining: number;
+          is_open: boolean;
+        }[];
       };
       reset_recipe_step_customization: {
         Args: {

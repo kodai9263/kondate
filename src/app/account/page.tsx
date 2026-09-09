@@ -42,13 +42,14 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
   const [{ data: household }, { data: subscription }, { data: settings }, { data: invites }, { data: members }] = await Promise.all([
     supabase.from("households").select("name").eq("id", profile.household_id).single(),
-    supabase.from("household_subscriptions").select("plan_id, status, current_period_end, cancel_at_period_end, stripe_customer_id").eq("household_id", profile.household_id).maybeSingle(),
+    supabase.from("household_subscriptions").select("plan_id, status, current_period_end, cancel_at_period_end, stripe_customer_id, monitor_started_at").eq("household_id", profile.household_id).maybeSingle(),
     supabase.from("household_settings").select("adult_count, child_count, shopping_day, allergies, breakfast_choices").eq("household_id", profile.household_id).maybeSingle(),
     supabase.from("household_invites").select("invite_token, expires_at, accepted_at").eq("household_id", profile.household_id).is("accepted_at", null).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }).limit(3),
     supabase.from("profiles").select("id, display_name, created_at").eq("household_id", profile.household_id).order("created_at", { ascending: true }),
   ]);
   const paid = subscription ? isActiveSubscriptionStatus(subscription.status, subscription.current_period_end) : false;
   const hasStripeCustomer = Boolean(subscription?.stripe_customer_id);
+  const isMonitorTrial = paid && Boolean(subscription?.monitor_started_at) && !hasStripeCustomer;
   const familySize = normalizeFamilySize(settings ? { adultCount: settings.adult_count, childCount: settings.child_count } : null);
   const shoppingDay = normalizeShoppingDay(settings?.shopping_day ?? defaultShoppingDay);
   const allergies = normalizeAllergies(settings?.allergies);
@@ -92,8 +93,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       </section>
 
       <section className="mt-4 rounded border border-kondate-line bg-white p-5">
-        <div className="flex items-start justify-between gap-3"><div><p className="flex items-center gap-2 font-semibold">契約プラン</p><p className="mt-1 text-sm text-kondate-muted">{paid ? "家族プランを利用中" : "無料プラン"}</p></div><span className="shrink-0 rounded-sm border border-kondate-line px-2 py-0.5 text-xs text-kondate-muted">{paid ? "有効" : "無料"}</span></div>
-        {paid ? hasStripeCustomer ? <div className="mt-4"><PortalButton /></div> : <p className="mt-4 rounded bg-kondate-bg p-3 text-sm leading-6 text-kondate-muted">運営者用PROのため、料金は発生していません。</p> : <Link href="/pricing" className={buttonClass({ variant: "secondary", className: "mt-4 w-full border-kondate-accent text-kondate-accent hover:border-kondate-accentDark hover:text-kondate-accentDark" })}>家族プランを見る</Link>}
+        <div className="flex items-start justify-between gap-3"><div><p className="flex items-center gap-2 font-semibold">契約プラン</p><p className="mt-1 text-sm text-kondate-muted">{isMonitorTrial ? "家族プランの無料モニター" : paid ? "家族プランを利用中" : "無料プラン"}</p></div><span className="shrink-0 rounded-sm border border-kondate-line px-2 py-0.5 text-xs text-kondate-muted">{isMonitorTrial ? "モニター" : paid ? "有効" : "無料"}</span></div>
+        {paid ? hasStripeCustomer ? <div className="mt-4"><PortalButton /></div> : <p className="mt-4 rounded bg-kondate-bg p-3 text-sm leading-6 text-kondate-muted">{isMonitorTrial ? `14日間は家族プランの全機能を無料で利用できます。${subscription?.current_period_end ? `終了予定: ${new Date(subscription.current_period_end).toLocaleDateString("ja-JP")}` : ""} 終了後は自動課金されず、無料プランへ戻ります。` : "運営者用PROのため、料金は発生していません。"}</p> : <Link href="/pricing" className={buttonClass({ variant: "secondary", className: "mt-4 w-full border-kondate-accent text-kondate-accent hover:border-kondate-accentDark hover:text-kondate-accentDark" })}>家族プランを見る</Link>}
       </section>
 
       <section className="mt-4 rounded border border-kondate-line bg-white p-5">

@@ -3,6 +3,9 @@ import { ArrowRight, CalendarDays, Check, ChefHat, Clock3, MessageCircleQuestion
 import Link from "next/link";
 import { TrackedLink } from "@/components/features/analytics/TrackedLink";
 import { buttonClass } from "@/components/ui/Button";
+import { getMonitorCampaignStatus } from "@/lib/marketing/monitorCampaign.server";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "無料モニター募集",
@@ -22,12 +25,14 @@ const steps = [
 ];
 
 const faqs = [
-  { question: "本当に無料ですか？", answer: "モニター期間は無料です。カード登録も必要ありません。モニター後に自動で有料契約へ切り替わることはありません。" },
+  { question: "本当に無料ですか？", answer: "14日間、月480円の家族プランと同じ機能を無料で使えます。カード登録は不要です。終了後は自動課金されず、データを残したまま無料プランへ戻ります。" },
   { question: "毎日使う必要がありますか？", answer: "ありません。普段の生活の中で、使いたい日にお試しください。使わなかった日や理由も大切なご意見です。" },
   { question: "料理が得意でなくても参加できますか？", answer: "参加できます。特別な材料を使わない、名前を見れば分かる家庭の定番メニューを中心にしています。" },
 ];
 
-export default function MonitorPage() {
+export default async function MonitorPage() {
+  const monitorStatus = await getMonitorCampaignStatus();
+  const accepting = monitorStatus.isAvailable && monitorStatus.isOpen;
   return (
     <main className="min-h-dvh bg-kondate-bg text-kondate-ink">
       <header className="border-b-2 border-kondate-ink bg-white">
@@ -43,14 +48,14 @@ export default function MonitorPage() {
       <section className="border-b-2 border-kondate-ink bg-white px-4 py-12 sm:px-6 sm:py-20">
         <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1fr_380px] lg:items-center">
           <div>
-            <p className="inline-flex min-h-11 items-center border-2 border-kondate-ink bg-kondate-morning px-4 text-sm font-black">募集枠 10家庭・参加無料</p>
+            <p className="inline-flex min-h-11 items-center border-2 border-kondate-ink bg-kondate-morning px-4 text-sm font-black">{accepting ? `先着10家庭・残り${monitorStatus.remaining}家庭` : monitorStatus.isAvailable ? "10家庭に達したため受付終了" : "受付状況を確認できません"}</p>
             <h1 className="font-mincho mt-6 text-[38px] font-black leading-[1.25] sm:text-6xl">平日の夕飯を考える時間を、<br className="hidden sm:block" />週に一度へ。</h1>
             <p className="mt-6 max-w-2xl text-base leading-8 text-kondate-muted sm:text-lg">「きょうのごはん」は、献立・仕込み・買い物を家族で進める献立Todoアプリです。もっと使いやすくするため、実際の暮らしの中で2週間試してくださるご家庭を募集します。</p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <TrackedLink href="/signup?source=monitor" eventName="monitor_signup_click" eventParams={{ placement: "hero" }} className={buttonClass({ className: "px-7" })}>無料モニターに参加する <ArrowRight size={18} aria-hidden="true" /></TrackedLink>
+              {accepting ? <TrackedLink href="/signup?source=monitor" eventName="monitor_signup_click" eventParams={{ placement: "hero" }} className={buttonClass({ className: "px-7" })}>14日間の無料モニターに参加 <ArrowRight size={18} aria-hidden="true" /></TrackedLink> : <span className={buttonClass({ variant: "secondary", className: "cursor-not-allowed px-7 text-kondate-muted" })}>無料モニター受付終了</span>}
               <TrackedLink href="/demo/planner?source=monitor" eventName="monitor_demo_click" eventParams={{ placement: "hero" }} className={buttonClass({ variant: "secondary", className: "px-7" })}>登録前に献立を試す</TrackedLink>
             </div>
-            <p className="mt-4 text-xs leading-6 text-kondate-faint">カード登録不要・モニター後の自動課金なし</p>
+            <p className="mt-4 text-xs leading-6 text-kondate-faint">家族プランの全機能を14日間無料・カード登録不要・終了後の自動課金なし</p>
           </div>
 
           <aside className="border-2 border-kondate-ink bg-kondate-sage p-6 sm:p-8" aria-label="モニター概要">
@@ -126,7 +131,7 @@ export default function MonitorPage() {
       <section className="bg-kondate-accent px-4 py-14 text-white sm:px-6">
         <div className="mx-auto flex max-w-6xl flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div><p className="font-mincho text-3xl font-black">次のごはんから、試してみませんか。</p><p className="mt-2 text-sm font-bold text-[#ffe4d8]">率直な感想が、これからの「きょうのごはん」をつくります。</p></div>
-          <TrackedLink href="/signup?source=monitor" eventName="monitor_signup_click" eventParams={{ placement: "footer" }} className={buttonClass({ variant: "secondary", className: "shrink-0 border-white bg-white px-7 text-kondate-ink hover:border-white hover:bg-kondate-bg" })}>無料モニターに参加する <ArrowRight size={18} aria-hidden="true" /></TrackedLink>
+          {accepting ? <TrackedLink href="/signup?source=monitor" eventName="monitor_signup_click" eventParams={{ placement: "footer" }} className={buttonClass({ variant: "secondary", className: "shrink-0 border-white bg-white px-7 text-kondate-ink hover:border-white hover:bg-kondate-bg" })}>14日間の無料モニターに参加 <ArrowRight size={18} aria-hidden="true" /></TrackedLink> : <span className={buttonClass({ variant: "secondary", className: "shrink-0 cursor-not-allowed border-white bg-white px-7 text-kondate-muted" })}>無料モニター受付終了</span>}
         </div>
       </section>
 
