@@ -1,6 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { normalizeGoogleAnalyticsId } from "@/lib/analytics/googleAnalytics";
+import { buildMonitorSignupHref } from "@/lib/marketing/campaignParams";
 import { normalizeSignupSource } from "@/lib/marketing/signupSource";
+
+describe("buildMonitorSignupHref", () => {
+  it("広告のUTMをモニター登録ページまで引き継ぐ", () => {
+    expect(buildMonitorSignupHref({ utm_source: "instagram", utm_medium: "paid_social", utm_campaign: "monitor 202609" })).toEqual({
+      pathname: "/signup",
+      query: { source: "monitor", utm_source: "instagram", utm_medium: "paid_social", utm_campaign: "monitor 202609" },
+    });
+  });
+
+  it("UTM以外の値は登録URLへ引き継がない", () => {
+    expect(buildMonitorSignupHref({ source: "unknown", redirect: "https://example.com" })).toEqual({ pathname: "/signup", query: { source: "monitor" } });
+  });
+});
 
 describe("normalizeSignupSource", () => {
   it("モニター募集経由だけを受け付ける", () => {
