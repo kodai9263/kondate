@@ -11,7 +11,7 @@ export async function getHouseholdPlannerContext(year: number, month: number) {
   const supabase = await getSupabaseServer();
   const [{ data: rows }, { data: officialRows }, { data: feedbackRows }, { data: savedRows }, { data: exclusions }] = await Promise.all([
     supabase.from("recipes").select("id,name,cook_minutes,image_url,protein_source,meta,recipe_nutrition(energy_kcal,protein_g,fat_g,carbs_g,fiber_g,salt_g,vegetables_g)").not("household_id", "is", null).is("archived_at", null),
-    supabase.from("recipes").select("id,name,meta").is("household_id", null),
+    supabase.from("recipes").select("id,name,cook_minutes,image_url,protein_source,meta,recipe_nutrition(energy_kcal,protein_g,fat_g,carbs_g,fiber_g,salt_g,vegetables_g)").is("household_id", null).is("archived_at", null),
     supabase.from("meal_preferences").select("recipe_name,rating,updated_at").order("updated_at", { ascending: false }).limit(500),
     supabase.from("plan_entries").select("date,recipe_id,locked").eq("meal_type", "dinner").gte("date", firstDate).lte("date", lastDate),
     supabase.from("household_recipe_exclusions").select("recipe_key"),
@@ -32,6 +32,7 @@ export async function getHouseholdPlannerContext(year: number, month: number) {
   const officialIdsByName = new Map<string, string>();
   for (const row of officialRows ?? []) {
     const meta = row.meta && typeof row.meta === "object" ? row.meta as Record<string, unknown> : {};
+    if (meta.visibility === "community") continue;
     if (typeof meta.nutrition_catalog_id === "string") officialIdsByKey.set(meta.nutrition_catalog_id, row.id);
     officialIdsByName.set(row.name, row.id);
   }
@@ -44,7 +45,17 @@ export async function getHouseholdPlannerContext(year: number, month: number) {
     const customizationId = stepCustomizationIds.get(databaseId);
     return customizationId ? [{ ...recipe, id: customizationId }] : [{ ...recipe, id: databaseId }];
   });
-  const filtered = filterRecipesForAllergies([...official, ...custom], preferences.allergies);
+  const community = (officialRows ?? []).flatMap((row) => {
+    const meta = row.meta && typeof row.meta === "object" ? row.meta as Record<string, unknown> : {};
+    if (meta.visibility !== "community") return [];
+    const exclusionKey = typeof meta.community_key === "string" ? meta.community_key : `community:${row.id}`;
+    if (excludedOfficialRecipeKeys.has(exclusionKey)) return [];
+    return mapDatabaseRecipe(row as Record<string, unknown>, "community").map((recipe) => ({
+      ...recipe,
+      id: stepCustomizationIds.get(row.id) ?? recipe.id,
+    }));
+  });
+  const filtered = filterRecipesForAllergies([...official, ...community, ...custom], preferences.allergies);
   const latestRatings = new Map<string, string>();
   for (const row of feedbackRows ?? []) {
     if (!latestRatings.has(row.recipe_name)) latestRatings.set(row.recipe_name, row.rating);
@@ -74,6 +85,10 @@ export async function getHouseholdPlannerContext(year: number, month: number) {
 }
 
 function mapCustomRecipe(row: Record<string, unknown>): NutritionRecipe[] {
+  return mapDatabaseRecipe(row, "custom");
+}
+
+function mapDatabaseRecipe(row: Record<string, unknown>, origin: "custom" | "community"): NutritionRecipe[] {
   const nutritionValue = Array.isArray(row.recipe_nutrition) ? row.recipe_nutrition[0] : row.recipe_nutrition;
   if (!nutritionValue || typeof nutritionValue !== "object") return [];
   const nutrition = nutritionValue as Record<string, number>;
@@ -95,6 +110,7 @@ function mapCustomRecipe(row: Record<string, unknown>): NutritionRecipe[] {
       vegetablesG: Number(nutrition.vegetables_g),
     },
     ingredientsText: typeof meta.ingredients_text === "string" ? meta.ingredients_text : undefined,
-    isCustom: true,
+    isCustom: origin === "custom",
+    isCommunity: origin === "community",
   }];
 }

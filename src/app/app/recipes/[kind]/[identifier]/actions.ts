@@ -7,7 +7,7 @@ import { z } from "zod";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
 const saveStepsSchema = z.object({
-  kind: z.enum(["official", "custom"]),
+  kind: z.enum(["official", "community", "custom"]),
   identifier: z.string().min(1).max(120),
   recipeId: z.string().uuid(),
   morningSteps: z.string().max(6000),
@@ -15,6 +15,7 @@ const saveStepsSchema = z.object({
 });
 
 const resetStepsSchema = z.object({
+  kind: z.enum(["official", "community"]),
   identifier: z.string().min(1).max(120),
   recipeId: z.string().uuid(),
 });
@@ -49,20 +50,21 @@ export async function resetRecipeSteps(formData: FormData) {
   const { error } = await supabase.rpc("reset_recipe_step_customization", {
     target_recipe_id: parsed.data.recipeId,
   });
-  if (error) redirect(editorUrl("official", parsed.data.identifier, "error=reset"));
+  if (error) redirect(editorUrl(parsed.data.kind, parsed.data.identifier, "error=reset"));
 
   revalidateRecipePaths();
-  redirect(editorUrl("official", parsed.data.identifier, "reset=1"));
+  redirect(editorUrl(parsed.data.kind, parsed.data.identifier, "reset=1"));
 }
 
 function redirectToEditor(formData: FormData, error: string): never {
-  const kind = formData.get("kind") === "custom" ? "custom" : "official";
+  const rawKind = formData.get("kind");
+  const kind = rawKind === "custom" || rawKind === "community" ? rawKind : "official";
   const rawIdentifier = formData.get("identifier");
   const identifier = typeof rawIdentifier === "string" ? rawIdentifier.slice(0, 120) : "";
   redirect(editorUrl(kind, identifier, `error=${error}`));
 }
 
-function editorUrl(kind: "official" | "custom", identifier: string, query: string): Route {
+function editorUrl(kind: "official" | "community" | "custom", identifier: string, query: string): Route {
   return `/app/recipes/${kind}/${encodeURIComponent(identifier)}?${query}` as Route;
 }
 

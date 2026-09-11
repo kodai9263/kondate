@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { resetRecipeSteps, saveRecipeSteps } from "@/app/app/recipes/[kind]/[identifier]/actions";
@@ -17,7 +17,7 @@ export default async function RecipeStepsPage({
   searchParams: Promise<{ saved?: string; reset?: string; error?: string }>;
 }) {
   const [{ kind, identifier }, query] = await Promise.all([params, searchParams]);
-  if (kind !== "official" && kind !== "custom") notFound();
+  if (kind !== "official" && kind !== "community" && kind !== "custom") notFound();
 
   const supabase = await getSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
@@ -27,7 +27,9 @@ export default async function RecipeStepsPage({
 
   const recipe = kind === "official"
     ? await getOfficialRecipe(identifier, profile.household_id)
-    : await getCustomRecipe(identifier, profile.household_id);
+    : kind === "community"
+      ? await getCommunityRecipe(identifier, profile.household_id)
+      : await getCustomRecipe(identifier, profile.household_id);
   if (!recipe) notFound();
 
   const { data: stepRows } = await supabase
@@ -41,8 +43,9 @@ export default async function RecipeStepsPage({
     <main className="mx-auto min-h-dvh w-full max-w-3xl px-4 pb-28 pt-5 sm:px-6">
       <Link href="/app/recipes" className="inline-flex min-h-11 items-center gap-2 text-sm text-kondate-muted transition-colors hover:text-kondate-ink"><ArrowLeft size={18} aria-hidden="true" />メニュー一覧</Link>
       <header className="mt-4 border-b border-kondate-line pb-5">
-        <div className="flex flex-wrap items-center gap-2"><h1 className="font-mincho text-[26px] font-bold">{recipe.name}</h1>{recipe.hasCustomization ? <span className="rounded-sm bg-kondate-doneSoft px-2 py-1 text-xs text-kondate-done">アレンジ済み</span> : null}</div>
+        <div className="flex flex-wrap items-center gap-2"><h1 className="font-mincho text-[26px] font-bold">{recipe.name}</h1>{kind === "community" ? <span className="rounded-sm bg-kondate-accentSoft px-2 py-1 text-xs text-kondate-accent">みんな</span> : null}{recipe.hasCustomization ? <span className="rounded-sm bg-kondate-doneSoft px-2 py-1 text-xs text-kondate-done">アレンジ済み</span> : null}</div>
         <p className="mt-1.5 text-sm text-kondate-muted">1行が1つの工程です。行の順番を変えると、今日の手順にも同じ順番で表示されます。</p>
+        {recipe.sourceUrl ? <a href={recipe.sourceUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm text-kondate-accent underline-offset-4 hover:underline">元レシピを見る<ExternalLink size={16} aria-hidden="true" /></a> : null}
       </header>
 
       {query.saved ? <p role="status" className="mt-5 rounded border border-kondate-done/30 bg-kondate-doneSoft p-3 text-sm">工程を保存し、今日以降の献立へ反映しました。</p> : null}
@@ -58,7 +61,8 @@ export default async function RecipeStepsPage({
         <PendingButton>工程を保存</PendingButton>
       </form>
 
-      {kind === "official" && recipe.hasCustomization ? <form action={resetRecipeSteps} className="mt-8 border-t border-kondate-line pt-6">
+      {kind !== "custom" && recipe.hasCustomization ? <form action={resetRecipeSteps} className="mt-8 border-t border-kondate-line pt-6">
+        <input type="hidden" name="kind" value={kind} />
         <input type="hidden" name="identifier" value={identifier} />
         <input type="hidden" name="recipeId" value={recipe.sourceRecipeId} />
         <ResetRecipeStepsButton />
@@ -84,13 +88,36 @@ export default async function RecipeStepsPage({
       sourceRecipeId: source.id,
       displayRecipeId: customization?.id ?? source.id,
       hasCustomization: Boolean(customization),
+      sourceUrl: null,
+    };
+  }
+
+  async function getCommunityRecipe(recipeId: string, householdId: string) {
+    const { data: source } = await supabase
+      .from("recipes")
+      .select("id,name,meta")
+      .eq("id", recipeId)
+      .is("household_id", null)
+      .is("archived_at", null)
+      .contains("meta", { visibility: "community" })
+      .maybeSingle();
+    if (!source) return null;
+
+    const { data: householdRecipes } = await supabase.from("recipes").select("id,meta").eq("household_id", householdId).is("archived_at", null);
+    const customization = (householdRecipes ?? []).find((row) => isCustomizationOf(row.meta, source.id));
+    return {
+      name: source.name,
+      sourceRecipeId: source.id,
+      displayRecipeId: customization?.id ?? source.id,
+      hasCustomization: Boolean(customization),
+      sourceUrl: getMetaString(source.meta, "source_url"),
     };
   }
 
   async function getCustomRecipe(recipeId: string, householdId: string) {
     const { data } = await supabase.from("recipes").select("id,name,meta").eq("id", recipeId).eq("household_id", householdId).is("archived_at", null).maybeSingle();
     if (!data || isStepCustomization(data.meta)) return null;
-    return { name: data.name, sourceRecipeId: data.id, displayRecipeId: data.id, hasCustomization: false };
+    return { name: data.name, sourceRecipeId: data.id, displayRecipeId: data.id, hasCustomization: false, sourceUrl: getMetaString(data.meta, "source_url") };
   }
 }
 
@@ -109,4 +136,10 @@ function isStepCustomization(meta: unknown) {
 function isCustomizationOf(meta: unknown, sourceRecipeId: string) {
   if (!isStepCustomization(meta)) return false;
   return (meta as Record<string, unknown>).source_recipe_id === sourceRecipeId;
+}
+
+function getMetaString(meta: unknown, key: string) {
+  if (!meta || typeof meta !== "object") return null;
+  const value = (meta as Record<string, unknown>)[key];
+  return typeof value === "string" ? value : null;
 }

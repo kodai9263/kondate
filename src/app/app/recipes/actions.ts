@@ -11,6 +11,7 @@ const officialRecipeKeys = new Set(officialNutritionRecipes.map((recipe) => reci
 const removeRecipeSchema = z.discriminatedUnion("recipeKind", [
   z.object({ recipeKind: z.literal("custom"), recipeId: z.string().uuid() }),
   z.object({ recipeKind: z.literal("official"), recipeKey: z.string().min(1).max(120) }),
+  z.object({ recipeKind: z.literal("community"), recipeId: z.string().uuid() }),
 ]);
 
 export async function removeRecipe(formData: FormData) {
@@ -34,6 +35,29 @@ export async function removeRecipe(formData: FormData) {
     const { error } = await supabase.from("household_recipe_exclusions").insert({
       household_id: profile.household_id,
       recipe_key: parsed.data.recipeKey,
+      created_by: user.id,
+    });
+    if (error && error.code !== "23505") redirect("/app/recipes?error=delete");
+
+    revalidateRecipePaths();
+    redirect("/app/recipes?deleted=1");
+  }
+
+  if (parsed.data.recipeKind === "community") {
+    const { data: recipe } = await supabase
+      .from("recipes")
+      .select("id,meta")
+      .eq("id", parsed.data.recipeId)
+      .is("household_id", null)
+      .contains("meta", { visibility: "community" })
+      .is("archived_at", null)
+      .maybeSingle();
+    if (!recipe) redirect("/app/recipes?error=delete");
+    const meta = recipe.meta && typeof recipe.meta === "object" ? recipe.meta as Record<string, unknown> : {};
+    const recipeKey = typeof meta.community_key === "string" ? meta.community_key : `community:${recipe.id}`;
+    const { error } = await supabase.from("household_recipe_exclusions").insert({
+      household_id: profile.household_id,
+      recipe_key: recipeKey,
       created_by: user.id,
     });
     if (error && error.code !== "23505") redirect("/app/recipes?error=delete");
