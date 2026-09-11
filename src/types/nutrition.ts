@@ -22,6 +22,7 @@ export type NutritionRecipe = {
   eveningSteps?: string[];
   seasonMonths?: number[];
   isCustom?: boolean;
+  isCommunity?: boolean;
 };
 
 export type PlannedDinner = {

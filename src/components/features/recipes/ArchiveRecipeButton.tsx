@@ -8,6 +8,7 @@ import { removeRecipe } from "@/app/app/recipes/actions";
 type ArchiveRecipeButtonProps = { recipeName: string } & (
   | { recipeKind: "custom"; recipeId: string }
   | { recipeKind: "official"; recipeKey: string }
+  | { recipeKind: "community"; recipeId: string }
 );
 
 export function ArchiveRecipeButton(props: ArchiveRecipeButtonProps) {
@@ -21,7 +22,7 @@ export function ArchiveRecipeButton(props: ArchiveRecipeButtonProps) {
       }}
     >
       <input type="hidden" name="recipeKind" value={recipeKind} />
-      {recipeKind === "custom" ? <input type="hidden" name="recipeId" value={props.recipeId} /> : <input type="hidden" name="recipeKey" value={props.recipeKey} />}
+      {recipeKind === "official" ? <input type="hidden" name="recipeKey" value={props.recipeKey} /> : <input type="hidden" name="recipeId" value={props.recipeId} />}
       <ArchiveSubmitButton recipeName={recipeName} />
     </form>
   );
