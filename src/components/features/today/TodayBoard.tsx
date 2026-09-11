@@ -40,9 +40,7 @@ export function TodayBoard({
     const supabase = getSupabaseBrowser();
     if (!supabase || !planEntryFilter) return;
     let cancelled = false;
-    const channels = planEntryIds.map((planEntryId) => supabase.channel(`plan-entry:${planEntryId}`, {
-      config: { private: true },
-    }));
+    const channels: ReturnType<typeof supabase.channel>[] = [];
 
     const receiveTaskChange = (payload: unknown) => {
       const row = getBroadcastRecord(payload);
@@ -50,8 +48,13 @@ export function TodayBoard({
       setTaskBindings((current) => updateTaskBindings(current, row.stepId, row.checked));
     };
 
-    void supabase.realtime.setAuth().then(() => {
+    void supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (cancelled || !user) return;
+      await supabase.realtime.setAuth();
       if (cancelled) return;
+      channels.push(...planEntryIds.map((planEntryId) => supabase.channel(`plan-entry:${planEntryId}:member:${user.id}`, {
+        config: { private: true },
+      })));
       channels.forEach((channel) => {
         channel
           .on("broadcast", { event: "*" }, receiveTaskChange)
@@ -61,6 +64,8 @@ export function TodayBoard({
             }
           });
       });
+    }).catch(() => {
+      if (!cancelled) setError("家族との自動同期が一時停止しています。保存は続けられます。");
     });
 
     return () => {

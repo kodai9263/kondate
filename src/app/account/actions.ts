@@ -6,6 +6,7 @@ import { normalizeAllergies, parseCustomAllergies } from "@/lib/family/allergies
 import { breakfastKeys, normalizeBreakfastChoices } from "@/lib/breakfast/preferences";
 import { isActiveSubscriptionStatus } from "@/lib/billing/entitlements";
 import { getSupabaseServer } from "@/lib/supabase/server";
+import { normalizeInviteToken } from "@/lib/family/invites";
 
 export async function signOut() {
   const supabase = await getSupabaseServer();
@@ -60,6 +61,7 @@ export async function createFamilyInvite() {
   const supabase = await getSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+  if (user.is_anonymous) redirect("/account?error=registered");
 
   const { data: profile } = await supabase.from("profiles").select("household_id").eq("id", user.id).single();
   if (!profile) redirect("/account?error=profile");
@@ -81,4 +83,16 @@ export async function createFamilyInvite() {
 
   if (error || !data?.invite_token) redirect("/account?error=invite");
   redirect(`/account?success=invite&invite=${data.invite_token}`);
+}
+
+export async function revokeFamilyInvite(formData: FormData) {
+  const inviteId = normalizeInviteToken(formData.get("inviteId"));
+  if (!inviteId) redirect("/account?error=revoke");
+  const supabase = await getSupabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  if (user.is_anonymous) redirect("/account?error=registered");
+  const { error } = await supabase.rpc("revoke_household_invite", { invite_id_input: inviteId });
+  if (error) redirect("/account?error=revoke");
+  redirect("/account?success=revoked");
 }

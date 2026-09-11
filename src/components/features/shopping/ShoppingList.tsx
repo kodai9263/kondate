@@ -62,9 +62,12 @@ export function ShoppingList({
     if (!supabase || !listId) return;
     let cancelled = false;
 
-    const channel = supabase.channel(`shopping-list:${listId}`, { config: { private: true } });
-    void supabase.realtime.setAuth().then(() => {
+    let channel: ReturnType<typeof supabase.channel> | undefined;
+    void supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (cancelled || !user) return;
+      await supabase.realtime.setAuth();
       if (cancelled) return;
+      channel = supabase.channel(`shopping-list:${listId}:member:${user.id}`, { config: { private: true } });
       channel
         .on("broadcast", { event: "*" }, (payload) => {
           const row = getShoppingBroadcastRecord(payload);
@@ -88,11 +91,13 @@ export function ShoppingList({
             setError("家族との自動同期が一時停止しています。保存は続けられます。");
           }
         });
+    }).catch(() => {
+      if (!cancelled) setError("家族との自動同期が一時停止しています。保存は続けられます。");
     });
 
     return () => {
       cancelled = true;
-      void supabase.removeChannel(channel);
+      if (channel) void supabase.removeChannel(channel);
     };
   }, [listId]);
 
