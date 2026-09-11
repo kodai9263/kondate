@@ -41,7 +41,7 @@ export default async function MonitorPage({ searchParams }: { searchParams: Prom
   const today = findTodayPlan(menuData);
   const previewDays = menuData.weeks[0].days.slice(0, 3);
   return (
-    <main className="min-h-dvh bg-kondate-bg text-kondate-ink">
+    <main className="min-h-dvh bg-kondate-bg pb-28 text-kondate-ink md:pb-0">
       <header className="border-b-2 border-kondate-ink bg-white">
         <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link href="/" aria-label="きょうのごはん トップ" className="flex min-h-11 items-center gap-2">
@@ -56,15 +56,15 @@ export default async function MonitorPage({ searchParams }: { searchParams: Prom
         <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(420px,1.1fr)] lg:items-center">
           <div>
             <p className="inline-flex min-h-11 items-center border-2 border-kondate-ink bg-kondate-morning px-4 text-sm font-black">{accepting ? `先着10家庭・残り${monitorStatus.remaining}家庭` : monitorStatus.isAvailable ? "10家庭に達したため受付終了" : "受付状況を確認できません"}</p>
-            <h1 className="font-mincho mt-6 text-[34px] font-black leading-[1.3] sm:text-5xl">夕方の献立決めを、<br />14日間だけ手放してみませんか。</h1>
-            <p className="mt-6 max-w-2xl text-base leading-8 text-kondate-muted sm:text-lg">4週間の献立、今日の段取り、買い物リストまでひと続き。普段の夕飯で試してくださるご家庭を募集しています。</p>
+            <h1 className="font-mincho mt-6 text-[34px] font-black leading-[1.3] sm:text-5xl">「何作ろう？」を、<br />週1回だけに。</h1>
+            <p className="mt-6 max-w-2xl text-base leading-8 text-kondate-muted sm:text-lg">4週間の献立、今日の段取り、買い物リストまでひとまとめ。開発中のため、10家庭限定で14日間無料で試せます。</p>
             <ul className="mt-6 grid gap-2 text-sm font-bold sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
               {["入力は3項目", "カード登録不要", "自動課金なし"].map((item) => <li key={item} className="flex items-center gap-2"><Check size={17} className="shrink-0 text-kondate-accent" aria-hidden="true" />{item}</li>)}
             </ul>
             <div className="mt-8">
-              {accepting ? <TrackedLink href={signupHref} eventName="monitor_signup_click" eventParams={{ placement: "hero" }} className={buttonClass({ className: "w-full px-7 sm:w-auto" })}>1分で無料モニターを始める <ArrowRight size={18} aria-hidden="true" /></TrackedLink> : <span className={buttonClass({ variant: "secondary", className: "w-full cursor-not-allowed px-7 text-kondate-muted sm:w-auto" })}>無料モニター受付終了</span>}
+              {accepting ? <TrackedLink href={signupHref} eventName="monitor_signup_click" eventParams={{ placement: "hero" }} className={buttonClass({ className: "w-full px-7 sm:w-auto" })}>無料で14日間試す <ArrowRight size={18} aria-hidden="true" /></TrackedLink> : <span className={buttonClass({ variant: "secondary", className: "w-full cursor-not-allowed px-7 text-kondate-muted sm:w-auto" })}>無料モニター受付終了</span>}
             </div>
-            <p className="mt-4 text-xs leading-6 text-kondate-faint">登録後すぐに、家族プランの全機能を14日間無料で使えます。</p>
+            <p className="mt-4 text-xs leading-6 text-kondate-faint">登録は約1分。お願いするのは、使ったあとの5分ほどの感想だけです。</p>
           </div>
 
           <aside className="border-2 border-kondate-ink bg-kondate-bg" aria-label="アプリ画面のプレビュー">
@@ -80,7 +80,6 @@ export default async function MonitorPage({ searchParams }: { searchParams: Prom
               <div className="mt-4 grid grid-cols-3 border-l border-t border-kondate-line">
                 {previewDays.map((day) => <div key={day.dow} className="min-h-28 border-b border-r border-kondate-line bg-white p-3"><p className="text-xs font-black text-kondate-accent">{day.dow}</p><p className="mt-2 text-xs font-black leading-5 sm:text-sm">{day.dinner}</p><p className="mt-1 text-[11px] leading-4 text-kondate-muted">{day.side}</p></div>)}
               </div>
-              <TrackedLink href="/demo/planner?source=monitor" eventName="monitor_demo_click" eventParams={{ placement: "hero_preview" }} className="mt-4 inline-flex min-h-11 items-center text-sm font-bold text-kondate-accent underline underline-offset-4 hover:text-kondate-accentDark">登録前に献立デモを見る <ArrowRight size={16} aria-hidden="true" /></TrackedLink>
             </div>
           </aside>
         </div>
@@ -146,13 +145,20 @@ export default async function MonitorPage({ searchParams }: { searchParams: Prom
       <section className="bg-kondate-accent px-4 py-14 text-white sm:px-6">
         <div className="mx-auto flex max-w-6xl flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div><p className="font-mincho text-3xl font-black">次のごはんから、試してみませんか。</p><p className="mt-2 text-sm font-bold text-[#ffe4d8]">率直な感想が、これからの「きょうのごはん」をつくります。</p></div>
-          {accepting ? <TrackedLink href={signupHref} eventName="monitor_signup_click" eventParams={{ placement: "footer" }} className={buttonClass({ variant: "secondary", className: "shrink-0 border-white bg-white px-7 text-kondate-ink hover:border-white hover:bg-kondate-bg" })}>1分で無料モニターを始める <ArrowRight size={18} aria-hidden="true" /></TrackedLink> : <span className={buttonClass({ variant: "secondary", className: "shrink-0 cursor-not-allowed border-white bg-white px-7 text-kondate-muted" })}>無料モニター受付終了</span>}
+          {accepting ? <TrackedLink href={signupHref} eventName="monitor_signup_click" eventParams={{ placement: "footer" }} className={buttonClass({ variant: "secondary", className: "shrink-0 border-white bg-white px-7 text-kondate-ink hover:border-white hover:bg-kondate-bg" })}>無料で14日間試す <ArrowRight size={18} aria-hidden="true" /></TrackedLink> : <span className={buttonClass({ variant: "secondary", className: "shrink-0 cursor-not-allowed border-white bg-white px-7 text-kondate-muted" })}>無料モニター受付終了</span>}
         </div>
       </section>
 
       <footer className="border-t-2 border-kondate-ink bg-white px-4 py-8 text-sm text-kondate-muted">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><p className="font-mincho text-base font-bold text-kondate-ink">きょうのごはん</p><div className="flex flex-wrap gap-x-5 gap-y-2"><Link href="/privacy">プライバシー</Link><Link href="/terms">利用規約</Link><Link href="/legal">特商法表記</Link></div></div>
       </footer>
+
+      {accepting ? (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t-2 border-kondate-ink bg-white px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-4px_18px_rgba(32,36,31,0.12)] md:hidden">
+          <p className="mb-2 text-center text-xs font-bold text-kondate-muted">カード不要・自動課金なし</p>
+          <TrackedLink href={signupHref} eventName="monitor_signup_click" eventParams={{ placement: "mobile_sticky" }} className={buttonClass({ fullWidth: true, className: "touch-manipulation" })}>無料で14日間試す <ArrowRight size={18} aria-hidden="true" /></TrackedLink>
+        </div>
+      ) : null}
     </main>
   );
 }
