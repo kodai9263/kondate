@@ -50,7 +50,14 @@ describe("monitor trial migration", () => {
 
   it("募集ページとアカウント画面に期間と自動課金なしを表示する", () => {
     expect(monitorPageSource).toContain("残り${monitorStatus.remaining}家庭");
-    expect(monitorPageSource).toContain("家族プランの全機能を14日間無料");
+    expect(monitorPageSource).toContain("14日間無料");
     expect(accountPageSource).toContain("終了後は自動課金されず、無料プランへ戻ります");
+  });
+
+  it("募集ページは主CTAを一本化し、スマホで常に登録へ進める", () => {
+    expect(monitorPageSource).toContain("無料で14日間試す");
+    expect(monitorPageSource).toContain('placement: "mobile_sticky"');
+    expect(monitorPageSource).toContain("safe-area-inset-bottom");
+    expect(monitorPageSource).not.toContain("monitor_demo_click");
   });
 });
