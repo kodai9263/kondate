@@ -14,6 +14,8 @@ import { ScrollToAccountTop } from "@/components/features/account/ScrollToAccoun
 import { breakfastKeys, normalizeBreakfastChoices } from "@/lib/breakfast/preferences";
 import { menuData } from "@/lib/menuData";
 import { BreakfastChoiceFieldset } from "@/components/features/account/BreakfastChoiceFieldset";
+import { InviteLinkField } from "@/components/features/account/InviteLinkField";
+import { RevokeInviteButton } from "@/components/features/account/RevokeInviteButton";
 
 export const dynamic = "force-dynamic";
 
@@ -22,11 +24,14 @@ const errorMessages: Record<string, string> = {
   profile: "アカウント情報を読み込めませんでした。",
   update: "変更を保存できませんでした。時間をおいて再度お試しください。",
   invite: "招待リンクを作成できませんでした。時間をおいて再度お試しください。",
+  revoke: "共有を解除できませんでした。時間をおいて再度お試しください。",
+  registered: "招待の管理は、招待した家族のアカウントから行ってください。",
 };
 
 const successMessages: Record<string, string> = {
   invite: "招待リンクを作成しました。",
   updated: "変更を保存しました。",
+  revoked: "共有・招待を解除しました。",
 };
 
 export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string; success?: string; feedback?: string; invite?: string; save?: string }> }) {
@@ -44,7 +49,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
     supabase.from("households").select("name").eq("id", profile.household_id).single(),
     supabase.from("household_subscriptions").select("plan_id, status, current_period_end, cancel_at_period_end, stripe_customer_id, monitor_started_at").eq("household_id", profile.household_id).maybeSingle(),
     supabase.from("household_settings").select("adult_count, child_count, shopping_day, allergies, breakfast_choices").eq("household_id", profile.household_id).maybeSingle(),
-    supabase.from("household_invites").select("invite_token, expires_at, accepted_at").eq("household_id", profile.household_id).is("accepted_at", null).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }).limit(3),
+    supabase.from("household_invites").select("id, invite_token, expires_at, accepted_at, accepted_by").eq("household_id", profile.household_id).eq("created_by", user.id).is("revoked_at", null).or(`accepted_at.not.is.null,expires_at.gt.${new Date().toISOString()}`).order("created_at", { ascending: false }),
     supabase.from("profiles").select("id, display_name, created_at").eq("household_id", profile.household_id).order("created_at", { ascending: true }),
   ]);
   const paid = subscription ? isActiveSubscriptionStatus(subscription.status, subscription.current_period_end) : false;
@@ -56,8 +61,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const selectedAllergies = new Set(allergies);
   const customAllergies = getCustomAllergies(allergies);
   const selectedBreakfasts = normalizeBreakfastChoices(settings?.breakfast_choices);
+  const pendingInvites = invites?.filter((invite) => !invite.accepted_at) ?? [];
   const createdInviteToken = normalizeInviteToken(params.invite);
-  const createdInviteUrl = createdInviteToken ? buildInviteUrl(createdInviteToken) : null;
 
   return (
     <main id="account-top" className="mx-auto min-h-dvh w-full max-w-[560px] scroll-mt-4 px-4 pb-16 pt-5">
@@ -67,13 +72,14 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
       {params.error ? <p role="alert" className="mb-4 rounded border border-kondate-alert/30 bg-kondate-alertSoft p-3 text-sm text-kondate-alert">{errorMessages[params.error] ?? errorMessages.update}</p> : null}
       {params.success ? <p role="status" className="mb-4 rounded border border-kondate-done/30 bg-kondate-doneSoft p-3 text-sm">{successMessages[params.success] ?? successMessages.updated}</p> : null}
+      {user.is_anonymous ? <p className="mb-4 rounded border border-kondate-line bg-white p-3 text-sm leading-6">この端末から家族として参加しています。機種変更・ブラウザのデータ削除・ログアウト後は、新しい招待リンクが必要です。表示名を変えると、家族が誰の端末か見分けやすくなります。</p> : null}
 
       <section className="rounded border border-kondate-line bg-white p-5">
         <h2 className="font-semibold">基本情報</h2>
         <form action={updateAccount} className="mt-4 space-y-4">
           <label className="block text-sm font-semibold">表示名 <span className="text-xs text-kondate-muted">（必須）</span><input name="displayName" required defaultValue={profile.display_name} autoComplete="name" className="mt-2 min-h-12 w-full rounded-lg border border-kondate-line bg-white px-3.5 text-base font-normal outline-none transition-colors focus:border-kondate-accent focus:ring-2 focus:ring-kondate-accent/15" /></label>
           <label className="block text-sm font-semibold">家族グループ名 <span className="text-xs text-kondate-muted">（必須）</span><input name="householdName" required defaultValue={household?.name ?? "わが家"} className="mt-2 min-h-12 w-full rounded-lg border border-kondate-line bg-white px-3.5 text-base font-normal outline-none transition-colors focus:border-kondate-accent focus:ring-2 focus:ring-kondate-accent/15" /></label>
-          <label className="block text-sm font-semibold">メールアドレス<input value={user.email ?? ""} readOnly className="mt-2 min-h-12 w-full rounded border border-kondate-line bg-kondate-bg px-3 text-base text-kondate-muted" /></label>
+          {!user.is_anonymous ? <label className="block text-sm font-semibold">メールアドレス<input value={user.email ?? ""} readOnly className="mt-2 min-h-12 w-full rounded border border-kondate-line bg-kondate-bg px-3 text-base text-kondate-muted" /></label> : null}
           <fieldset className="border-t border-kondate-line pt-5"><legend className="flex items-center gap-2 px-1 font-semibold">家族の人数</legend><div className="mt-4 grid grid-cols-2 gap-3"><label className="text-sm font-semibold">大人<input name="adultCount" type="number" inputMode="numeric" min="1" max="10" required defaultValue={familySize.adultCount} className="mt-2 min-h-12 w-full rounded-lg border border-kondate-line bg-white px-3.5 text-base font-normal outline-none transition-colors focus:border-kondate-accent focus:ring-2 focus:ring-kondate-accent/15" /></label><label className="text-sm font-semibold">子ども<input name="childCount" type="number" inputMode="numeric" min="0" max="10" required defaultValue={familySize.childCount} className="mt-2 min-h-12 w-full rounded-lg border border-kondate-line bg-white px-3.5 text-base font-normal outline-none transition-colors focus:border-kondate-accent focus:ring-2 focus:ring-kondate-accent/15" /></label></div><p className="mt-3 text-xs leading-6 text-kondate-muted">{formatServingLabel(familySize)}。子どもは大人の0.6人前として献立と買い物を調整します。</p></fieldset>
           <label className="block border-t border-kondate-line pt-5 text-sm font-semibold"><span className="flex items-center gap-2">まとめ買いの曜日</span><select name="shoppingDay" defaultValue={shoppingDay} className="mt-3 min-h-12 w-full rounded-lg border border-kondate-line bg-white px-3.5 text-base font-normal outline-none transition-colors focus:border-kondate-accent focus:ring-2 focus:ring-kondate-accent/15">{shoppingWeekdays.map((weekday, index) => <option key={weekday} value={index}>{weekday}曜日</option>)}</select></label>
           <BreakfastChoiceFieldset
@@ -94,25 +100,26 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
       <section className="mt-4 rounded border border-kondate-line bg-white p-5">
         <div className="flex items-start justify-between gap-3"><div><p className="flex items-center gap-2 font-semibold">契約プラン</p><p className="mt-1 text-sm text-kondate-muted">{isMonitorTrial ? "家族プランの無料モニター" : paid ? "家族プランを利用中" : "無料プラン"}</p></div><span className="shrink-0 rounded-sm border border-kondate-line px-2 py-0.5 text-xs text-kondate-muted">{isMonitorTrial ? "モニター" : paid ? "有効" : "無料"}</span></div>
-        {paid ? hasStripeCustomer ? <div className="mt-4"><PortalButton /></div> : <p className="mt-4 rounded bg-kondate-bg p-3 text-sm leading-6 text-kondate-muted">{isMonitorTrial ? `14日間は家族プランの全機能を無料で利用できます。${subscription?.current_period_end ? `終了予定: ${new Date(subscription.current_period_end).toLocaleDateString("ja-JP")}` : ""} 終了後は自動課金されず、無料プランへ戻ります。` : "運営者用PROのため、料金は発生していません。"}</p> : <Link href="/pricing" className={buttonClass({ variant: "secondary", className: "mt-4 w-full border-kondate-accent text-kondate-accent hover:border-kondate-accentDark hover:text-kondate-accentDark" })}>家族プランを見る</Link>}
+        {user.is_anonymous ? <p className="mt-4 text-sm text-kondate-muted">契約の管理は、招待した家族に確認してください。</p> : paid ? hasStripeCustomer ? <div className="mt-4"><PortalButton /></div> : <p className="mt-4 rounded bg-kondate-bg p-3 text-sm leading-6 text-kondate-muted">{isMonitorTrial ? `14日間は家族プランの全機能を無料で利用できます。${subscription?.current_period_end ? `終了予定: ${new Date(subscription.current_period_end).toLocaleDateString("ja-JP")}` : ""} 終了後は自動課金されず、無料プランへ戻ります。` : "運営者用PROのため、料金は発生していません。"}</p> : <Link href="/pricing" className={buttonClass({ variant: "secondary", className: "mt-4 w-full border-kondate-accent text-kondate-accent hover:border-kondate-accentDark hover:text-kondate-accentDark" })}>家族プランを見る</Link>}
       </section>
 
       <section className="mt-4 rounded border border-kondate-line bg-white p-5">
-        <div className="flex items-start justify-between gap-3"><div><p className="flex items-center gap-2 font-semibold">家族共有</p><p className="mt-1 text-sm leading-6 text-kondate-muted">招待リンクは7日間だけ有効です。家族プラン利用中は、参加した家族と献立・買い物・設定を共有できます。</p></div><span className="shrink-0 rounded-sm border border-kondate-line px-2 py-0.5 text-xs text-kondate-muted">家族プラン</span></div>
+        <div className="flex items-start justify-between gap-3"><p className="font-semibold">家族共有</p><span className="shrink-0 rounded-sm border border-kondate-line px-2 py-0.5 text-xs text-kondate-muted">家族プラン</span></div>
+        <p className="mt-2 text-sm leading-6 text-kondate-muted">招待された家族は、登録なしで参加できます。招待リンクは7日間有効・1人につき1つです。参加後は、家族プラン利用中に献立・買い物・設定を共有できます。</p>
         <div className="mt-4 rounded border border-kondate-line bg-kondate-bg p-3">
           <p className="text-xs font-semibold text-kondate-muted">参加済みメンバー</p>
           <div className="mt-3 space-y-2">
             {(members?.length ? members : [{ id: user.id, display_name: profile.display_name, created_at: "" }]).map((member) => (
-              <div key={member.id} className="flex min-h-11 items-center justify-between gap-3 rounded bg-white px-3">
+              <div key={member.id} className="flex min-h-11 flex-wrap items-center justify-between gap-3 rounded bg-white px-3 py-2">
                 <span className="truncate text-sm text-kondate-ink">{member.display_name}{member.id === user.id ? "（あなた）" : ""}</span>
                 <span className="shrink-0 text-xs text-kondate-muted">{member.created_at ? `${new Date(member.created_at).toLocaleDateString("ja-JP")} 参加` : "参加中"}</span>
+                {member.id !== user.id && invites?.find((invite) => invite.accepted_by === member.id) ? <RevokeInviteButton inviteId={invites.find((invite) => invite.accepted_by === member.id)!.id} memberName={member.display_name} /> : null}
               </div>
             ))}
           </div>
         </div>
-        {createdInviteUrl ? <div className="mt-4 rounded border border-kondate-line bg-kondate-bg p-3"><p className="text-xs font-semibold text-kondate-muted">作成した招待リンク</p><input readOnly value={createdInviteUrl} className="mt-2 min-h-11 w-full rounded border border-kondate-line bg-white px-3 text-sm text-kondate-ink" /></div> : null}
-        {invites?.length ? <div className="mt-4 space-y-2">{invites.map((invite) => <div key={invite.invite_token} className="rounded border border-kondate-line p-3"><p className="truncate text-sm">{buildInviteUrl(invite.invite_token)}</p><p className="mt-1 text-xs text-kondate-muted">期限: {new Date(invite.expires_at).toLocaleDateString("ja-JP")}</p></div>)}</div> : null}
-        {paid ? <form action={createFamilyInvite} className="mt-4"><Button type="submit" variant="ink" fullWidth><Link2 size={18} aria-hidden="true" />招待リンクを作成</Button></form> : <Link href="/pricing?required=family_sharing" className={buttonClass({ variant: "ink", className: "mt-4 w-full" })}><CreditCard size={18} aria-hidden="true" />家族プランで招待する</Link>}
+        {pendingInvites.length ? <div className="mt-4 space-y-2">{pendingInvites.map((invite) => <div key={invite.invite_token} className="rounded border border-kondate-line p-3">{invite.invite_token === createdInviteToken ? <p className="mb-2 text-xs font-semibold text-kondate-muted">作成した招待リンク</p> : null}<InviteLinkField url={buildInviteUrl(invite.invite_token)} /><p className="mt-1 text-xs text-kondate-muted">期限: {new Date(invite.expires_at).toLocaleDateString("ja-JP")}</p><RevokeInviteButton inviteId={invite.id} /></div>)}</div> : null}
+        {user.is_anonymous ? <p className="mt-4 text-sm text-kondate-muted">ほかの家族を招待するときは、招待してくれた家族にリンクの発行をお願いしてください。</p> : paid ? <form action={createFamilyInvite} className="mt-4"><Button type="submit" variant="ink" fullWidth><Link2 size={18} aria-hidden="true" />招待リンクを作成</Button></form> : <Link href="/pricing?required=family_sharing" className={buttonClass({ variant: "ink", className: "mt-4 w-full" })}><CreditCard size={18} aria-hidden="true" />家族プランで招待する</Link>}
       </section>
 
       <section className="mt-4 rounded border border-kondate-line bg-white p-5">

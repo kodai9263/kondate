@@ -13,7 +13,7 @@ export async function getBillingContext(): Promise<BillingContext> {
     error: userError,
   } = await supabase.auth.getUser();
 
-  if (userError || !user?.email) {
+  if (userError || !user?.email || user.is_anonymous) {
     throw new Error("unauthenticated");
   }
 
