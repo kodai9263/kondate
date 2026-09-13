@@ -30,7 +30,7 @@ describe("みんなのメニュー", () => {
   });
 
   it("一覧と献立候補に表示し、家庭単位で非表示にできる", () => {
-    expect(recipesPageSource).toContain("みんなのメニュー");
+    expect(recipesPageSource).toContain("/app/recipes/community/");
     expect(recipesPageSource).toContain('{ visibility: "community" }');
     expect(plannerSource).toContain('meta.visibility !== "community"');
     expect(plannerSource).toContain("community_key");
