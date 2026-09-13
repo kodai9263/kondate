@@ -36,13 +36,19 @@ export default async function RecipesPage({ searchParams }: { searchParams: Prom
     return !excludedRecipeKeys.has(exclusionKey);
   });
   const visibleOfficialRecipes = officialNutritionRecipes.filter((recipe) => !excludedRecipeKeys.has(recipe.id));
-  return <main className="mx-auto min-h-dvh w-full max-w-5xl px-4 pb-28 pt-5 sm:px-6"><header className="flex items-end justify-between gap-4 border-b border-kondate-line pb-5"><div><h1 className="font-mincho text-[26px] font-bold">メニュー</h1><p className="mt-1.5 text-sm text-kondate-muted">わが家・みんな・公式の料理。</p></div><Link href={paid ? "/app/recipes/new" : "/pricing?required=custom_recipes"} className={buttonClass({ className: "shrink-0 px-4 text-sm" })}>{paid ? <Plus size={18} aria-hidden="true" /> : <Crown size={18} aria-hidden="true" />}{paid ? "登録" : "家族プラン"}</Link></header>
-    {created ? <p role="status" className="mt-5 rounded border border-kondate-done/30 bg-kondate-doneSoft p-3 text-sm">{created === "community" ? "みんなのメニューに追加しました。各家庭の次の月間生成から候補に入ります。" : "新しいメニューを登録しました。次の月間生成から候補に入ります。"}</p> : null}
+  const visibleRecipeCount = visibleCommunityRecipes.length + visibleOfficialRecipes.length;
+  return <main className="mx-auto min-h-dvh w-full max-w-5xl px-4 pb-28 pt-5 sm:px-6"><header className="flex items-end justify-between gap-4 border-b border-kondate-line pb-5"><div><h1 className="font-mincho text-[26px] font-bold">メニュー</h1><p className="mt-1.5 text-sm text-kondate-muted">毎日の献立に使う料理。</p></div><Link href={paid ? "/app/recipes/new" : "/pricing?required=custom_recipes"} className={buttonClass({ className: "shrink-0 px-4 text-sm" })}>{paid ? <Plus size={18} aria-hidden="true" /> : <Crown size={18} aria-hidden="true" />}{paid ? "登録" : "家族プラン"}</Link></header>
+    {created ? <p role="status" className="mt-5 rounded border border-kondate-done/30 bg-kondate-doneSoft p-3 text-sm">{created === "community" ? "メニューに追加しました。各家庭の次の月間生成から候補に入ります。" : "新しいメニューを登録しました。次の月間生成から候補に入ります。"}</p> : null}
     {deleted ? <p role="status" className="mt-5 rounded border border-kondate-done/30 bg-kondate-doneSoft p-3 text-sm">メニューを削除しました。今後の献立候補には入りません。</p> : null}
     {error === "delete" ? <p role="alert" className="mt-5 rounded border border-kondate-alert/30 bg-kondate-alertSoft p-3 text-sm text-kondate-alert">メニューを削除できませんでした。時間をおいて、もう一度お試しください。</p> : null}
     {customRecipes && customRecipes.length > 0 ? <section className="mt-8"><h2 className="text-sm font-semibold">わが家のメニュー</h2><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{customRecipes.map((recipe) => <RecipeCard key={recipe.id} id={recipe.id} name={recipe.name} minutes={recipe.cook_minutes} kind="custom" />)}</div></section> : <section className="mt-8 border-y border-kondate-line py-10 text-center"><p className="font-mincho text-lg font-bold">まだ自分のメニューはありません</p><p className="mt-2 text-sm text-kondate-muted">よく作る料理を登録すると、自動献立に混ぜられます。</p></section>}
-    <section className="mt-10"><div className="flex items-baseline justify-between gap-3"><h2 className="text-sm font-semibold">みんなのメニュー</h2><p className="text-xs tabular-nums text-kondate-faint">{visibleCommunityRecipes.length}品</p></div><p className="mt-1 text-xs text-kondate-muted">運営がレシピサイトから追加した料理です。不要な料理は各家庭で非表示にできます。</p>{visibleCommunityRecipes.length > 0 ? <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{visibleCommunityRecipes.map((recipe) => <RecipeCard key={recipe.id} id={recipe.id} name={recipe.name} minutes={recipe.cook_minutes} kind="community" customized={customizedSourceIds.has(recipe.id)} />)}</div> : <p className="mt-4 border-y border-kondate-line py-8 text-center text-sm text-kondate-muted">みんなのメニューはまだありません。</p>}</section>
-    <section className="mt-10"><div className="flex items-baseline justify-between gap-3"><h2 className="text-sm font-semibold">公式バランスメニュー</h2><p className="text-xs tabular-nums text-kondate-faint">{visibleOfficialRecipes.length}品</p></div>{visibleOfficialRecipes.length > 0 ? <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{visibleOfficialRecipes.map((recipe) => <RecipeCard key={recipe.id} recipeKey={recipe.id} name={recipe.name} minutes={recipe.cookMinutes} kind="official" customized={customizedOfficialKeys.has(recipe.id)} />)}</div> : <p className="mt-4 border-y border-kondate-line py-10 text-center text-sm text-kondate-muted">表示できる公式メニューはありません。</p>}</section>
+    <section className="mt-8">
+      <div className="flex items-baseline justify-between gap-3"><h2 className="text-sm font-semibold">メニュー</h2><p className="text-xs tabular-nums text-kondate-faint">{visibleRecipeCount}品</p></div>
+      {visibleRecipeCount > 0 ? <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {visibleCommunityRecipes.map((recipe) => <RecipeCard key={`community:${recipe.id}`} id={recipe.id} name={recipe.name} minutes={recipe.cook_minutes} kind="community" customized={customizedSourceIds.has(recipe.id)} />)}
+        {visibleOfficialRecipes.map((recipe) => <RecipeCard key={`official:${recipe.id}`} recipeKey={recipe.id} name={recipe.name} minutes={recipe.cookMinutes} kind="official" customized={customizedOfficialKeys.has(recipe.id)} />)}
+      </div> : <p className="mt-4 border-y border-kondate-line py-10 text-center text-sm text-kondate-muted">表示できるメニューはありません。</p>}
+    </section>
   </main>;
 }
 
@@ -56,7 +62,20 @@ function RecipeCard(props: RecipeCardProps) {
   const { kind, name, minutes } = props;
   const href = (kind === "official" ? `/app/recipes/official/${props.recipeKey}` : kind === "community" ? `/app/recipes/community/${props.id}` : `/app/recipes/custom/${props.id}`) as Route;
   const customized = kind !== "custom" && props.customized;
-  return <article className="grid min-h-18 grid-cols-[minmax(0,1fr)_auto] items-center rounded border border-kondate-line bg-white transition-colors hover:border-kondate-ink"><Link href={href} className="group flex min-w-0 items-center justify-between gap-3 px-4 py-3"><div className="min-w-0"><div className="flex flex-wrap items-start gap-2"><h3 className="font-mincho text-base font-bold leading-snug">{name}</h3>{kind === "custom" ? <span className="shrink-0 rounded-sm bg-kondate-accentSoft px-2 py-0.5 text-xs text-kondate-accent">わが家</span> : kind === "community" ? <span className="shrink-0 rounded-sm bg-kondate-accentSoft px-2 py-0.5 text-xs text-kondate-accent">みんな</span> : null}{customized ? <span className="shrink-0 rounded-sm bg-kondate-doneSoft px-2 py-0.5 text-xs text-kondate-done">アレンジ済み</span> : null}</div><p className="mt-1 text-xs tabular-nums text-kondate-faint">調理 {minutes}分</p></div><ChevronRight size={18} aria-hidden="true" className="shrink-0 text-kondate-faint transition-transform group-hover:translate-x-0.5" /></Link><div className="pr-3">{kind === "custom" ? <ArchiveRecipeButton recipeKind="custom" recipeId={props.id} recipeName={name} /> : kind === "community" ? <ArchiveRecipeButton recipeKind="community" recipeId={props.id} recipeName={name} /> : <ArchiveRecipeButton recipeKind="official" recipeKey={props.recipeKey} recipeName={name} />}</div></article>;
+  return <article className="grid min-h-[72px] grid-cols-[minmax(0,1fr)_auto] items-center rounded border border-kondate-line bg-white transition-colors hover:border-kondate-ink">
+    <Link href={href} title={name} className="group flex min-w-0 items-center justify-between gap-3 px-4 py-3">
+      <div className="min-w-0">
+        <h3 className="font-mincho truncate text-base font-bold leading-snug">{name}</h3>
+        <div className="mt-1 flex items-center gap-2 text-xs">
+          <p className="shrink-0 tabular-nums text-kondate-faint">調理 {minutes}分</p>
+          {kind === "custom" ? <span className="shrink-0 text-kondate-accent">わが家</span> : null}
+          {customized ? <span className="shrink-0 text-kondate-done">アレンジ済み</span> : null}
+        </div>
+      </div>
+      <ChevronRight size={18} aria-hidden="true" className="shrink-0 text-kondate-faint transition-transform group-hover:translate-x-0.5" />
+    </Link>
+    <div className="pr-3">{kind === "custom" ? <ArchiveRecipeButton recipeKind="custom" recipeId={props.id} recipeName={name} /> : kind === "community" ? <ArchiveRecipeButton recipeKind="community" recipeId={props.id} recipeName={name} /> : <ArchiveRecipeButton recipeKind="official" recipeKey={props.recipeKey} recipeName={name} />}</div>
+  </article>;
 }
 
 function isStepCustomization(meta: unknown) {
