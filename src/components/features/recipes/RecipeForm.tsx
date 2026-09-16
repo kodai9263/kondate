@@ -142,7 +142,7 @@ export function RecipeForm({ canPublish }: { canPublish: boolean }) {
         <Field label="料理名" name="name" value={fields.name} onChange={(value) => updateField("name", value)} required />
         <Field label="副菜・汁物" name="side" value={fields.side} onChange={(value) => updateField("side", value)} helper="一緒に食べたい副菜や汁物を入力します。" />
         <div className="grid gap-4 sm:grid-cols-2">
-          <NumberField label="調理時間" name="cookMinutes" unit="分" value={fields.cookMinutes} onChange={(value) => updateField("cookMinutes", value)} />
+          <div><NumberField label="完成までの時間" name="cookMinutes" unit="分" value={fields.cookMinutes} onChange={(value) => updateField("cookMinutes", value)} /><p className="mt-2 text-xs leading-6 text-kondate-muted">下ごしらえや待ち時間も含めてください。40分を超える料理は保存できますが、今はメニュー一覧と新しい献立の候補から外れます。</p></div>
           <label className="block text-sm font-semibold">主なたんぱく源 <Required /><select name="proteinSource" required value={fields.proteinSource} onChange={(event) => updateField("proteinSource", event.target.value)} className="mt-2 min-h-12 w-full rounded-lg border border-kondate-line bg-white px-3.5 text-base font-normal outline-none transition-colors focus:border-kondate-accent focus:ring-2 focus:ring-kondate-accent/15"><option value="fish">魚</option><option value="meat">肉</option><option value="soy">大豆・豆腐</option><option value="egg">卵</option><option value="noodle">麺・その他</option></select></label>
         </div>
         <TextArea label="材料" name="ingredients" value={fields.ingredients} onChange={(value) => updateField("ingredients", value)} helper="1行に1つずつ書くと、あとから買い物リストへ変換しやすくなります。" />

@@ -1,4 +1,5 @@
 import type { Nutrition, NutritionRecipe, NutritionSummary, PlannedDinner, ProteinSource } from "@/types/nutrition";
+import { isDinnerCandidate } from "@/lib/nutrition/cookingTime";
 
 export const dinnerNutritionTarget: Nutrition = {
   energyKcal: 650,
@@ -30,8 +31,7 @@ export function generateMonthlyDinnerPlan({
   preferredRecipeIds = [],
 }: GenerateOptions): PlannedDinner[] {
   if (recipes.length === 0) return [];
-  const available = maxCookMinutes ? recipes.filter((item) => item.cookMinutes <= maxCookMinutes) : recipes;
-  const candidates = available.length > 0 ? available : recipes;
+  const candidates = recipes.filter((item) => isDinnerCandidate(item, maxCookMinutes));
   const byId = new Map(recipes.map((recipe) => [recipe.id, recipe]));
   const random = seededRandom(seed);
   const preferred = new Set(preferredRecipeIds);
@@ -45,6 +45,7 @@ export function generateMonthlyDinnerPlan({
       plan.push({ date, recipe: lockedRecipe, locked: true });
       continue;
     }
+    if (candidates.length === 0) continue;
 
     const recent = plan.slice(-4);
     const week = plan.slice(Math.max(0, plan.length - ((day - 1) % 7)));
@@ -66,7 +67,13 @@ export function materializeDinnerPlan(
   lockedRecipeIds: Record<string, string>,
 ) {
   const recipeById = new Map(recipes.map((recipe) => [recipe.id, recipe]));
-  return generatedPlan.map((day) => ({
+  const days = new Map(generatedPlan.map((day) => [day.date, day]));
+  // 候補がゼロになった場合も、保存済みの日付と料理は読み出せるようにする。
+  for (const [date, recipeId] of Object.entries(changedRecipeIds)) {
+    const recipe = recipeById.get(recipeId);
+    if (recipe && !days.has(date)) days.set(date, { date, recipe, locked: Boolean(lockedRecipeIds[date]) });
+  }
+  return [...days.values()].sort((a, b) => a.date.localeCompare(b.date)).map((day) => ({
     ...day,
     recipe: recipeById.get(changedRecipeIds[day.date]) ?? day.recipe,
     locked: Boolean(lockedRecipeIds[day.date]),
@@ -94,8 +101,7 @@ export function rankAlternativeRecipes({
 }) {
   const nearby = new Set(nearbyRecipeIds);
   const preferred = new Set(preferredRecipeIds);
-  const withinTime = maxCookMinutes ? recipes.filter((recipe) => recipe.cookMinutes <= maxCookMinutes) : recipes;
-  const candidates = (withinTime.length > 1 ? withinTime : recipes).filter((recipe) => recipe.id !== currentRecipe.id);
+  const candidates = recipes.filter((recipe) => isDinnerCandidate(recipe, maxCookMinutes) && recipe.id !== currentRecipe.id);
 
   return [...candidates].sort((a, b) => alternativeScore(a) - alternativeScore(b));
 
