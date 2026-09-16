@@ -1,0 +1,12 @@
+create function pg_temp.check_true(value boolean, label text) returns void language plpgsql as $$ begin if value is not true then raise exception 'FAIL: %', label; end if; raise notice 'PASS: %',label; end; $$;
+select pg_temp.check_true((select count(*)=95 from recipes where meta->>'recipe_detail_version'='2'), '公式94品と対象の共有1品を更新');
+select pg_temp.check_true((select bool_and(servings_base=4 and prep_minutes=0 and (meta->>'total_minutes')::int>=25) from recipes where meta->>'recipe_detail_version'='2'), '人数と時間を更新');
+select pg_temp.check_true((select count(*)=0 from recipe_steps s join recipes r on r.id=s.recipe_id where r.meta->>'recipe_detail_version'='2' and s.phase='morning'), '重複する朝仕込みを除く');
+select pg_temp.check_true((select bool_and(s.n between 6 and 10) from (select r.id,count(*) n from recipes r join recipe_steps s on r.id=s.recipe_id where r.meta->>'recipe_detail_version'='2' and s.phase='evening' group by r.id) s), '95品に6から10工程');
+select pg_temp.check_true((select bool_and(meta->>'ingredients_text'=(select string_agg(s.text,E'\n' order by position) from recipe_steps s where s.recipe_id=r.id and s.phase='seasoning') and meta->>'steps_text'=(select string_agg(s.text,E'\n' order by position) from recipe_steps s where s.recipe_id=r.id and s.phase='evening')) from recipes r where meta->>'recipe_detail_version'='2'), '保存した材料と工程がメタデータと一致');
+select pg_temp.check_true((select meta->>'ingredients_text'='家庭の材料' and meta->>'recipe_detail_version' is null from recipes where id='33333333-3333-4333-8333-333333333333'), '家庭アレンジの材料と設定を維持');
+select pg_temp.check_true((select text='家庭の作り方' from recipe_steps where recipe_id='33333333-3333-4333-8333-333333333333' and phase='evening'), '家庭アレンジの工程を維持');
+select pg_temp.check_true((select meta->>'recipe_detail_version' is null from recipes where id='22222222-2222-4222-8222-222222222222'), '無関係な共有品は更新しない');
+select pg_temp.check_true((select bool_and(not ts.checked) from task_states ts join plan_entries pe on pe.id=ts.plan_entry_id where pe.date>=(timezone('Asia/Tokyo',now()))::date), '今日以降の古いチェックを解除');
+select pg_temp.check_true((select bool_and(ts.checked) from task_states ts join plan_entries pe on pe.id=ts.plan_entry_id where pe.date<(timezone('Asia/Tokyo',now()))::date), '維持される工程の過去のチェックは保持');
+update task_states set checked=true;

@@ -14,6 +14,10 @@ export type Dinner = {
   kids: boolean;
   prepMin: number;
   cookMin: number;
+  totalMin?: number;
+  recipeNotes?: string[];
+  servingsBase?: number;
+  ingredientsScalable?: boolean;
   morning: string[];
   evening: string[];
   seasonings: string[];

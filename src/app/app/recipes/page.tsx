@@ -41,18 +41,18 @@ export default async function RecipesPage({ searchParams }: { searchParams: Prom
     {created ? <p role="status" className="mt-5 rounded border border-kondate-done/30 bg-kondate-doneSoft p-3 text-sm">{created === "community" ? "メニューに追加しました。各家庭の次の月間生成から候補に入ります。" : "新しいメニューを登録しました。次の月間生成から候補に入ります。"}</p> : null}
     {deleted ? <p role="status" className="mt-5 rounded border border-kondate-done/30 bg-kondate-doneSoft p-3 text-sm">メニューを削除しました。今後の献立候補には入りません。</p> : null}
     {error === "delete" ? <p role="alert" className="mt-5 rounded border border-kondate-alert/30 bg-kondate-alertSoft p-3 text-sm text-kondate-alert">メニューを削除できませんでした。時間をおいて、もう一度お試しください。</p> : null}
-    {customRecipes && customRecipes.length > 0 ? <section className="mt-8"><h2 className="text-sm font-semibold">わが家のメニュー</h2><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{customRecipes.map((recipe) => <RecipeCard key={recipe.id} id={recipe.id} name={recipe.name} minutes={recipe.cook_minutes} kind="custom" />)}</div></section> : <section className="mt-8 border-y border-kondate-line py-10 text-center"><p className="font-mincho text-lg font-bold">まだ自分のメニューはありません</p><p className="mt-2 text-sm text-kondate-muted">よく作る料理を登録すると、自動献立に混ぜられます。</p></section>}
+    {customRecipes && customRecipes.length > 0 ? <section className="mt-8"><h2 className="text-sm font-semibold">わが家のメニュー</h2><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{customRecipes.map((recipe) => <RecipeCard key={recipe.id} id={recipe.id} name={recipe.name} minutes={getTotalMinutes(recipe.meta) ?? recipe.cook_minutes} totalTime={Boolean(getTotalMinutes(recipe.meta))} kind="custom" />)}</div></section> : <section className="mt-8 border-y border-kondate-line py-10 text-center"><p className="font-mincho text-lg font-bold">まだ自分のメニューはありません</p><p className="mt-2 text-sm text-kondate-muted">よく作る料理を登録すると、自動献立に混ぜられます。</p></section>}
     <section className="mt-8">
       <div className="flex items-baseline justify-between gap-3"><h2 className="text-sm font-semibold">メニュー</h2><p className="text-xs tabular-nums text-kondate-faint">{visibleRecipeCount}品</p></div>
       {visibleRecipeCount > 0 ? <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {visibleCommunityRecipes.map((recipe) => <RecipeCard key={`community:${recipe.id}`} id={recipe.id} name={recipe.name} minutes={recipe.cook_minutes} kind="community" customized={customizedSourceIds.has(recipe.id)} />)}
-        {visibleOfficialRecipes.map((recipe) => <RecipeCard key={`official:${recipe.id}`} recipeKey={recipe.id} name={recipe.name} minutes={recipe.cookMinutes} kind="official" customized={customizedOfficialKeys.has(recipe.id)} />)}
+        {visibleCommunityRecipes.map((recipe) => <RecipeCard key={`community:${recipe.id}`} id={recipe.id} name={recipe.name} minutes={getTotalMinutes(recipe.meta) ?? recipe.cook_minutes} totalTime={Boolean(getTotalMinutes(recipe.meta))} kind="community" customized={customizedSourceIds.has(recipe.id)} />)}
+        {visibleOfficialRecipes.map((recipe) => <RecipeCard key={`official:${recipe.id}`} recipeKey={recipe.id} name={recipe.name} minutes={recipe.totalMinutes ?? recipe.cookMinutes} totalTime kind="official" customized={customizedOfficialKeys.has(recipe.id)} />)}
       </div> : <p className="mt-4 border-y border-kondate-line py-10 text-center text-sm text-kondate-muted">表示できるメニューはありません。</p>}
     </section>
   </main>;
 }
 
-type RecipeCardProps = { name: string; minutes: number } & (
+type RecipeCardProps = { name: string; minutes: number; totalTime?: boolean } & (
   | { kind: "custom"; id: string }
   | { kind: "community"; id: string; customized: boolean }
   | { kind: "official"; recipeKey: string; customized: boolean }
@@ -67,7 +67,7 @@ function RecipeCard(props: RecipeCardProps) {
       <div className="min-w-0">
         <h3 className="font-mincho truncate text-base font-bold leading-snug">{name}</h3>
         <div className="mt-1 flex items-center gap-2 text-xs">
-          <p className="shrink-0 tabular-nums text-kondate-faint">調理 {minutes}分</p>
+          <p className="shrink-0 tabular-nums text-kondate-faint">{customized ? "作り方を確認" : `${props.totalTime ? "完成まで約" : "調理 "}${minutes}分`}</p>
           {kind === "custom" ? <span className="shrink-0 text-kondate-accent">わが家</span> : null}
           {customized ? <span className="shrink-0 text-kondate-done">アレンジ済み</span> : null}
         </div>
@@ -86,4 +86,10 @@ function getMetaString(meta: unknown, key: string) {
   if (!meta || typeof meta !== "object") return null;
   const value = (meta as Record<string, unknown>)[key];
   return typeof value === "string" ? value : null;
+}
+
+function getTotalMinutes(meta: unknown) {
+  if (!meta || typeof meta !== "object") return undefined;
+  const value = (meta as Record<string, unknown>).total_minutes;
+  return typeof value === "number" ? value : undefined;
 }

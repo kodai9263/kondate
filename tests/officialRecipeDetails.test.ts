@@ -3,7 +3,7 @@ import { officialNutritionRecipes } from "@/lib/nutrition/catalog";
 import { officialRecipeDetails } from "@/lib/nutrition/recipeDetails";
 
 describe("公式献立の調理詳細", () => {
-  it("全94献立に材料と4〜7個の個別工程がある", () => {
+  it("全94献立に材料と6〜10個の個別工程がある", () => {
     expect(officialNutritionRecipes).toHaveLength(94);
     expect(Object.keys(officialRecipeDetails)).toHaveLength(94);
 
@@ -11,8 +11,8 @@ describe("公式献立の調理詳細", () => {
       const detail = officialRecipeDetails[recipe.id];
       expect(detail, recipe.id).toBeDefined();
       expect(detail.ingredients.length, `${recipe.id}: 材料`).toBeGreaterThanOrEqual(3);
-      expect(detail.steps.length, `${recipe.id}: 工程`).toBeGreaterThanOrEqual(4);
-      expect(detail.steps.length, `${recipe.id}: 工程`).toBeLessThanOrEqual(7);
+      expect(detail.steps.length, `${recipe.id}: 工程`).toBeGreaterThanOrEqual(6);
+      expect(detail.steps.length, `${recipe.id}: 工程`).toBeLessThanOrEqual(10);
       expect(recipe.ingredientsText).toBe(detail.ingredients.join("\n"));
       expect(recipe.eveningSteps).toEqual(detail.steps);
     });

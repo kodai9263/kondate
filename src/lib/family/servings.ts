@@ -61,6 +61,38 @@ export function scaleQuantityText(text: string, familySize: FamilySize) {
   );
 }
 
+/** 調理用の分量。買い物用の「袋・個単位の切り上げ」は行わない。 */
+export function scaleRecipeIngredient(text: string, servings: number, baseServings = 4) {
+  if (!Number.isFinite(servings) || !Number.isFinite(baseServings) || servings <= 0 || baseServings <= 0) return text;
+  const scale = servings / baseServings;
+  if (Math.abs(scale - 1) < 0.00001) return text;
+  const amount = String.raw`(?:\d+(?:と|\s+)\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?)`;
+  const units = `${postfixUnits}|合|尾|片|cm|皿分`;
+  const convert = (raw: string, spoon = false) => {
+    const parts = raw.split(/と|\s+/);
+    const value = parts.reduce((sum, part) => sum + parseQuantity(part), 0) * scale;
+    if (spoon || raw.includes("/")) {
+      for (let denominator = 1; denominator <= 64; denominator += 1) {
+        const numerator = Math.round(value * denominator);
+        if (Math.abs(numerator / denominator - value) > 0.00001) continue;
+        const whole = Math.floor(numerator / denominator);
+        const remainder = numerator % denominator;
+        if (!remainder) return String(whole);
+        const fraction = `${remainder}/${denominator}`;
+        return whole ? `${whole}と${fraction}` : fraction;
+      }
+    }
+    return Number(value.toFixed(3)).toString();
+  };
+  return text
+    .replace(new RegExp(`(${amount})\\s*(${units})`, "g"), (_match, raw: string, unit: string) => `${convert(raw)}${unit}`)
+    .replace(new RegExp(`(大さじ|小さじ)(?:各)?\\s*(${amount})`, "g"), (_match, unit: string, raw: string) => `${unit}${convert(raw, true)}`);
+}
+
+export function getRecipeServings(familySize: FamilySize) {
+  return Math.max(1, Math.ceil(getAdultEquivalent(familySize)));
+}
+
 function parseQuantity(raw: string) {
   if (!raw.includes("/")) return Number(raw);
   const [numerator, denominator] = raw.split("/").map(Number);

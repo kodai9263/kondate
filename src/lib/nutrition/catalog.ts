@@ -47,7 +47,7 @@ export const officialNutritionRecipes: NutritionRecipe[] = [
   recipe("summer-veg-whitefish", "白身魚と夏野菜のラタトゥイユ", "豆のコンソメスープ", 30, "fish", 602, 32, 15, 81, 12.1, 1.7, 280, [6, 7, 8, 9]),
   recipe("sesame-chicken-noodles", "蒸し鶏の冷やしごまだれ麺", "枝豆とトマトのサラダ", 20, "noodle", 648, 30, 18, 94, 9.0, 2.3, 210, [6, 7, 8]),
   recipe("taco-rice", "野菜たっぷりタコライス", "オクラのコンソメスープ", 25, "meat", 676, 29, 21, 92, 10.3, 2.1, 250, [6, 7, 8, 9]),
-  recipe("spicy-hiyayakko", "香味野菜のピリ辛冷ややっこ", "鶏ととうもろこしの混ぜご飯", 20, "soy", 606, 27, 17, 84, 9.8, 1.9, 220, [6, 7, 8]),
+  recipe("spicy-hiyayakko", "香味野菜のピリ辛冷ややっこ", "鶏ととうもろこしの炊き込みご飯", 20, "soy", 606, 27, 17, 84, 9.8, 1.9, 220, [6, 7, 8]),
   recipe("unagi-bowl", "うなぎと夏野菜のちらし丼", "冬瓜のすまし汁", 25, "fish", 692, 31, 23, 91, 7.8, 2.2, 180, [7, 8]),
   recipe("pumpkin-chicken-curry", "かぼちゃと鶏肉の夏カレー", "きゅうりのヨーグルトサラダ", 30, "meat", 684, 31, 19, 96, 11.0, 2.1, 245, [7, 8, 9]),
 
@@ -137,6 +137,9 @@ function recipe(
     name,
     side,
     cookMinutes,
+    totalMinutes: detail.totalMinutes,
+    recipeNotes: detail.notes,
+    servingsBase: 4,
     proteinSource,
     imageUrl: imageByProteinSource[proteinSource],
     nutrition: { energyKcal, proteinG, fatG, carbsG, fiberG, saltG, vegetablesG },

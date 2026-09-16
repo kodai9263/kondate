@@ -49,6 +49,7 @@ describe("mergeTodayPlan", () => {
         side: "冬瓜のすまし汁",
         prepMin: 0,
         cookMin: 25,
+        ingredientsScalable: false,
         morning: [],
         evening: [
           "冬瓜を薄切りにし、水・だしと中火で10分煮て、醤油と塩で味を整える",
