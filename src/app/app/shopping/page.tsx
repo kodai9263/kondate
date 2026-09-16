@@ -1,3 +1,6 @@
+import { getBreakfastVersions } from "@/lib/breakfast/server";
+import { breakfastCategory } from "@/lib/breakfast/settings";
+import { shoppingWithBreakfast } from "@/lib/breakfast/shopping";
 import { ShoppingList, type ShoppingListGroup } from "@/components/features/shopping/ShoppingList";
 import { formatFamilyLabel, formatShoppingDay, scaleQuantityText } from "@/lib/family/servings";
 import { getCurrentHouseholdPreferences } from "@/lib/family/server";
@@ -7,18 +10,19 @@ import { getSupabaseServer } from "@/lib/supabase/server";
 
 export default async function ShoppingPage() {
   const today = new Date();
-  const preferences = await getCurrentHouseholdPreferences();
+  const [preferences, breakfastState] = await Promise.all([getCurrentHouseholdPreferences(), getBreakfastVersions()]);
   const { weekIndex, weekStart } = getShoppingCycle(menuData, preferences.shoppingDay, today);
   const savedState = await getSavedShoppingState(weekStart);
   const familySize = { adultCount: preferences.adultCount, childCount: preferences.childCount };
   const week = menuData.weeks[weekIndex];
-  const groups: ShoppingListGroup[] = orderShoppingEntries(week.shopping, preferences.breakfastChoices.length > 0).map(([category, items]) => ({
+  const shopping = shoppingWithBreakfast(menuData, weekIndex, weekStart, breakfastState.versions);
+  const groups: ShoppingListGroup[] = orderShoppingEntries(shopping).map(([category, items]) => ({
     category,
     items: items.map((name, position) => ({
       category,
       name,
       position,
-      label: scaleQuantityText(name, familySize),
+      label: category === breakfastCategory ? name : scaleQuantityText(name, familySize),
     })),
   }));
 
@@ -28,6 +32,7 @@ export default async function ShoppingPage() {
         <h1 className="font-mincho text-[26px] font-bold">基本の買い物リスト</h1>
         <p className="mt-1.5 text-sm text-kondate-muted">{formatShoppingDay(preferences.shoppingDay)}曜向け・{week.label}・{formatFamilyLabel(familySize)}</p>
       </header>
+      {breakfastState.error ? <p role="alert" className="mt-4 text-sm text-kondate-alert">朝食の買うものを読み込めませんでした。再読み込みして確認してください。</p> : null}
       <div className="mt-5">
         <ShoppingList
           groups={groups}

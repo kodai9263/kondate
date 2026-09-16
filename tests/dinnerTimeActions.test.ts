@@ -81,7 +81,8 @@ describe("今日の献立の補充", () => {
     const state = await getTodayPlanState(fallback);
     expect(state.loadError).toBeUndefined();
     expect(mocks.upsert).not.toHaveBeenCalled();
-    expect(mocks.rpc).not.toHaveBeenCalled();
+    expect(mocks.rpc).toHaveBeenCalledWith("ensure_today_breakfast", { target_date: fallback.date });
+    expect(mocks.rpc).not.toHaveBeenCalledWith("ensure_today_plan", expect.anything());
   });
   it("選んだ夕食の保存に失敗しても旧テンプレートへ切り替えない", async () => {
     mocks.upsert.mockResolvedValue({ error: new Error("offline") });
@@ -93,7 +94,7 @@ describe("今日の献立の補充", () => {
   it("選んだ夕食が確定してから朝食とチェック状態を準備する", async () => {
     await getTodayPlanState(fallback, { recipeId: shortId, servings: 4 });
     expect(mocks.upsert).toHaveBeenCalledOnce();
-    expect(mocks.rpc).toHaveBeenCalledWith("ensure_today_plan", { target_date: fallback.date });
+    expect(mocks.rpc).toHaveBeenCalledWith("ensure_today_breakfast", { target_date: fallback.date });
     expect(mocks.upsert.mock.invocationCallOrder[0]).toBeLessThan(mocks.rpc.mock.invocationCallOrder[0]);
   });
 });

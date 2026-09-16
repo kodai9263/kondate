@@ -1,3 +1,6 @@
+import { getBreakfastVersions } from "@/lib/breakfast/server";
+import { breakfastForDate } from "@/lib/breakfast/settings";
+import { shoppingWithBreakfast } from "@/lib/breakfast/shopping";
 import { Settings } from "lucide-react";
 import Link from "next/link";
 import { buttonClass } from "@/components/ui/Button";
@@ -15,8 +18,9 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
   const params = await searchParams;
   const baseToday = findTodayPlan(menuData);
   const [year, month] = baseToday.date.split("-").map(Number);
-  const plannerContext = await getHouseholdPlannerContext(year, month);
-  const fallbackToday = findTodayPlan(menuData, new Date(), plannerContext.preferences.breakfastChoices);
+  const [plannerContext, breakfastState] = await Promise.all([getHouseholdPlannerContext(year, month), getBreakfastVersions()]);
+  const breakfast = breakfastForDate(breakfastState.versions, baseToday.date);
+  const fallbackToday = { ...baseToday, breakfast: breakfast ? { ...breakfast, minutes: breakfast.minutes ?? undefined } : null };
   const generatedPlan = generateMonthlyDinnerPlan({
     year,
     month,
@@ -51,10 +55,8 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
   const familySize = { adultCount: preferences.adultCount, childCount: preferences.childCount };
   const shoppingDayLabel = formatShoppingDay(preferences.shoppingDay);
   const shoppingCycle = getShoppingCycle(menuData, preferences.shoppingDay);
-  const shoppingWeek = menuData.weeks[shoppingCycle.weekIndex];
-  const shoppingItemCount = Object.entries(shoppingWeek.shopping).reduce((total, [category, items]) => (
-    category === "朝ごはん定番" && preferences.breakfastChoices.length === 0 ? total : total + items.length
-  ), 0);
+  const shopping = shoppingWithBreakfast(menuData, shoppingCycle.weekIndex, shoppingCycle.weekStart, breakfastState.versions);
+  const shoppingItemCount = Object.values(shopping).reduce((total, items) => total + items.length, 0);
   return (
     <main className="mx-auto min-h-dvh w-full max-w-[560px] px-4 pb-24 pt-5">
       <header className="mb-6 flex items-center justify-between gap-3">
@@ -65,7 +67,7 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
         </div>
       </header>
       {params.notice === "family-joined" ? <p role="status" className="mb-5 rounded border border-kondate-done/30 bg-kondate-doneSoft p-3 text-sm text-kondate-ink">家族グループに参加しました。</p> : null}
-      {planState.loadError ? <p role="alert" className="mb-4 text-sm text-kondate-alert">献立やチェック状態を読み込めませんでした。再読み込みしてお試しください。</p> : null}
+      {breakfastState.error || planState.loadError ? <p role="alert" className="mb-4 text-sm text-kondate-alert">献立やチェック状態を読み込めませんでした。再読み込みしてお試しください。</p> : null}
       <div className="space-y-8"><TodayBoard familySize={familySize} feedbackStatus={params.mealFeedback} today={today} initialTaskBindings={taskBindings} dinnerAvailable={Boolean(plannedDinner)} /><ShoppingSummaryLink shoppingDayLabel={shoppingDayLabel} itemCount={shoppingItemCount} /></div>
     </main>
   );

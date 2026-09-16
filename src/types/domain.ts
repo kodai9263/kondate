@@ -2,7 +2,7 @@ export type WeekdayJa = "日" | "月" | "火" | "水" | "木" | "金" | "土";
 
 export type Breakfast = {
   name: string;
-  minutes: number;
+  minutes?: number;
   tasks: string[];
 };
 

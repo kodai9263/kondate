@@ -11,9 +11,8 @@ import { submitAppFeedback } from "@/app/feedback/actions";
 import { buildInviteUrl, normalizeInviteToken } from "@/lib/family/invites";
 import { isActiveSubscriptionStatus } from "@/lib/billing/entitlements";
 import { ScrollToAccountTop } from "@/components/features/account/ScrollToAccountTop";
-import { breakfastKeys, normalizeBreakfastChoices } from "@/lib/breakfast/preferences";
-import { menuData } from "@/lib/menuData";
-import { BreakfastChoiceFieldset } from "@/components/features/account/BreakfastChoiceFieldset";
+import { getBreakfastVersions } from "@/lib/breakfast/server";
+import { BreakfastSettings } from "@/components/features/account/BreakfastSettings";
 import { InviteLinkField } from "@/components/features/account/InviteLinkField";
 import { RevokeInviteButton } from "@/components/features/account/RevokeInviteButton";
 
@@ -60,7 +59,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const allergies = normalizeAllergies(settings?.allergies);
   const selectedAllergies = new Set(allergies);
   const customAllergies = getCustomAllergies(allergies);
-  const selectedBreakfasts = normalizeBreakfastChoices(settings?.breakfast_choices);
+  const breakfastState = await getBreakfastVersions();
   const pendingInvites = invites?.filter((invite) => !invite.accepted_at) ?? [];
   const createdInviteToken = normalizeInviteToken(params.invite);
 
@@ -82,10 +81,6 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           {!user.is_anonymous ? <label className="block text-sm font-semibold">メールアドレス<input value={user.email ?? ""} readOnly className="mt-2 min-h-12 w-full rounded border border-kondate-line bg-kondate-bg px-3 text-base text-kondate-muted" /></label> : null}
           <fieldset className="border-t border-kondate-line pt-5"><legend className="flex items-center gap-2 px-1 font-semibold">家族の人数</legend><div className="mt-4 grid grid-cols-2 gap-3"><label className="text-sm font-semibold">大人<input name="adultCount" type="number" inputMode="numeric" min="1" max="10" required defaultValue={familySize.adultCount} className="mt-2 min-h-12 w-full rounded-lg border border-kondate-line bg-white px-3.5 text-base font-normal outline-none transition-colors focus:border-kondate-accent focus:ring-2 focus:ring-kondate-accent/15" /></label><label className="text-sm font-semibold">子ども<input name="childCount" type="number" inputMode="numeric" min="0" max="10" required defaultValue={familySize.childCount} className="mt-2 min-h-12 w-full rounded-lg border border-kondate-line bg-white px-3.5 text-base font-normal outline-none transition-colors focus:border-kondate-accent focus:ring-2 focus:ring-kondate-accent/15" /></label></div><p className="mt-3 text-xs leading-6 text-kondate-muted">{formatServingLabel(familySize)}。子どもは大人の0.6人前として献立と買い物を調整します。</p></fieldset>
           <label className="block border-t border-kondate-line pt-5 text-sm font-semibold"><span className="flex items-center gap-2">まとめ買いの曜日</span><select name="shoppingDay" defaultValue={shoppingDay} className="mt-3 min-h-12 w-full rounded-lg border border-kondate-line bg-white px-3.5 text-base font-normal outline-none transition-colors focus:border-kondate-accent focus:ring-2 focus:ring-kondate-accent/15">{shoppingWeekdays.map((weekday, index) => <option key={weekday} value={index}>{weekday}曜日</option>)}</select></label>
-          <BreakfastChoiceFieldset
-            initialSelectedKeys={selectedBreakfasts}
-            options={breakfastKeys.map((key) => ({ key, ...menuData.breakfasts[key] }))}
-          />
           <fieldset className="border-t border-kondate-line pt-5">
             <legend className="flex items-center gap-2 px-1 font-semibold">アレルギー・避けたい食材</legend>
             <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -97,6 +92,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           <Button type="submit" fullWidth><Save size={18} aria-hidden="true" />変更を保存</Button>
         </form>
       </section>
+
+      <BreakfastSettings initialVersion={breakfastState.versions.at(-1)} loadError={breakfastState.error} />
 
       <section className="mt-4 rounded border border-kondate-line bg-white p-5">
         <div className="flex items-start justify-between gap-3"><div><p className="flex items-center gap-2 font-semibold">契約プラン</p><p className="mt-1 text-sm text-kondate-muted">{isMonitorTrial ? "家族プランの無料モニター" : paid ? "家族プランを利用中" : "無料プラン"}</p></div><span className="shrink-0 rounded-sm border border-kondate-line px-2 py-0.5 text-xs text-kondate-muted">{isMonitorTrial ? "モニター" : paid ? "有効" : "無料"}</span></div>

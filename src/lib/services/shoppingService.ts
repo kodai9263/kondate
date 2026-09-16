@@ -11,6 +11,7 @@ export const shoppingCategoryOrder = [
   "麺・パン",
   "冷凍・缶詰",
   "朝ごはん定番",
+  "朝ごはん",
   "調味料(在庫確認)",
 ];
 
