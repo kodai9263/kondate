@@ -9,12 +9,14 @@ export function AuthField({
   type = "text",
   autoComplete,
   helper,
+  maxLength,
 }: {
   id: string;
   label: string;
   type?: "text" | "email" | "password";
   autoComplete: string;
   helper?: string;
+  maxLength?: number;
 }) {
   return (
     <div>
@@ -26,6 +28,7 @@ export function AuthField({
         name={id}
         type={type}
         required
+        maxLength={maxLength}
         minLength={type === "password" ? 8 : undefined}
         autoComplete={autoComplete}
         aria-describedby={helper ? `${id}-helper` : undefined}
