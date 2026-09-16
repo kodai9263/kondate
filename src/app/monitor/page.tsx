@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { ArrowRight, CalendarDays, Check, ChefHat, Clock3, ListChecks, MessageCircleQuestion, ShoppingBasket, Users } from "lucide-react";
 import Link from "next/link";
 import { TrackedLink } from "@/components/features/analytics/TrackedLink";
+import { SignupForm } from "@/components/features/auth/SignupForm";
+import { hasAuthenticatedSession } from "@/lib/auth/session";
 import { buttonClass } from "@/components/ui/Button";
 import { buildMonitorSignupHref } from "@/lib/marketing/campaignParams";
 import { getMonitorCampaignStatus } from "@/lib/marketing/monitorCampaign.server";
@@ -35,9 +37,12 @@ const faqs = [
 
 export default async function MonitorPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const campaignParams = await searchParams;
-  const monitorStatus = await getMonitorCampaignStatus();
+  const [monitorStatus, authenticated] = await Promise.all([getMonitorCampaignStatus(), hasAuthenticatedSession()]);
   const accepting = monitorStatus.isAvailable && monitorStatus.isOpen;
-  const signupHref = buildMonitorSignupHref(campaignParams);
+  const campaignFields = buildMonitorSignupHref(campaignParams).query;
+  const signupHref = authenticated ? "/app" : "#monitor-signup";
+  const ctaLabel = authenticated ? "献立を開く" : "無料で14日間試す";
+  const ctaEvent = authenticated ? "monitor_app_click" : "monitor_signup_click";
   const today = findTodayPlan(menuData);
   const previewDays = menuData.weeks[0].days.slice(0, 3);
   return (
@@ -62,7 +67,7 @@ export default async function MonitorPage({ searchParams }: { searchParams: Prom
               {["入力は3項目", "カード登録不要", "自動課金なし"].map((item) => <li key={item} className="flex items-center gap-2"><Check size={17} className="shrink-0 text-kondate-accent" aria-hidden="true" />{item}</li>)}
             </ul>
             <div className="mt-8">
-              {accepting ? <TrackedLink href={signupHref} eventName="monitor_signup_click" eventParams={{ placement: "hero" }} className={buttonClass({ className: "w-full px-7 sm:w-auto" })}>無料で14日間試す <ArrowRight size={18} aria-hidden="true" /></TrackedLink> : <span className={buttonClass({ variant: "secondary", className: "w-full cursor-not-allowed px-7 text-kondate-muted sm:w-auto" })}>無料モニター受付終了</span>}
+              {accepting || authenticated ? <TrackedLink href={signupHref} eventName={ctaEvent} eventParams={{ placement: "hero" }} className={buttonClass({ className: "w-full px-7 sm:w-auto" })}>{ctaLabel} <ArrowRight size={18} aria-hidden="true" /></TrackedLink> : <span className={buttonClass({ variant: "secondary", className: "w-full cursor-not-allowed px-7 text-kondate-muted sm:w-auto" })}>無料モニター受付終了</span>}
             </div>
             <p className="mt-4 text-xs leading-6 text-kondate-faint">登録は約1分。お願いするのは、使ったあとの5分ほどの感想だけです。</p>
           </div>
@@ -84,6 +89,16 @@ export default async function MonitorPage({ searchParams }: { searchParams: Prom
           </aside>
         </div>
       </section>
+
+      {accepting && !authenticated ? <section id="monitor-signup" aria-labelledby="monitor-signup-title" className="scroll-mt-4 border-b-2 border-kondate-ink bg-kondate-morning px-4 py-10 sm:px-6">
+        <div className="mx-auto max-w-md border-2 border-kondate-ink bg-white p-5 sm:p-8">
+          <h2 id="monitor-signup-title" className="font-mincho text-2xl font-black">ここから無料で始められます</h2>
+          <p className="mt-3 text-sm leading-7 text-kondate-muted">入力は3項目。カード登録も、自動課金もありません。</p>
+          <div className="mt-6"><SignupForm signupSource="monitor" campaignFields={campaignFields} placement="monitor_inline" /></div>
+          <p className="mt-4 text-xs leading-6 text-kondate-faint">登録すると、<Link href="/terms" className="underline">利用規約</Link>と<Link href="/privacy" className="underline">プライバシーポリシー</Link>に同意したものとみなされます。</p>
+          <p className="mt-4 text-sm text-kondate-muted">登録済みの方は <Link href="/login" className="inline-flex min-h-11 items-center font-bold text-kondate-accent underline">ログイン</Link></p>
+        </div>
+      </section> : null}
 
       <section className="border-b-2 border-kondate-ink px-4 py-14 sm:px-6 sm:py-20">
         <div className="mx-auto max-w-6xl">
@@ -145,7 +160,7 @@ export default async function MonitorPage({ searchParams }: { searchParams: Prom
       <section className="bg-kondate-accent px-4 py-14 text-white sm:px-6">
         <div className="mx-auto flex max-w-6xl flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div><p className="font-mincho text-3xl font-black">次のごはんから、試してみませんか。</p><p className="mt-2 text-sm font-bold text-[#ffe4d8]">率直な感想が、これからの「きょうのごはん」をつくります。</p></div>
-          {accepting ? <TrackedLink href={signupHref} eventName="monitor_signup_click" eventParams={{ placement: "footer" }} className={buttonClass({ variant: "secondary", className: "shrink-0 border-white bg-white px-7 text-kondate-ink hover:border-white hover:bg-kondate-bg" })}>無料で14日間試す <ArrowRight size={18} aria-hidden="true" /></TrackedLink> : <span className={buttonClass({ variant: "secondary", className: "shrink-0 cursor-not-allowed border-white bg-white px-7 text-kondate-muted" })}>無料モニター受付終了</span>}
+          {accepting || authenticated ? <TrackedLink href={signupHref} eventName={ctaEvent} eventParams={{ placement: "footer" }} className={buttonClass({ variant: "secondary", className: "shrink-0 border-white bg-white px-7 text-kondate-ink hover:border-white hover:bg-kondate-bg" })}>{ctaLabel} <ArrowRight size={18} aria-hidden="true" /></TrackedLink> : <span className={buttonClass({ variant: "secondary", className: "shrink-0 cursor-not-allowed border-white bg-white px-7 text-kondate-muted" })}>無料モニター受付終了</span>}
         </div>
       </section>
 
@@ -156,7 +171,7 @@ export default async function MonitorPage({ searchParams }: { searchParams: Prom
       {accepting ? (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t-2 border-kondate-ink bg-white px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-4px_18px_rgba(32,36,31,0.12)] md:hidden">
           <p className="mb-2 text-center text-xs font-bold text-kondate-muted">カード不要・自動課金なし</p>
-          <TrackedLink href={signupHref} eventName="monitor_signup_click" eventParams={{ placement: "mobile_sticky" }} className={buttonClass({ fullWidth: true, className: "touch-manipulation" })}>無料で14日間試す <ArrowRight size={18} aria-hidden="true" /></TrackedLink>
+          <TrackedLink href={signupHref} eventName={ctaEvent} eventParams={{ placement: "mobile_sticky" }} className={buttonClass({ fullWidth: true, className: "touch-manipulation" })}>{ctaLabel} <ArrowRight size={18} aria-hidden="true" /></TrackedLink>
         </div>
       ) : null}
     </main>

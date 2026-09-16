@@ -5,6 +5,8 @@ import { z } from "zod";
 import { getAppUrl } from "@/lib/billing/stripe";
 import { normalizeInviteToken } from "@/lib/family/invites";
 import { normalizeSignupSource } from "@/lib/marketing/signupSource";
+import { buildSignupReturnHref } from "@/lib/marketing/campaignParams";
+import { redirectIfAuthenticated } from "@/lib/auth/session";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { getSupabaseServer, isSupabaseConfigured } from "@/lib/supabase/server";
 
@@ -70,7 +72,8 @@ export async function login(formData: FormData) {
 }
 
 export async function signup(formData: FormData) {
-  authReady("/signup");
+  if (!isSupabaseConfigured()) redirect(buildSignupReturnHref(formData, { error: "setup" }));
+  await redirectIfAuthenticated();
   const signupSource = normalizeSignupSource(formData.get("signupSource"));
   const parsed = z
     .object({
@@ -85,14 +88,14 @@ export async function signup(formData: FormData) {
     });
   const inviteToken = normalizeInviteToken(formData.get("inviteToken"));
 
-  if (!parsed.success) redirect("/signup?error=invalid");
+  if (!parsed.success) redirect(buildSignupReturnHref(formData, { error: "invalid" }));
 
   const supabase = await getSupabaseServer();
   const monitorClaimToken = signupSource === "monitor" ? crypto.randomUUID() : null;
   if (monitorClaimToken) {
     const reservation = await reserveMonitorTrialSlot(monitorClaimToken);
-    if (reservation === "full") redirect("/signup?source=monitor&error=monitor-full");
-    if (reservation === "unavailable") redirect("/signup?source=monitor&error=monitor-unavailable");
+    if (reservation === "full") redirect(buildSignupReturnHref(formData, { error: "monitor-full" }));
+    if (reservation === "unavailable") redirect(buildSignupReturnHref(formData, { error: "monitor-unavailable" }));
   }
 
   const { data, error } = await supabase.auth.signUp({
@@ -110,9 +113,9 @@ export async function signup(formData: FormData) {
 
   if (error) {
     if (monitorClaimToken) await releaseMonitorTrialSlot(monitorClaimToken);
-    redirect(`/signup?${signupSource === "monitor" ? "source=monitor&" : ""}error=signup`);
+    redirect(buildSignupReturnHref(formData, { error: "signup" }));
   }
-  if (!data.session) redirect("/signup?success=check-email");
+  if (!data.session) redirect(buildSignupReturnHref(formData, { success: "check-email" }));
 
   await supabase.rpc("ensure_current_user_household");
   if (await joinInviteIfPresent(supabase, inviteToken)) redirect("/app?notice=family-joined");
