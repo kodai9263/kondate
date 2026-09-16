@@ -15,6 +15,9 @@ export type NutritionRecipe = {
   name: string;
   side: string;
   cookMinutes: number;
+  totalMinutes?: number;
+  recipeNotes?: string[];
+  servingsBase?: number;
   proteinSource: ProteinSource;
   imageUrl: string;
   nutrition: Nutrition;

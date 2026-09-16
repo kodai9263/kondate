@@ -2,6 +2,7 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { resetRecipeSteps, saveRecipeSteps } from "@/app/app/recipes/[kind]/[identifier]/actions";
+import { RecipeCookingGuide } from "@/components/features/recipes/RecipeCookingGuide";
 import { ResetRecipeStepsButton } from "@/components/features/recipes/ResetRecipeStepsButton";
 import { PendingButton } from "@/components/ui/PendingButton";
 import { officialNutritionRecipes } from "@/lib/nutrition/catalog";
@@ -39,12 +40,17 @@ export default async function RecipeStepsPage({
     .order("position", { ascending: true });
   const steps = (stepRows ?? []) as RecipeStep[];
 
+  const { data: displayedRecipe } = await supabase.from("recipes").select("meta,servings_base").eq("id", recipe.displayRecipeId).maybeSingle();
+  const displayMeta = (displayedRecipe?.meta ?? {}) as Record<string, unknown>;
+  const seasoning = stepsForPhase(steps, "seasoning");
+  const ingredients = seasoning.length ? seasoning : typeof displayMeta.ingredients_text === "string" ? displayMeta.ingredients_text.split("\n").filter(Boolean) : [];
+
   return (
     <main className="mx-auto min-h-dvh w-full max-w-3xl px-4 pb-28 pt-5 sm:px-6">
       <Link href="/app/recipes" className="inline-flex min-h-11 items-center gap-2 text-sm text-kondate-muted transition-colors hover:text-kondate-ink"><ArrowLeft size={18} aria-hidden="true" />メニュー一覧</Link>
       <header className="mt-4 border-b border-kondate-line pb-5">
         <div className="flex flex-wrap items-center gap-2"><h1 className="font-mincho text-[26px] font-bold">{recipe.name}</h1>{kind === "community" ? <span className="rounded-sm bg-kondate-accentSoft px-2 py-1 text-xs text-kondate-accent">みんな</span> : null}{recipe.hasCustomization ? <span className="rounded-sm bg-kondate-doneSoft px-2 py-1 text-xs text-kondate-done">アレンジ済み</span> : null}</div>
-        <p className="mt-1.5 text-sm text-kondate-muted">1行が1つの工程です。行の順番を変えると、今日の手順にも同じ順番で表示されます。</p>
+        <p className="mt-1.5 text-sm text-kondate-muted">材料をそろえて、作り方を上から順番に進めてください。</p>
         {recipe.sourceUrl ? <a href={recipe.sourceUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm text-kondate-accent underline-offset-4 hover:underline">元レシピを見る<ExternalLink size={16} aria-hidden="true" /></a> : null}
       </header>
 
@@ -52,6 +58,19 @@ export default async function RecipeStepsPage({
       {query.reset ? <p role="status" className="mt-5 rounded border border-kondate-done/30 bg-kondate-doneSoft p-3 text-sm">公式の工程に戻しました。</p> : null}
       {query.error ? <p role="alert" className="mt-5 rounded border border-kondate-alert/30 bg-kondate-alertSoft p-3 text-sm text-kondate-alert">工程を保存できませんでした。入力内容を確認して、もう一度お試しください。</p> : null}
 
+      <RecipeCookingGuide
+        key={recipe.displayRecipeId}
+        ingredients={ingredients}
+        morning={stepsForPhase(steps, "morning")}
+        steps={stepsForPhase(steps, "evening")}
+        baseServings={Number(displayedRecipe?.servings_base) || 4}
+        totalMinutes={!recipe.hasCustomization && typeof displayMeta.total_minutes === "number" ? displayMeta.total_minutes : undefined}
+        notes={Array.isArray(displayMeta.recipe_notes) ? displayMeta.recipe_notes.filter((note): note is string => typeof note === "string") : []}
+        scalable={displayMeta.recipe_detail_version === 2 && !recipe.hasCustomization && kind !== "custom"}
+      />
+      <details className="mt-8 border-t border-kondate-line pt-5" open={Boolean(query.error)}>
+        <summary className="cursor-pointer text-sm font-semibold">わが家の作り方にアレンジする</summary>
+        <p className="mt-3 text-sm leading-7 text-kondate-muted">1行が1つの工程です。行の順番を変えると、今日の手順にも同じ順番で表示されます。材料の分量はそのままなので、工程だけで材料や分量を変えないでください。</p>
       <form action={saveRecipeSteps} className="mt-6 space-y-6">
         <input type="hidden" name="kind" value={kind} />
         <input type="hidden" name="identifier" value={identifier} />
@@ -60,6 +79,7 @@ export default async function RecipeStepsPage({
         <StepField label="夜の手順" name="eveningSteps" steps={stepsForPhase(steps, "evening")} />
         <PendingButton>工程を保存</PendingButton>
       </form>
+      </details>
 
       {kind !== "custom" && recipe.hasCustomization ? <form action={resetRecipeSteps} className="mt-8 border-t border-kondate-line pt-6">
         <input type="hidden" name="kind" value={kind} />

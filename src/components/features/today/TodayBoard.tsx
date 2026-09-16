@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { setTodayTaskChecked } from "@/app/app/actions";
+import { CookingBasics } from "@/components/features/recipes/CookingBasics";
 import { CheckRow } from "@/components/ui/CheckRow";
-import { formatServingLabel, scaleQuantityText, type FamilySize } from "@/lib/family/servings";
+import { formatServingLabel, getRecipeServings, scaleRecipeIngredient, scaleQuantityText, type FamilySize } from "@/lib/family/servings";
 import { MealFeedbackForm } from "@/components/features/feedback/MealFeedbackForm";
 import { countCheckedTasks, countTasks, type TodayTaskBinding, type TodayTaskBindings, updateTaskBindings } from "@/lib/realtime/taskState";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
@@ -32,8 +33,8 @@ export function TodayBoard({
   )), [initialTaskBindings]);
   const planEntryFilter = planEntryIds.join(",");
   const seasoningTasks = useMemo(
-    () => taskBindings.seasoning.map((task) => ({ ...task, text: scaleQuantityText(task.text, familySize) })),
-    [familySize, taskBindings.seasoning],
+    () => taskBindings.seasoning.map((task) => ({ ...task, text: today.dinner.ingredientsScalable ? scaleRecipeIngredient(task.text, getRecipeServings(familySize), today.dinner.servingsBase ?? 4) : today.dinner.servingsBase ? task.text : scaleQuantityText(task.text, familySize) })),
+    [familySize, taskBindings.seasoning, today.dinner.ingredientsScalable, today.dinner.servingsBase],
   );
 
   useEffect(() => {
@@ -99,7 +100,7 @@ export function TodayBoard({
         <p className="text-sm text-kondate-muted">{formatDateLabel(today)}</p>
         <h1 className="font-mincho mt-1.5 text-[27px] font-bold leading-tight">{today.dinner.dinner}</h1>
         <p className="mt-1.5 text-[15px] text-kondate-muted">{today.dinner.side}</p>
-        <p className="mt-3 text-xs text-kondate-faint">{formatServingLabel(familySize)}・夜 {today.dinner.cookMin}分</p>
+        <p className="mt-3 text-xs text-kondate-faint">{formatServingLabel(familySize)}・{today.dinner.totalMin ? `完成まで約${today.dinner.totalMin}分` : `夜 ${today.dinner.cookMin}分`}</p>
 
         <div className="mt-5 flex items-center gap-3">
           <span className="h-[3px] flex-1 overflow-hidden rounded-full bg-kondate-line">
@@ -135,10 +136,13 @@ export function TodayBoard({
         onCheckedChange={updateTask}
       /> : null}
 
+      <CookingBasics />
+      {today.dinner.recipeNotes?.length ? <ul className="list-disc space-y-2 pl-5 text-sm leading-7 text-kondate-muted">{today.dinner.recipeNotes.map((note) => <li key={note}>{note}</li>)}</ul> : null}
+
       {seasoningTasks.length > 0 ? <MealBlock
         rule="border-kondate-eveningInk"
-        title="調味料"
-        note={formatServingLabel(familySize)}
+        title="材料・調味料"
+        note={today.dinner.ingredientsScalable ? `${getRecipeServings(familySize)}人分に換算` : today.dinner.servingsBase ? `${today.dinner.servingsBase}人分（保存した分量）` : formatServingLabel(familySize)}
         tasks={seasoningTasks}
         pendingStepIds={pendingStepIds}
         onCheckedChange={updateTask}
@@ -147,7 +151,8 @@ export function TodayBoard({
       <MealBlock
         rule="border-kondate-eveningInk"
         title="夜の手順"
-        minutes={today.dinner.cookMin}
+        note={today.dinner.totalMin ? "下ごしらえから順番に進めてください" : undefined}
+        numbered
         tasks={taskBindings.evening}
         pendingStepIds={pendingStepIds}
         onCheckedChange={updateTask}
@@ -164,6 +169,7 @@ function MealBlock({
   minutes,
   note,
   subtitle,
+  numbered = false,
   tasks,
   pendingStepIds,
   onCheckedChange,
@@ -173,27 +179,28 @@ function MealBlock({
   minutes?: number;
   note?: string;
   subtitle?: string;
+  numbered?: boolean;
   tasks: TodayTaskBinding[];
   pendingStepIds: Set<string>;
   onCheckedChange: (task: TodayTaskBinding, checked: boolean) => void;
 }) {
   return (
     <section className={`border-l-2 pl-4 ${rule}`}>
-      <div className="flex items-baseline gap-2">
+      <div className="flex flex-wrap items-baseline gap-2">
         <h2 className="text-sm font-semibold">{title}</h2>
         {typeof minutes === "number" ? <span className="text-xs tabular-nums text-kondate-faint">{minutes}分</span> : null}
         {note ? <span className="text-xs text-kondate-faint">{note}</span> : null}
       </div>
       {subtitle ? <p className="mt-0.5 text-sm text-kondate-muted">{subtitle}</p> : null}
       <div className="mt-1.5 divide-y divide-kondate-line">
-        {tasks.map((task) => (
+        {tasks.map((task, index) => (
           <CheckRow
             key={task.stepId ?? task.text}
             checked={task.checked}
             disabled={task.stepId ? pendingStepIds.has(task.stepId) : false}
             onCheckedChange={(checked) => onCheckedChange(task, checked)}
           >
-            {task.text}
+            {numbered ? <span className="mr-2 font-semibold text-kondate-accent">{index + 1}.</span> : null}{task.text}
           </CheckRow>
         ))}
       </div>

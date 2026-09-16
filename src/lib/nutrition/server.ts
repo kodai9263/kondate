@@ -18,12 +18,14 @@ export async function getHouseholdPlannerContext(year: number, month: number) {
   ]);
 
   const stepCustomizationIds = new Map<string, string>();
+  const customizationRows = new Map<string, Record<string, unknown>>();
   const custom: NutritionRecipe[] = [];
   for (const row of rows ?? []) {
     const meta = row.meta && typeof row.meta === "object" ? row.meta as Record<string, unknown> : {};
     const sourceRecipeId = typeof meta.source_recipe_id === "string" ? meta.source_recipe_id : null;
     if (meta.step_customization === true && sourceRecipeId) {
       stepCustomizationIds.set(sourceRecipeId, row.id);
+      customizationRows.set(row.id, row as Record<string, unknown>);
       continue;
     }
     custom.push(...mapCustomRecipe(row as Record<string, unknown>));
@@ -43,17 +45,24 @@ export async function getHouseholdPlannerContext(year: number, month: number) {
     const databaseId = officialIdsByKey.get(recipe.id) ?? officialIdsByName.get(recipe.name);
     if (!databaseId) return [];
     const customizationId = stepCustomizationIds.get(databaseId);
-    return customizationId ? [{ ...recipe, id: customizationId }] : [{ ...recipe, id: databaseId }];
+    if (customizationId) {
+      const customization = customizationRows.get(customizationId);
+      const mapped = customization ? mapDatabaseRecipe(customization, "custom") : [];
+      return mapped.map((item) => ({ ...item, totalMinutes: undefined, isCustom: false, seasonMonths: recipe.seasonMonths }));
+    }
+    return [{ ...recipe, id: databaseId }];
   });
   const community = (officialRows ?? []).flatMap((row) => {
     const meta = row.meta && typeof row.meta === "object" ? row.meta as Record<string, unknown> : {};
     if (meta.visibility !== "community") return [];
     const exclusionKey = typeof meta.community_key === "string" ? meta.community_key : `community:${row.id}`;
     if (excludedOfficialRecipeKeys.has(exclusionKey)) return [];
-    return mapDatabaseRecipe(row as Record<string, unknown>, "community").map((recipe) => ({
-      ...recipe,
-      id: stepCustomizationIds.get(row.id) ?? recipe.id,
-    }));
+    const customizationId = stepCustomizationIds.get(row.id);
+    if (customizationId) {
+      const customization = customizationRows.get(customizationId);
+      return customization ? mapDatabaseRecipe(customization, "community").map((recipe) => ({ ...recipe, totalMinutes: undefined })) : [];
+    }
+    return mapDatabaseRecipe(row as Record<string, unknown>, "community");
   });
   const filtered = filterRecipesForAllergies([...official, ...community, ...custom], preferences.allergies);
   const latestRatings = new Map<string, string>();
@@ -98,6 +107,7 @@ function mapDatabaseRecipe(row: Record<string, unknown>, origin: "custom" | "com
     name: String(row.name),
     side: typeof meta.side === "string" ? meta.side : "わが家の副菜",
     cookMinutes: Number(row.cook_minutes ?? 0),
+    totalMinutes: typeof meta.total_minutes === "number" ? meta.total_minutes : undefined,
     proteinSource: String(row.protein_source ?? "meat") as ProteinSource,
     imageUrl: typeof row.image_url === "string" ? row.image_url : "/images/family-dinner.png",
     nutrition: {
