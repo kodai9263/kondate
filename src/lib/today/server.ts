@@ -22,6 +22,7 @@ export type DailyPlanRow = {
 export type TodayPlanState = {
   today: PlanMeal;
   taskBindings: TodayTaskBindings;
+  loadError?: boolean;
 };
 
 export async function getTodayPlanState(
@@ -31,6 +32,7 @@ export async function getTodayPlanState(
   const fallback = {
     today: fallbackToday,
     taskBindings: buildBindings(fallbackToday, []),
+    loadError: true,
   };
 
   try {
@@ -40,8 +42,9 @@ export async function getTodayPlanState(
       const { data: profile } = user
         ? await supabase.from("profiles").select("household_id").eq("id", user.id).maybeSingle()
         : { data: null };
-      if (profile?.household_id) {
-        await supabase.from("plan_entries").upsert({
+      if (!profile?.household_id) return fallback;
+      {
+        const { error: saveError } = await supabase.from("plan_entries").upsert({
           household_id: profile.household_id,
           date: fallbackToday.date,
           meal_type: "dinner",
@@ -49,10 +52,12 @@ export async function getTodayPlanState(
           servings: plannedDinner.servings,
           status: "planned",
         }, { onConflict: "household_id,date,meal_type" });
+        if (saveError) return fallback;
       }
+      // 候補がない日に、旧テンプレートの夕食を補充しない。
+      const { error: ensureError } = await supabase.rpc("ensure_today_plan", { target_date: fallbackToday.date });
+      if (ensureError) return fallback;
     }
-    const { error: ensureError } = await supabase.rpc("ensure_today_plan", { target_date: fallbackToday.date });
-    if (ensureError) return fallback;
 
     const { data, error } = await supabase
       .from("v_daily_plan")
@@ -60,7 +65,7 @@ export async function getTodayPlanState(
       .eq("date", fallbackToday.date);
     if (error) return fallback;
 
-    const rows = (data ?? []) as DailyPlanRow[];
+    const rows = ((data ?? []) as DailyPlanRow[]).filter((row) => plannedDinner || row.meal_type === "breakfast");
     const today = mergeTodayPlan(fallbackToday, rows);
     return {
       today,

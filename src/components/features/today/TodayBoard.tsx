@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { setTodayTaskChecked } from "@/app/app/actions";
 import { CookingBasics } from "@/components/features/recipes/CookingBasics";
 import { CheckRow } from "@/components/ui/CheckRow";
@@ -15,11 +16,13 @@ export function TodayBoard({
   feedbackStatus,
   today,
   initialTaskBindings,
+  dinnerAvailable = true,
 }: {
   familySize: FamilySize;
   feedbackStatus?: string;
   today: PlanMeal;
   initialTaskBindings: TodayTaskBindings;
+  dinnerAvailable?: boolean;
 }) {
   const [taskBindings, setTaskBindings] = useState(initialTaskBindings);
   const [pendingStepIds, setPendingStepIds] = useState(() => new Set<string>());
@@ -100,7 +103,7 @@ export function TodayBoard({
         <p className="text-sm text-kondate-muted">{formatDateLabel(today)}</p>
         <h1 className="font-mincho mt-1.5 text-[27px] font-bold leading-tight">{today.dinner.dinner}</h1>
         <p className="mt-1.5 text-[15px] text-kondate-muted">{today.dinner.side}</p>
-        <p className="mt-3 text-xs text-kondate-faint">{formatServingLabel(familySize)}・{today.dinner.totalMin ? `完成まで約${today.dinner.totalMin}分` : `夜 ${today.dinner.cookMin}分`}</p>
+        {dinnerAvailable ? <p className="mt-3 text-xs text-kondate-faint">{formatServingLabel(familySize)}・{today.dinner.totalMin ? `完成まで約${today.dinner.totalMin}分` : `夜 ${today.dinner.cookMin}分`}</p> : <p role="status" className="mt-3 text-sm leading-7 text-kondate-muted">条件に合う40分以内の料理がありません。<Link href="/app/recipes" className="text-kondate-accent underline">メニューを確認する</Link></p>}
 
         <div className="mt-5 flex items-center gap-3">
           <span className="h-[3px] flex-1 overflow-hidden rounded-full bg-kondate-line">
@@ -136,7 +139,7 @@ export function TodayBoard({
         onCheckedChange={updateTask}
       /> : null}
 
-      <CookingBasics />
+      {dinnerAvailable ? <CookingBasics /> : null}
       {today.dinner.recipeNotes?.length ? <ul className="list-disc space-y-2 pl-5 text-sm leading-7 text-kondate-muted">{today.dinner.recipeNotes.map((note) => <li key={note}>{note}</li>)}</ul> : null}
 
       {seasoningTasks.length > 0 ? <MealBlock
@@ -148,7 +151,7 @@ export function TodayBoard({
         onCheckedChange={updateTask}
       /> : null}
 
-      <MealBlock
+      {dinnerAvailable ? <MealBlock
         rule="border-kondate-eveningInk"
         title="夜の手順"
         note={today.dinner.totalMin ? "下ごしらえから順番に進めてください" : undefined}
@@ -156,9 +159,9 @@ export function TodayBoard({
         tasks={taskBindings.evening}
         pendingStepIds={pendingStepIds}
         onCheckedChange={updateTask}
-      />
+      /> : null}
 
-      <MealFeedbackForm servedOn={today.date} recipeName={today.dinner.dinner} status={feedbackStatus} />
+      {dinnerAvailable ? <MealFeedbackForm servedOn={today.date} recipeName={today.dinner.dinner} status={feedbackStatus} /> : null}
     </section>
   );
 }

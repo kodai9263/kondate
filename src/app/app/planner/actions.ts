@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { isCompleteMonthPlan } from "@/lib/nutrition/month";
+import { getMonthDateRange, isCompleteMonthPlan } from "@/lib/nutrition/month";
+import { officialNutritionRecipes } from "@/lib/nutrition/catalog";
+import { databaseRecipeTime, isDinnerCandidate } from "@/lib/nutrition/cookingTime";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
 const monthlyPlanSchema = z.object({
@@ -30,9 +32,26 @@ export async function saveMonthlyDinnerPlan(input: unknown): Promise<{ ok: boole
   if (!profile?.household_id) return { ok: false, message: "家族情報を確認してください。" };
 
   const recipeIds = [...new Set(parsed.data.entries.map((entry) => entry.recipeId))];
-  const { data: recipes, error: recipeError } = await supabase.from("recipes").select("id").in("id", recipeIds).is("archived_at", null);
-  if (recipeError || recipes?.length !== recipeIds.length) {
+  const { firstDate, lastDate } = getMonthDateRange(parsed.data.year, parsed.data.month);
+  const [{ data: recipes, error: recipeError }, { data: saved, error: savedError }] = await Promise.all([
+    supabase.from("recipes").select("id,name,cook_minutes,meta,category,household_id").in("id", recipeIds).is("archived_at", null),
+    supabase.from("plan_entries").select("date,recipe_id").eq("household_id", profile.household_id).eq("meal_type", "dinner").gte("date", firstDate).lte("date", lastDate),
+  ]);
+  if (recipeError || savedError || recipes?.length !== recipeIds.length) {
     return { ok: false, message: "保存できないレシピが含まれています。" };
+  }
+
+  const candidateIds = new Set(recipes.filter((recipe) => {
+    if (recipe.category === "breakfast") return false;
+    const meta = recipe.meta && typeof recipe.meta === "object" ? recipe.meta as Record<string, unknown> : {};
+    const catalog = recipe.household_id === null && meta.visibility !== "community"
+      ? officialNutritionRecipes.find((item) => item.id === meta.nutrition_catalog_id || item.name === recipe.name)
+      : undefined;
+    return isDinnerCandidate(catalog ?? databaseRecipeTime(recipe));
+  }).map((recipe) => recipe.id));
+  const savedByDate = new Map((saved ?? []).map((entry) => [entry.date, entry.recipe_id]));
+  if (parsed.data.entries.some((entry) => !candidateIds.has(entry.recipeId) && savedByDate.get(entry.date) !== entry.recipeId)) {
+    return { ok: false, message: "新しい献立には、完成まで40分以内の料理を選んでください。" };
   }
 
   const rows = parsed.data.entries.map((entry) => ({
