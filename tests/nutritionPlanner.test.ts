@@ -54,9 +54,10 @@ describe("generateMonthlyDinnerPlan", () => {
     expect(summarizeNutrition(plan).score).toBeGreaterThanOrEqual(70);
   });
 
-  it("選択月の旬を優先しながら栄養バランスを維持する", () => {
+  it("時間条件を満たす候補では旬を優先しながら栄養バランスを維持する", () => {
+    const shortRecipes = officialNutritionRecipes.map((recipe) => ({ ...recipe, totalMinutes: 30 }));
     for (const month of [1, 4, 8, 10]) {
-      const plan = generateMonthlyDinnerPlan({ year: 2026, month, recipes: officialNutritionRecipes, seed: month * 100 });
+      const plan = generateMonthlyDinnerPlan({ year: 2026, month, recipes: shortRecipes, seed: month * 100 });
       const seasonalRatio = plan.filter((day) => isRecipeInSeason(day.recipe, month)).length / plan.length;
       expect(seasonalRatio).toBeGreaterThanOrEqual(0.7);
       expect(summarizeNutrition(plan).score).toBeGreaterThanOrEqual(85);

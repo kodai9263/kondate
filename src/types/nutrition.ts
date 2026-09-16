@@ -16,6 +16,7 @@ export type NutritionRecipe = {
   side: string;
   cookMinutes: number;
   totalMinutes?: number;
+  timeUnconfirmed?: boolean;
   recipeNotes?: string[];
   servingsBase?: number;
   proteinSource: ProteinSource;

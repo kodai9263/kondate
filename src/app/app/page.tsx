@@ -27,13 +27,27 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
     recipes: plannerContext.recipes,
     lockedRecipeIds: plannerContext.initialLockedRecipeIds,
     seed: 1,
-    maxCookMinutes: 30,
     preferredRecipeIds: plannerContext.preferredRecipeIds,
   });
   const monthlyPlan = materializeDinnerPlan(generatedPlan, plannerContext.recipes, plannerContext.initialRecipeIds, plannerContext.initialLockedRecipeIds);
   const plannedDinner = monthlyPlan.find((day) => day.date === fallbackToday.date);
+  const selectedRecipe = plannedDinner?.recipe;
+  const selectedToday = { ...fallbackToday, dinner: {
+    ...fallbackToday.dinner,
+    dinner: selectedRecipe?.name ?? "夕食の候補がありません",
+    side: selectedRecipe?.side ?? "",
+    prepMin: 0,
+    cookMin: selectedRecipe?.cookMinutes ?? 0,
+    totalMin: selectedRecipe?.timeUnconfirmed ? undefined : selectedRecipe?.totalMinutes,
+    recipeNotes: selectedRecipe?.recipeNotes,
+    servingsBase: selectedRecipe?.servingsBase,
+    ingredientsScalable: Boolean(selectedRecipe?.servingsBase),
+    morning: [],
+    evening: selectedRecipe?.eveningSteps ?? [],
+    seasonings: selectedRecipe?.ingredientsText?.split("\n").filter(Boolean) ?? [],
+  } };
   const preferences = plannerContext.preferences;
-  const planState = await getTodayPlanState(fallbackToday, plannedDinner ? {
+  const planState = await getTodayPlanState(selectedToday, plannedDinner ? {
     recipeId: plannedDinner.recipe.id,
     servings: Math.max(1, Math.ceil(getAdultEquivalent(preferences))),
   } : undefined);
@@ -53,8 +67,8 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
         </div>
       </header>
       {params.notice === "family-joined" ? <p role="status" className="mb-5 rounded border border-kondate-done/30 bg-kondate-doneSoft p-3 text-sm text-kondate-ink">家族グループに参加しました。</p> : null}
-      {breakfastState.error || planState.loadError ? <p role="alert" className="mb-4 text-sm text-kondate-alert">朝食やチェック状態を読み込めませんでした。再読み込みしてお試しください。</p> : null}
-      <div className="space-y-8"><TodayBoard familySize={familySize} feedbackStatus={params.mealFeedback} today={today} initialTaskBindings={taskBindings} /><ShoppingSummaryLink shoppingDayLabel={shoppingDayLabel} itemCount={shoppingItemCount} /></div>
+      {breakfastState.error || planState.loadError ? <p role="alert" className="mb-4 text-sm text-kondate-alert">献立やチェック状態を読み込めませんでした。再読み込みしてお試しください。</p> : null}
+      <div className="space-y-8"><TodayBoard familySize={familySize} feedbackStatus={params.mealFeedback} today={today} initialTaskBindings={taskBindings} dinnerAvailable={Boolean(plannedDinner)} /><ShoppingSummaryLink shoppingDayLabel={shoppingDayLabel} itemCount={shoppingItemCount} /></div>
     </main>
   );
 }

@@ -3,6 +3,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import { buttonClass } from "@/components/ui/Button";
 import { ArchiveRecipeButton } from "@/components/features/recipes/ArchiveRecipeButton";
+import { databaseRecipeTime, isDinnerCandidate } from "@/lib/nutrition/cookingTime";
 import { officialNutritionRecipes } from "@/lib/nutrition/catalog";
 import { isActiveSubscriptionStatus } from "@/lib/billing/entitlements";
 import { getSupabaseServer } from "@/lib/supabase/server";
@@ -18,7 +19,7 @@ export default async function RecipesPage({ searchParams }: { searchParams: Prom
     profile?.household_id ? supabase.from("household_subscriptions").select("status,current_period_end").eq("household_id", profile.household_id).maybeSingle() : Promise.resolve({ data: null }),
     supabase.from("household_recipe_exclusions").select("recipe_key"),
   ]);
-  const customRecipes = (customRecipeRows ?? []).filter((recipe) => !isStepCustomization(recipe.meta));
+  const customRecipes = (customRecipeRows ?? []).filter((recipe) => !isStepCustomization(recipe.meta) && isDinnerCandidate(databaseRecipeTime(recipe)));
   const customizedOfficialKeys = new Set((customRecipeRows ?? []).flatMap((recipe) => {
     if (!isStepCustomization(recipe.meta)) return [];
     const key = getMetaString(recipe.meta, "nutrition_catalog_id");
@@ -33,15 +34,16 @@ export default async function RecipesPage({ searchParams }: { searchParams: Prom
   const excludedRecipeKeys = new Set((exclusions ?? []).map((row) => row.recipe_key));
   const visibleCommunityRecipes = (communityRecipeRows ?? []).filter((recipe) => {
     const exclusionKey = getMetaString(recipe.meta, "community_key") ?? `community:${recipe.id}`;
-    return !excludedRecipeKeys.has(exclusionKey);
+    return !excludedRecipeKeys.has(exclusionKey) && !customizedSourceIds.has(recipe.id) && isDinnerCandidate(databaseRecipeTime(recipe));
   });
-  const visibleOfficialRecipes = officialNutritionRecipes.filter((recipe) => !excludedRecipeKeys.has(recipe.id));
+  const visibleOfficialRecipes = officialNutritionRecipes.filter((recipe) => !excludedRecipeKeys.has(recipe.id) && !customizedOfficialKeys.has(recipe.id) && isDinnerCandidate(recipe));
   const visibleRecipeCount = visibleCommunityRecipes.length + visibleOfficialRecipes.length;
-  return <main className="mx-auto min-h-dvh w-full max-w-5xl px-4 pb-28 pt-5 sm:px-6"><header className="flex items-end justify-between gap-4 border-b border-kondate-line pb-5"><div><h1 className="font-mincho text-[26px] font-bold">メニュー</h1><p className="mt-1.5 text-sm text-kondate-muted">毎日の献立に使う料理。</p></div><Link href={paid ? "/app/recipes/new" : "/pricing?required=custom_recipes"} className={buttonClass({ className: "shrink-0 px-4 text-sm" })}>{paid ? <Plus size={18} aria-hidden="true" /> : <Crown size={18} aria-hidden="true" />}{paid ? "登録" : "家族プラン"}</Link></header>
-    {created ? <p role="status" className="mt-5 rounded border border-kondate-done/30 bg-kondate-doneSoft p-3 text-sm">{created === "community" ? "メニューに追加しました。各家庭の次の月間生成から候補に入ります。" : "新しいメニューを登録しました。次の月間生成から候補に入ります。"}</p> : null}
+  return <main className="mx-auto min-h-dvh w-full max-w-5xl px-4 pb-28 pt-5 sm:px-6"><header className="flex items-end justify-between gap-4 border-b border-kondate-line pb-5"><div><h1 className="font-mincho text-[26px] font-bold">メニュー</h1><p className="mt-1.5 text-sm text-kondate-muted">完成まで40分以内の料理から選べます。</p></div><Link href={paid ? "/app/recipes/new" : "/pricing?required=custom_recipes"} className={buttonClass({ className: "shrink-0 px-4 text-sm" })}>{paid ? <Plus size={18} aria-hidden="true" /> : <Crown size={18} aria-hidden="true" />}{paid ? "登録" : "家族プラン"}</Link></header>
+    <p className="mt-4 text-xs leading-6 text-kondate-muted">40分を超える料理と時間未確認の料理は、いったん候補から外しています。保存済みの献立はそのままです。</p>
+    {created ? <p role="status" className="mt-5 rounded border border-kondate-done/30 bg-kondate-doneSoft p-3 text-sm">{created === "community" ? "メニューに追加しました。40分以内の料理が献立の候補に入ります。" : "新しいメニューを登録しました。40分以内の料理が献立の候補に入ります。"}</p> : null}
     {deleted ? <p role="status" className="mt-5 rounded border border-kondate-done/30 bg-kondate-doneSoft p-3 text-sm">メニューを削除しました。今後の献立候補には入りません。</p> : null}
     {error === "delete" ? <p role="alert" className="mt-5 rounded border border-kondate-alert/30 bg-kondate-alertSoft p-3 text-sm text-kondate-alert">メニューを削除できませんでした。時間をおいて、もう一度お試しください。</p> : null}
-    {customRecipes && customRecipes.length > 0 ? <section className="mt-8"><h2 className="text-sm font-semibold">わが家のメニュー</h2><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{customRecipes.map((recipe) => <RecipeCard key={recipe.id} id={recipe.id} name={recipe.name} minutes={getTotalMinutes(recipe.meta) ?? recipe.cook_minutes} totalTime={Boolean(getTotalMinutes(recipe.meta))} kind="custom" />)}</div></section> : <section className="mt-8 border-y border-kondate-line py-10 text-center"><p className="font-mincho text-lg font-bold">まだ自分のメニューはありません</p><p className="mt-2 text-sm text-kondate-muted">よく作る料理を登録すると、自動献立に混ぜられます。</p></section>}
+    {customRecipes && customRecipes.length > 0 ? <section className="mt-8"><h2 className="text-sm font-semibold">わが家のメニュー</h2><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{customRecipes.map((recipe) => <RecipeCard key={recipe.id} id={recipe.id} name={recipe.name} minutes={getTotalMinutes(recipe.meta) ?? recipe.cook_minutes} totalTime={Boolean(getTotalMinutes(recipe.meta))} kind="custom" />)}</div></section> : <section className="mt-8 border-y border-kondate-line py-10 text-center"><p className="font-mincho text-lg font-bold">40分以内のわが家のメニューはありません</p><p className="mt-2 text-sm text-kondate-muted">40分以内で作れる料理を登録すると、自動献立に混ぜられます。</p></section>}
     <section className="mt-8">
       <div className="flex items-baseline justify-between gap-3"><h2 className="text-sm font-semibold">メニュー</h2><p className="text-xs tabular-nums text-kondate-faint">{visibleRecipeCount}品</p></div>
       {visibleRecipeCount > 0 ? <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

@@ -63,7 +63,7 @@ export async function getTodayPlanState(
       .eq("date", fallbackToday.date);
     if (error) return fallback;
 
-    const rows = (data ?? []) as DailyPlanRow[];
+    const rows = ((data ?? []) as DailyPlanRow[]).filter((row) => plannedDinner || row.meal_type === "breakfast");
     const today = mergeTodayPlan(fallbackToday, rows);
     return {
       today,

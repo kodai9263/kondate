@@ -1,6 +1,7 @@
 import { filterRecipesForAllergies } from "@/lib/family/allergies";
 import { getCurrentHouseholdPreferences } from "@/lib/family/server";
 import { officialNutritionRecipes } from "@/lib/nutrition/catalog";
+import { databaseRecipeTime } from "@/lib/nutrition/cookingTime";
 import { getMonthDateRange } from "@/lib/nutrition/month";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import type { NutritionRecipe, ProteinSource } from "@/types/nutrition";
@@ -106,8 +107,7 @@ function mapDatabaseRecipe(row: Record<string, unknown>, origin: "custom" | "com
     id: String(row.id),
     name: String(row.name),
     side: typeof meta.side === "string" ? meta.side : "わが家の副菜",
-    cookMinutes: Number(row.cook_minutes ?? 0),
-    totalMinutes: typeof meta.total_minutes === "number" ? meta.total_minutes : undefined,
+    ...databaseRecipeTime({ cook_minutes: Number(row.cook_minutes ?? 0), meta }),
     proteinSource: String(row.protein_source ?? "meat") as ProteinSource,
     imageUrl: typeof row.image_url === "string" ? row.image_url : "/images/family-dinner.png",
     nutrition: {
