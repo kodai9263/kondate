@@ -22,6 +22,7 @@ export type DailyPlanRow = {
 export type TodayPlanState = {
   today: PlanMeal;
   taskBindings: TodayTaskBindings;
+  loadError?: boolean;
 };
 
 export async function getTodayPlanState(
@@ -31,6 +32,7 @@ export async function getTodayPlanState(
   const fallback = {
     today: fallbackToday,
     taskBindings: buildBindings(fallbackToday, []),
+    loadError: true,
   };
 
   try {
@@ -40,18 +42,19 @@ export async function getTodayPlanState(
       const { data: profile } = user
         ? await supabase.from("profiles").select("household_id").eq("id", user.id).maybeSingle()
         : { data: null };
-      if (profile?.household_id) {
-        await supabase.from("plan_entries").upsert({
-          household_id: profile.household_id,
-          date: fallbackToday.date,
-          meal_type: "dinner",
-          recipe_id: plannedDinner.recipeId,
-          servings: plannedDinner.servings,
-          status: "planned",
-        }, { onConflict: "household_id,date,meal_type" });
-      }
+      if (!profile?.household_id) return fallback;
+      const { error: saveError } = await supabase.from("plan_entries").upsert({
+        household_id: profile.household_id,
+        date: fallbackToday.date,
+        meal_type: "dinner",
+        recipe_id: plannedDinner.recipeId,
+        servings: plannedDinner.servings,
+        status: "planned",
+      }, { onConflict: "household_id,date,meal_type" });
+      if (saveError) return fallback;
     }
-    const { error: ensureError } = await supabase.rpc("ensure_today_plan", { target_date: fallbackToday.date });
+    // 夕食が未設定でも朝食を確定する。夕食の固定テンプレートは補充しない。
+    const { error: ensureError } = await supabase.rpc("ensure_today_breakfast", { target_date: fallbackToday.date });
     if (ensureError) return fallback;
 
     const { data, error } = await supabase
@@ -72,6 +75,12 @@ export async function getTodayPlanState(
 }
 
 export function mergeTodayPlan(fallbackToday: PlanMeal, rows: DailyPlanRow[]): PlanMeal {
+  const breakfast = rows.find((row) => row.meal_type === "breakfast");
+  if (breakfast) fallbackToday = { ...fallbackToday, breakfast: {
+    name: breakfast.recipe_name,
+    minutes: breakfast.meta?.breakfast_snapshot === true && breakfast.meta.minutes === null ? undefined : breakfast.cook_minutes,
+    tasks: getStepTexts(breakfast, "morning"),
+  } };
   const dinner = rows.find((row) => row.meal_type === "dinner");
   if (!dinner) return fallbackToday;
 
@@ -116,8 +125,8 @@ function buildBindings(today: PlanMeal, rows: DailyPlanRow[]): TodayTaskBindings
 
 function bindTasks(texts: string[], row: DailyPlanRow | undefined, phase: DailyPlanStep["phase"]): TodayTaskBinding[] {
   const steps = (row?.steps ?? []).filter((step) => step.phase === phase);
-  return texts.map((text) => {
-    const step = steps.find((candidate) => candidate.text === text);
+  return texts.map((text, index) => {
+    const step = steps[index]?.text === text ? steps[index] : undefined;
     return {
       planEntryId: step ? row?.plan_entry_id ?? null : null,
       stepId: step?.id ?? null,

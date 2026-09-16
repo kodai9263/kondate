@@ -1,5 +1,7 @@
 "use server";
 
+import { getBreakfastVersions } from "@/lib/breakfast/server";
+import { shoppingWithBreakfast } from "@/lib/breakfast/shopping";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getCurrentHouseholdPreferences } from "@/lib/family/server";
@@ -46,7 +48,9 @@ export async function setShoppingItemChecked(input: unknown): Promise<{ ok: bool
   if (currentCycle.weekIndex !== weekIndex || currentCycle.weekStart !== weekStart) return { ok: false };
 
   if (source === "auto") {
-    const expectedName = menuData.weeks[weekIndex]?.shopping[category]?.[position];
+    const breakfastState = await getBreakfastVersions();
+    if (breakfastState.error) return { ok: false };
+    const expectedName = shoppingWithBreakfast(menuData, weekIndex, weekStart, breakfastState.versions)[category]?.[position];
     if (expectedName !== name) return { ok: false };
   } else if (!id) return { ok: false };
 

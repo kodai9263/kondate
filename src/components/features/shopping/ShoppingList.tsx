@@ -1,5 +1,6 @@
 "use client";
 
+import { breakfastCategory } from "@/lib/breakfast/settings";
 import { Check, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
@@ -201,6 +202,7 @@ export function ShoppingList({
       {error ? <p role="alert" className="rounded border border-kondate-alert/30 bg-kondate-alertSoft p-3 text-sm text-kondate-alert">{error}</p> : null}
 
       <div className="space-y-7">
+        {groups.some((group) => group.category === breakfastCategory) ? <p className="text-xs leading-6 text-kondate-muted">朝ごはんの必要量は、ご家庭に合わせて確認してください。</p> : null}
         {manualItems.length > 0 ? <ShoppingGroup category="追加したもの" items={manualItems} checkedKeys={checkedKeys} pendingKeys={pendingKeys} onToggle={toggleItem} onDelete={deleteItem} /> : null}
         {visibleGroups.map((group) => <ShoppingGroup key={group.category} category={group.category} items={group.items} checkedKeys={checkedKeys} pendingKeys={pendingKeys} onToggle={toggleItem} onDismiss={group.category === seasoningShoppingCategory ? dismissSeasoning : undefined} />)}
       </div>

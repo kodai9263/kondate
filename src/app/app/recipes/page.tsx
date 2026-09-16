@@ -13,7 +13,7 @@ export default async function RecipesPage({ searchParams }: { searchParams: Prom
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = await supabase.from("profiles").select("household_id").eq("id", user?.id ?? "").maybeSingle();
   const [{ data: customRecipeRows }, { data: communityRecipeRows }, { data: subscription }, { data: exclusions }] = await Promise.all([
-    supabase.from("recipes").select("id,name,cook_minutes,protein_source,meta").not("household_id", "is", null).is("archived_at", null).order("created_at", { ascending: false }),
+    supabase.from("recipes").select("id,name,cook_minutes,protein_source,meta").not("household_id", "is", null).neq("category", "breakfast").is("archived_at", null).order("created_at", { ascending: false }),
     supabase.from("recipes").select("id,name,cook_minutes,meta").is("household_id", null).is("archived_at", null).contains("meta", { visibility: "community" }).order("created_at", { ascending: false }),
     profile?.household_id ? supabase.from("household_subscriptions").select("status,current_period_end").eq("household_id", profile.household_id).maybeSingle() : Promise.resolve({ data: null }),
     supabase.from("household_recipe_exclusions").select("recipe_key"),

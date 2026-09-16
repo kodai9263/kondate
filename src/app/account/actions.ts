@@ -3,7 +3,6 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { normalizeAllergies, parseCustomAllergies } from "@/lib/family/allergies";
-import { breakfastKeys, normalizeBreakfastChoices } from "@/lib/breakfast/preferences";
 import { isActiveSubscriptionStatus } from "@/lib/billing/entitlements";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { normalizeInviteToken } from "@/lib/family/invites";
@@ -22,14 +21,12 @@ export async function updateAccount(formData: FormData) {
     childCount: z.coerce.number().int().min(0).max(10),
     shoppingDay: z.coerce.number().int().min(0).max(6),
     allergies: z.array(z.string().trim().min(1).max(40)).max(30),
-    breakfastChoices: z.array(z.enum(breakfastKeys)).max(breakfastKeys.length),
   }).safeParse({
     displayName: formData.get("displayName"),
     householdName: formData.get("householdName"),
     adultCount: formData.get("adultCount"),
     childCount: formData.get("childCount"),
     shoppingDay: formData.get("shoppingDay"),
-    breakfastChoices: normalizeBreakfastChoices(formData.getAll("breakfastChoices")),
     allergies: normalizeAllergies([
       ...formData.getAll("allergies"),
       ...parseCustomAllergies(formData.get("customAllergies")),
@@ -48,7 +45,6 @@ export async function updateAccount(formData: FormData) {
     child_count_input: parsed.data.childCount,
     shopping_day_input: parsed.data.shoppingDay,
     allergies_input: parsed.data.allergies,
-    breakfast_choices_input: parsed.data.breakfastChoices,
   });
   if (error) {
     console.error("Account update failed", { code: error.code, message: error.message });
