@@ -15,9 +15,9 @@ describe("買い物リストの調味料削除", () => {
 
   it("調味料カテゴリと現在週の自動品目だけを受け付ける", () => {
     expect(actionSource).toContain("z.literal(seasoningShoppingCategory)");
-    expect(actionSource).toContain("currentCycle.weekIndex !== weekIndex");
-    expect(actionSource).toContain("currentCycle.weekStart !== weekStart");
-    expect(actionSource).toContain("expectedName !== name");
+    expect(actionSource).toContain("input.weekStart !== context.period.storageWeekStart");
+    expect(actionSource).toContain("input.rangeStart !== context.period.start");
+    expect(actionSource).toContain("expected.name !== item.name");
   });
 
   it("調味料にだけ削除操作を表示して家族の更新を同期する", () => {

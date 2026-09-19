@@ -6,17 +6,19 @@ import { getMonthDateRange } from "@/lib/nutrition/month";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import type { NutritionRecipe, ProteinSource } from "@/types/nutrition";
 
-export async function getHouseholdPlannerContext(year: number, month: number) {
+export async function getHouseholdPlannerContext(year: number, month: number, strict = false) {
   const { firstDate, lastDate } = getMonthDateRange(year, month);
-  const preferences = await getCurrentHouseholdPreferences();
+  const preferences = await getCurrentHouseholdPreferences(strict);
   const supabase = await getSupabaseServer();
-  const [{ data: rows }, { data: officialRows }, { data: feedbackRows }, { data: savedRows }, { data: exclusions }] = await Promise.all([
-    supabase.from("recipes").select("id,name,cook_minutes,image_url,protein_source,meta,recipe_nutrition(energy_kcal,protein_g,fat_g,carbs_g,fiber_g,salt_g,vegetables_g)").not("household_id", "is", null).neq("category", "breakfast").is("archived_at", null),
-    supabase.from("recipes").select("id,name,cook_minutes,image_url,protein_source,meta,recipe_nutrition(energy_kcal,protein_g,fat_g,carbs_g,fiber_g,salt_g,vegetables_g)").is("household_id", null).is("archived_at", null),
+  const results = await Promise.all([
+    supabase.from("recipes").select("id,name,cook_minutes,servings_base,image_url,protein_source,meta,recipe_nutrition(energy_kcal,protein_g,fat_g,carbs_g,fiber_g,salt_g,vegetables_g)").not("household_id", "is", null).neq("category", "breakfast").is("archived_at", null),
+    supabase.from("recipes").select("id,name,cook_minutes,servings_base,image_url,protein_source,meta,recipe_nutrition(energy_kcal,protein_g,fat_g,carbs_g,fiber_g,salt_g,vegetables_g)").is("household_id", null).is("archived_at", null),
     supabase.from("meal_preferences").select("recipe_name,rating,updated_at").order("updated_at", { ascending: false }).limit(500),
     supabase.from("plan_entries").select("date,recipe_id,locked").eq("meal_type", "dinner").gte("date", firstDate).lte("date", lastDate),
     supabase.from("household_recipe_exclusions").select("recipe_key"),
   ]);
+  if (strict && results.some((result) => result.error)) throw new Error("shopping_plan_unavailable");
+  const [{ data: rows }, { data: officialRows }, { data: feedbackRows }, { data: savedRows }, { data: exclusions }] = results;
 
   const stepCustomizationIds = new Map<string, string>();
   const customizationRows = new Map<string, Record<string, unknown>>();
@@ -120,6 +122,8 @@ function mapDatabaseRecipe(row: Record<string, unknown>, origin: "custom" | "com
       vegetablesG: Number(nutrition.vegetables_g),
     },
     ingredientsText: typeof meta.ingredients_text === "string" ? meta.ingredients_text : undefined,
+    servingsBase: typeof row.servings_base === "number" && row.servings_base > 0 ? row.servings_base
+      : typeof meta.servings_base === "number" && meta.servings_base > 0 ? meta.servings_base : undefined,
     isCustom: origin === "custom",
     isCommunity: origin === "community",
   }];
