@@ -82,6 +82,56 @@ describe("献立からの材料集計", () => {
     const result = labels(build([dinner("hamburg")]));
     for (const name of ["合いびき肉", "卵", "パン粉", "牛乳", "ケチャップ", "中濃ソース", "ブロッコリー", "コーン", "マヨネーズ", "玉ねぎ"]) expect(result.some((line) => line.includes(name)), name).toBe(true);
   });
+  it("調味料は分量・少々・適量の注記をまとめて名前だけにし、材料の根拠を残す", () => {
+    const dinners = [
+      { ...dinner("hamburg"), recipe: { ...recipe("hamburg"), isCustom: true,
+        ingredientsText: "塩 小さじ0.5\n塩 少々\n油 適量(フライパンと手に薄く塗る)\nにんじん 1本" } },
+      { ...dinner("hamburg", "2026-09-20"), recipe: { ...recipe("hamburg"), isCustom: true,
+        ingredientsText: "塩 大さじ1\n油 小さじ1\nにんじん 1本" } },
+    ];
+    const originals = dinners.map((day) => day.recipe.ingredientsText);
+    const result = build(dinners, [], 2);
+    const seasonings = result.groups.find((group) => group.category === "調味料(在庫確認)")!.items;
+    expect(seasonings.map(({ label, name, position }) => ({ label, name, position }))).toEqual([
+      { label: "塩", name: "塩", position: 0 }, { label: "油", name: "油", position: 1 },
+    ]);
+    expect(seasonings[0].contributions).toHaveLength(3);
+    expect(seasonings[0].contributions).toEqual(expect.arrayContaining([
+      { date: "2026-09-19", meal: recipe("hamburg").name, original: "塩 小さじ0.5", scale: 0.5 },
+      { date: "2026-09-19", meal: recipe("hamburg").name, original: "塩 少々", scale: 0.5 },
+      { date: "2026-09-20", meal: recipe("hamburg").name, original: "塩 大さじ1", scale: 0.5 },
+    ]));
+    expect(seasonings[1].contributions.map((source) => source.original)).toEqual([
+      "油 適量(フライパンと手に薄く塗る)", "油 小さじ1",
+    ]);
+    expect(seasonings.every((item) => item.needsReview)).toBe(true);
+    expect(labels(result)).toContain("にんじん 1本");
+    expect(dinners.map((day) => day.recipe.ingredientsText)).toEqual(originals);
+  });
+  it("調味料の表記ゆれをまとめ、異なる油や塩こしょうは別品として残す", () => {
+    const result = build([], [breakfast([
+      "サラダ油 大さじ1", "油 少々", "オリーブ油 大さじ1", "ごま油 小さじ1",
+      "塩こしょう 少々", "塩 少々", "胡椒 少々", "こしょう 小さじ1", "しょうゆ 大さじ1", "醤油 小さじ1",
+    ])]);
+    const seasonings = result.groups.find((group) => group.category === "調味料(在庫確認)")!.items;
+    expect(seasonings.map((item) => item.label)).toEqual(["油", "オリーブ油", "ごま油", "塩こしょう", "塩", "こしょう", "醤油"]);
+    for (const name of ["油", "こしょう", "醤油"]) {
+      expect(seasonings.find((item) => item.label === name)!.contributions).toHaveLength(14);
+    }
+  });
+  it("基準人数が不明な調味料も一行にまとめ、人数確認の根拠と警告を残す", () => {
+    const result = build([
+      { ...dinner("hamburg"), recipe: { ...recipe("hamburg"), isCustom: true, ingredientsText: "塩 小さじ1\n酢 小さじ1" } },
+      { ...dinner("hamburg", "2026-09-20"), recipe: { ...recipe("hamburg"), isCustom: true,
+        servingsBase: undefined, ingredientsText: "塩 小さじ1" } },
+    ]);
+    const seasonings = result.groups.find((group) => group.category === "調味料(在庫確認)")!.items;
+    expect(seasonings.map(({ label, needsReview }) => ({ label, needsReview }))).toEqual([
+      { label: "塩", needsReview: true }, { label: "酢", needsReview: false },
+    ]);
+    expect(seasonings[0].contributions).toHaveLength(2);
+    expect(result.warnings.some((warning) => warning.includes("基準人数が不明"))).toBe(true);
+  });
   it("材料変更・献立差し替えと対象期間外の除外を反映する", () => {
     const before = labels(build([dinner("hamburg"), dinner("salmon", "2026-09-26")]));
     expect(before.some((line) => line.startsWith("生鮭"))).toBe(false);

@@ -56,13 +56,29 @@ export function buildPlannedShopping({ start, end, dinners, breakfastVersions, s
     }
   }
   const groups = new Map<string, PlannedShoppingItem[]>();
+  const seasonings = new Map<string, PlannedShoppingItem>();
   for (const entry of entries.values()) {
     const category = ingredientCategory(entry.name);
-    const count = new Set(entry.contributions.map((item) => `${item.date}:${item.meal}`)).size;
+    const items = groups.get(category) ?? [];
     const review = entry.amount === null || entry.unscaled;
+    if (category === "調味料(在庫確認)") {
+      // 在庫確認は名前だけでまとめ、分量や調理時の補足は元の材料記録に残す。
+      const existing = seasonings.get(entry.name);
+      if (existing) {
+        existing.contributions.push(...entry.contributions);
+        existing.needsReview ||= review;
+      } else {
+        const item = { category, name: entry.name, label: entry.name, position: items.length,
+          needsReview: review, contributions: [...entry.contributions] };
+        seasonings.set(entry.name, item);
+        items.push(item);
+        groups.set(category, items);
+      }
+      continue;
+    }
+    const count = new Set(entry.contributions.map((item) => `${item.date}:${item.meal}`)).size;
     const quantity = entry.amount === null ? `${count}回分・数量確認` : `${formatIngredientAmount(entry.amount, entry.unit)}${entry.unscaled ? "・人数分を確認" : ""}`;
     const label = `${entry.name} ${quantity}${entry.note ? ` ${entry.note}` : ""}`;
-    const items = groups.get(category) ?? [];
     // nameはDBの識別にも使う。長文も省略せず、保存キーはサーバー側で付ける。
     items.push({ category, name: label, label, position: items.length, needsReview: review, contributions: entry.contributions });
     groups.set(category, items);

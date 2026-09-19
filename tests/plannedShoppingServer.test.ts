@@ -41,6 +41,24 @@ describe("買い物の対象月と集計", () => {
     expect(shopping.meals).toHaveLength(1);
     expect(shopping.groups[0].items[0].label).toBe("にんじん 1本");
   });
+  it("調味料の分量変更で在庫確認の保存キーを変えず、食材の分量変更は区別する", async () => {
+    mock.settings.shopping_range_end = "2026-09-30";
+    const plannedDinner = (ingredientsText: string) => [{ date: "2026-09-30", recipe: {
+      name: "夕食", ingredientsText, servingsBase: 4, isCustom: true,
+    } }];
+    mock.resolve.mockReturnValue(plannedDinner("塩 小さじ0.5\nにんじん 1本"));
+    const before = await getPlannedShopping();
+    mock.resolve.mockReturnValue(plannedDinner("塩 大さじ1\n塩 少々\nにんじん 2本"));
+    const after = await getPlannedShopping();
+    const saltBefore = before.groups.find((group) => group.category === "調味料(在庫確認)")!.items;
+    const saltAfter = after.groups.find((group) => group.category === "調味料(在庫確認)")!.items;
+    expect(saltAfter).toHaveLength(1);
+    expect(saltAfter[0].label).toBe("塩");
+    expect(saltAfter[0].name).toBe(saltBefore[0].name);
+    expect(saltAfter[0].name).toMatch(/^planned-v1:[a-f0-9]{64}$/);
+    expect(after.groups.find((group) => group.category === "野菜・その他")!.items[0].name)
+      .not.toBe(before.groups.find((group) => group.category === "野菜・その他")!.items[0].name);
+  });
   it("対象月の読み込み失敗で一部分だけのリストを表示しない", async () => {
     mock.planner.mockRejectedValueOnce(new Error("unavailable"));
     await expect(getPlannedShopping()).rejects.toThrow("unavailable");
