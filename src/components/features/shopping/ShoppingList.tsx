@@ -1,12 +1,13 @@
 "use client";
 
-import { breakfastCategory } from "@/lib/breakfast/settings";
+import { useRouter } from "next/navigation";
 import { Check, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { addManualShoppingItem, deleteManualShoppingItem, dismissSeasoningShoppingItem, setShoppingItemChecked } from "@/app/app/shopping/actions";
+import { addManualShoppingItem, deleteManualShoppingItem, dismissSeasoningShoppingItem, restoreShoppingSeasonings, setShoppingItemChecked } from "@/app/app/shopping/actions";
 import { getShoppingBroadcastRecord, type ShoppingBroadcastItem } from "@/lib/realtime/shoppingItems";
 import { buildShoppingItemKey, seasoningShoppingCategory } from "@/lib/services/shoppingService";
+import type { ShoppingPeriodMode } from "@/lib/shopping/period";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
 
 export type ShoppingListItem = {
@@ -31,7 +32,9 @@ export function ShoppingList({
   initialCheckedKeys,
   initialDismissedKeys,
   listId,
-  weekIndex,
+  rangeStart,
+  rangeEnd,
+  periodMode,
   weekStart,
   loadError = false,
 }: {
@@ -40,10 +43,13 @@ export function ShoppingList({
   initialCheckedKeys: string[];
   initialDismissedKeys: string[];
   listId: string | null;
-  weekIndex: number;
+  rangeStart: string;
+  rangeEnd: string;
+  periodMode: ShoppingPeriodMode;
   weekStart: string;
   loadError?: boolean;
 }) {
+  const router = useRouter();
   const [checkedKeys, setCheckedKeys] = useState(() => new Set(initialCheckedKeys));
   const [dismissedKeys, setDismissedKeys] = useState(() => new Set(initialDismissedKeys));
   const [manualItems, setManualItems] = useState<ManualItem[]>(() => initialManualItems.map(toManualItem));
@@ -51,6 +57,15 @@ export function ShoppingList({
   const [newItemName, setNewItemName] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [error, setError] = useState(loadError ? "チェック状態を読み込めませんでした。" : "");
+  const incomingState = JSON.stringify([initialCheckedKeys, initialDismissedKeys, initialManualItems]);
+  const [appliedState, setAppliedState] = useState(incomingState);
+  // 家族による更新を反映しても、入力途中の手動品名は消さない。
+  if (appliedState !== incomingState) {
+    setAppliedState(incomingState);
+    setCheckedKeys(new Set(initialCheckedKeys));
+    setDismissedKeys(new Set(initialDismissedKeys));
+    setManualItems(initialManualItems.map(toManualItem));
+  }
   const visibleGroups = groups
     .map((group) => ({ ...group, items: group.items.filter((item) => !dismissedKeys.has(buildShoppingItemKey(item.category, item.name))) }))
     .filter((group) => group.items.length > 0);
@@ -71,6 +86,7 @@ export function ShoppingList({
       channel = supabase.channel(`shopping-list:${listId}:member:${user.id}`, { config: { private: true } });
       channel
         .on("broadcast", { event: "*" }, (payload) => {
+          if (payload.event === "PERIOD_CHANGED") { router.refresh(); return; }
           const row = getShoppingBroadcastRecord(payload);
           if (!row) return;
           const itemKey = buildShoppingItemKey(row.category, row.name);
@@ -100,7 +116,7 @@ export function ShoppingList({
       cancelled = true;
       if (channel) void supabase.removeChannel(channel);
     };
-  }, [listId]);
+  }, [listId, router]);
 
   async function toggleItem(item: ShoppingListItem) {
     const itemKey = buildShoppingItemKey(item.category, item.name);
@@ -113,7 +129,9 @@ export function ShoppingList({
     const result = await setShoppingItemChecked({
       id: item.id,
       source: item.source ?? "auto",
-      weekIndex,
+      rangeStart,
+      rangeEnd,
+      periodMode,
       weekStart,
       category: item.category,
       name: item.name,
@@ -121,6 +139,7 @@ export function ShoppingList({
       checked: nextChecked,
     });
 
+    router.refresh();
     setPendingKeys((current) => updateSet(current, itemKey, false));
     if (!result.ok) {
       setCheckedKeys((current) => updateSet(current, itemKey, wasChecked));
@@ -134,7 +153,8 @@ export function ShoppingList({
     if (!name || isAdding) return;
     setError("");
     setIsAdding(true);
-    const result = await addManualShoppingItem({ weekStart, name });
+    const result = await addManualShoppingItem({ weekStart, rangeStart, rangeEnd, periodMode, name });
+    router.refresh();
     setIsAdding(false);
     if (!result.ok || !result.item) {
       setError("追加できませんでした。通信状態を確認して、もう一度お試しください。");
@@ -148,7 +168,8 @@ export function ShoppingList({
     if (pendingKeys.has(item.id)) return;
     setError("");
     setPendingKeys((current) => updateSet(current, item.id, true));
-    const result = await deleteManualShoppingItem({ weekStart, id: item.id });
+    const result = await deleteManualShoppingItem({ weekStart, rangeStart, rangeEnd, periodMode, id: item.id });
+    router.refresh();
     setPendingKeys((current) => updateSet(current, item.id, false));
     if (!result.ok) {
       setError("削除できませんでした。通信状態を確認して、もう一度お試しください。");
@@ -167,12 +188,15 @@ export function ShoppingList({
     setCheckedKeys((current) => updateSet(current, itemKey, false));
     setPendingKeys((current) => updateSet(current, itemKey, true));
     const result = await dismissSeasoningShoppingItem({
-      weekIndex,
+      rangeStart,
+      rangeEnd,
+      periodMode,
       weekStart,
       category: item.category,
       name: item.name,
       position: item.position,
     });
+    router.refresh();
     setPendingKeys((current) => updateSet(current, itemKey, false));
     if (!result.ok) {
       setDismissedKeys((current) => updateSet(current, itemKey, false));
@@ -202,7 +226,11 @@ export function ShoppingList({
       {error ? <p role="alert" className="rounded border border-kondate-alert/30 bg-kondate-alertSoft p-3 text-sm text-kondate-alert">{error}</p> : null}
 
       <div className="space-y-7">
-        {groups.some((group) => group.category === breakfastCategory) ? <p className="text-xs leading-6 text-kondate-muted">朝ごはんの必要量は、ご家庭に合わせて確認してください。</p> : null}
+        {dismissedKeys.size > 0 ? <Button variant="secondary" onClick={async () => {
+          const result = await restoreShoppingSeasonings({ weekStart, rangeStart, rangeEnd, periodMode });
+          if (result.ok) setDismissedKeys(new Set()); else setError("調味料を戻せませんでした。もう一度お試しください。");
+          router.refresh();
+        }}>非表示にした調味料を戻す</Button> : null}
         {manualItems.length > 0 ? <ShoppingGroup category="追加したもの" items={manualItems} checkedKeys={checkedKeys} pendingKeys={pendingKeys} onToggle={toggleItem} onDelete={deleteItem} /> : null}
         {visibleGroups.map((group) => <ShoppingGroup key={group.category} category={group.category} items={group.items} checkedKeys={checkedKeys} pendingKeys={pendingKeys} onToggle={toggleItem} onDismiss={group.category === seasoningShoppingCategory ? dismissSeasoning : undefined} />)}
       </div>
@@ -211,7 +239,7 @@ export function ShoppingList({
 }
 
 function ShoppingGroup({ category, items, checkedKeys, pendingKeys, onToggle, onDelete, onDismiss }: { category: string; items: ShoppingListItem[]; checkedKeys: Set<string>; pendingKeys: Set<string>; onToggle: (item: ShoppingListItem) => void; onDelete?: (item: ManualItem) => void; onDismiss?: (item: ShoppingListItem) => void }) {
-  return <section aria-labelledby={`shopping-${category}`}><h2 id={`shopping-${category}`} className="border-b border-kondate-line pb-2 text-sm font-semibold">{category}<span className="ml-2 text-xs font-normal tabular-nums text-kondate-faint">{items.length}品</span></h2><div className="mt-2 divide-y divide-kondate-line">{items.map((item) => { const itemKey = buildShoppingItemKey(item.category, item.name); const checked = checkedKeys.has(itemKey); const pending = pendingKeys.has(itemKey) || (item.id ? pendingKeys.has(item.id) : false); const canDelete = Boolean((onDelete && item.id && item.source === "manual") || onDismiss); return <div key={item.id ?? itemKey} className="grid grid-cols-[minmax(0,1fr)_44px] items-center"><button type="button" aria-pressed={checked} disabled={pending} onClick={() => onToggle(item)} className="grid min-h-12 w-full cursor-pointer grid-cols-[26px_1fr] items-center gap-3 py-2 text-left transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-kondate-ink disabled:cursor-wait disabled:opacity-50"><span className={["flex size-[26px] items-center justify-center rounded-full border transition-colors", checked ? "border-kondate-done bg-kondate-done text-white" : "border-kondate-line bg-white text-transparent"].join(" ")}><Check size={15} strokeWidth={2.5} aria-hidden="true" /></span><span className={["text-[15px] leading-7", checked ? "text-kondate-faint line-through" : "text-kondate-ink"].join(" ")}>{item.label}</span></button>{canDelete ? <Button variant="danger" size="icon" aria-label={`${item.name}を買い物リストから削除`} disabled={pending} onClick={() => onDelete && item.id && item.source === "manual" ? onDelete(item as ManualItem) : onDismiss?.(item)}><Trash2 size={18} /></Button> : <span />}</div>; })}</div></section>;
+  return <section aria-labelledby={`shopping-${category}`}><h2 id={`shopping-${category}`} className="border-b border-kondate-line pb-2 text-sm font-semibold">{category}<span className="ml-2 text-xs font-normal tabular-nums text-kondate-faint">{items.length}品</span></h2><div className="mt-2 divide-y divide-kondate-line">{items.map((item) => { const itemKey = buildShoppingItemKey(item.category, item.name); const checked = checkedKeys.has(itemKey); const pending = pendingKeys.has(itemKey) || (item.id ? pendingKeys.has(item.id) : false); const canDelete = Boolean((onDelete && item.id && item.source === "manual") || onDismiss); return <div key={item.id ?? itemKey} className="grid grid-cols-[minmax(0,1fr)_44px] items-center"><button type="button" aria-pressed={checked} disabled={pending} onClick={() => onToggle(item)} className="grid min-h-12 w-full cursor-pointer grid-cols-[26px_1fr] items-center gap-3 py-2 text-left transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-kondate-ink disabled:cursor-wait disabled:opacity-50"><span className={["flex size-[26px] items-center justify-center rounded-full border transition-colors", checked ? "border-kondate-done bg-kondate-done text-white" : "border-kondate-line bg-white text-transparent"].join(" ")}><Check size={15} strokeWidth={2.5} aria-hidden="true" /></span><span className={["text-[15px] leading-7", checked ? "text-kondate-faint line-through" : "text-kondate-ink"].join(" ")}>{item.label}</span></button>{canDelete ? <Button variant="danger" size="icon" aria-label={`${item.label}を買い物リストから削除`} disabled={pending} onClick={() => onDelete && item.id && item.source === "manual" ? onDelete(item as ManualItem) : onDismiss?.(item)}><Trash2 size={18} /></Button> : <span />}</div>; })}</div></section>;
 }
 
 function updateSet(current: Set<string>, key: string, included: boolean): Set<string> {

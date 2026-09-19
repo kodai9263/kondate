@@ -150,7 +150,7 @@ export function BreakfastSettings({ initialVersion, loadError = false }: { initi
           <h3 className="text-sm font-semibold">{editor.isNew ? "朝食を追加" : "朝食を編集"}</h3>
           <label className="block text-sm font-semibold">朝食の名前<input aria-label="朝食の名前" maxLength={80} className={inputClass} value={editor.item.name} onChange={(event) => setEditor({ ...editor, item: { ...editor.item, name: event.target.value } })} /></label>
           <label className="block text-sm font-semibold">買うもの（1行に1品）<textarea aria-label="買うもの（1行に1品）" rows={3} maxLength={1620} className={inputClass} value={editor.shoppingText} onChange={(event) => setEditor({ ...editor, shoppingText: event.target.value })} /></label>
-          <p className="text-xs leading-6 text-kondate-muted">空欄にすると買い物リストには追加しません。組み合わせを変えたら、買うものと作り方の両方を確認してください。</p>
+          <p className="text-xs leading-6 text-kondate-muted">ご家庭の1回分を「卵 2個」「牛乳 400ml」のように入力すると、食べる回数分を合計します。数量なしは「数量確認」と表示します。空欄の場合は材料未登録としてお知らせします。</p>
           <details><summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold">作り方・目安時間も設定する</summary>
             <label className="mt-2 block text-sm font-semibold">作り方（1行に1工程）<textarea aria-label="作り方（1行に1工程）" rows={4} maxLength={4020} className={inputClass} value={editor.tasksText} onChange={(event) => setEditor({ ...editor, tasksText: event.target.value })} /></label>
             <label className="mt-3 block text-sm font-semibold">目安時間（分）<input aria-label="目安時間（分）" type="number" min={1} max={120} className={inputClass} value={editor.minutesText} onChange={(event) => setEditor({ ...editor, minutesText: event.target.value })} /></label>

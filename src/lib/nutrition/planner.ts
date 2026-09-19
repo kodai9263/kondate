@@ -80,6 +80,16 @@ export function materializeDinnerPlan(
   }));
 }
 
+// 今日画面と買い物リストで、保存済みの変更を含む同じ献立を使う。
+export function resolveMonthlyDinnerPlan(year: number, month: number, context: {
+  recipes: NutritionRecipe[]; preferredRecipeIds: string[];
+  initialRecipeIds: Record<string, string>; initialLockedRecipeIds: Record<string, string>;
+}) {
+  const generated = generateMonthlyDinnerPlan({ year, month, recipes: context.recipes,
+    preferredRecipeIds: context.preferredRecipeIds, lockedRecipeIds: context.initialLockedRecipeIds, seed: 1 });
+  return materializeDinnerPlan(generated, context.recipes, context.initialRecipeIds, context.initialLockedRecipeIds);
+}
+
 export function isRecipeInSeason(recipe: NutritionRecipe, month: number) {
   return recipe.seasonMonths?.includes(month) ?? false;
 }

@@ -1,132 +1,74 @@
 "use server";
 
-import { getBreakfastVersions } from "@/lib/breakfast/server";
-import { shoppingWithBreakfast } from "@/lib/breakfast/shopping";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getCurrentHouseholdPreferences } from "@/lib/family/server";
-import { menuData } from "@/lib/menuData";
-import { getShoppingCycle, seasoningShoppingCategory } from "@/lib/services/shoppingService";
-import { getSupabaseServer } from "@/lib/supabase/server";
+import { seasoningShoppingCategory } from "@/lib/services/shoppingService";
+import { getPlannedShopping, getShoppingContext } from "@/lib/shopping/server";
+import { isShoppingRange } from "@/lib/shopping/period";
 
+const periodMode = z.enum(["today", "week", "custom"]);
+const periodFields = { weekStart: z.string().date(), rangeStart: z.string().date(), rangeEnd: z.string().date(), periodMode };
+const periodSchema = z.object(periodFields);
 const shoppingItemSchema = z.object({
-  weekIndex: z.number().int().min(0).max(3),
-  weekStart: z.string().date(),
-  category: z.string().trim().min(1).max(80),
-  name: z.string().trim().min(1).max(200),
-  position: z.number().int().min(0).max(500),
-  checked: z.boolean(),
-  id: z.string().uuid().optional(),
-  source: z.enum(["auto", "manual"]).default("auto"),
+  ...periodFields, category: z.string().trim().min(1).max(80), name: z.string().trim().min(1).max(200),
+  position: z.number().int().min(0).max(500), checked: z.boolean(),
+  id: z.string().uuid().optional(), source: z.enum(["auto", "manual"]).default("auto"),
 });
+const manualItemSchema = z.object({ ...periodFields, name: z.string().trim().min(1).max(200) });
+const deleteManualItemSchema = z.object({ ...periodFields, id: z.string().uuid() });
+const dismissSeasoningSchema = z.object({ ...periodFields, category: z.literal(seasoningShoppingCategory),
+  name: z.string().trim().min(1).max(200), position: z.number().int().min(0).max(500) });
 
-const manualItemSchema = z.object({
-  weekStart: z.string().date(),
-  name: z.string().trim().min(1).max(200),
-});
+type Result = { ok: boolean; item?: { id: string; category: string; name: string; position: number; checked: boolean; source: "manual" } };
+type PeriodInput = z.infer<typeof periodSchema>;
 
-const deleteManualItemSchema = z.object({
-  weekStart: z.string().date(),
-  id: z.string().uuid(),
-});
-
-const dismissSeasoningSchema = z.object({
-  weekIndex: z.number().int().min(0).max(3),
-  weekStart: z.string().date(),
-  category: z.literal(seasoningShoppingCategory),
-  name: z.string().trim().min(1).max(200),
-  position: z.number().int().min(0).max(500),
-});
-
-export async function setShoppingItemChecked(input: unknown): Promise<{ ok: boolean }> {
-  const parsed = shoppingItemSchema.safeParse(input);
-  if (!parsed.success) return { ok: false };
-
-  const { weekIndex, weekStart, category, name, position, checked, id, source } = parsed.data;
-  const preferences = await getCurrentHouseholdPreferences();
-  const currentCycle = getShoppingCycle(menuData, preferences.shoppingDay);
-  if (currentCycle.weekIndex !== weekIndex || currentCycle.weekStart !== weekStart) return { ok: false };
-
-  if (source === "auto") {
-    const breakfastState = await getBreakfastVersions();
-    if (breakfastState.error) return { ok: false };
-    const expectedName = shoppingWithBreakfast(menuData, weekIndex, weekStart, breakfastState.versions)[category]?.[position];
-    if (expectedName !== name) return { ok: false };
-  } else if (!id) return { ok: false };
-
-  const supabase = await getSupabaseServer();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { ok: false };
-
-  const { error } = source === "manual"
-    ? await supabase.rpc("set_manual_shopping_item_checked", { target_item_id: id, target_checked: checked })
-    : await supabase.rpc("set_shopping_item_checked", {
-      target_week_start: weekStart,
-      target_category: category,
-      target_name: name,
-      target_position: position,
-      target_checked: checked,
+async function mutate(input: PeriodInput, operation: string, item: Record<string, unknown> = {}, checkAuto = false): Promise<Result> {
+  try {
+    const context = await getShoppingContext();
+    if (input.weekStart !== context.period.storageWeekStart || input.rangeStart !== context.period.start
+      || input.rangeEnd !== context.period.end || input.periodMode !== context.period.mode) return { ok: false };
+    if (checkAuto) {
+      const shopping = await getPlannedShopping();
+      const expected = shopping.groups.find((group) => group.category === item.category)?.items[Number(item.position)];
+      if (!expected || expected.name !== item.name) return { ok: false };
+    }
+    // DBでも期間と所有権を行ロックの下で確認し、別端末の期間変更との競合を防ぐ。
+    const { data, error } = await context.supabase.rpc("update_planned_shopping", {
+      target_week_start: input.weekStart, expected_range_start: input.rangeStart, expected_range_end: input.rangeEnd,
+      expected_period_mode: input.periodMode, operation, item,
     });
-  if (error) return { ok: false };
-
-  revalidatePath("/app/shopping");
-  return { ok: true };
+    if (error || data?.ok !== true) return { ok: false };
+    revalidatePath("/app/shopping");
+    revalidatePath("/app");
+    return data as Result;
+  } catch { return { ok: false }; }
 }
 
-export async function addManualShoppingItem(input: unknown): Promise<{ ok: boolean; item?: { id: string; category: string; name: string; position: number; checked: boolean; source: "manual" } }> {
+export async function setShoppingItemChecked(input: unknown): Promise<Result> {
+  const parsed = shoppingItemSchema.safeParse(input);
+  if (!parsed.success || (parsed.data.source === "manual" && !parsed.data.id)) return { ok: false };
+  return mutate(parsed.data, "check", parsed.data, parsed.data.source === "auto");
+}
+export async function addManualShoppingItem(input: unknown): Promise<Result> {
   const parsed = manualItemSchema.safeParse(input);
-  if (!parsed.success || !await isCurrentShoppingWeek(parsed.data.weekStart)) return { ok: false };
-
-  const supabase = await getSupabaseServer();
-  const { data, error } = await supabase.rpc("add_manual_shopping_item", {
-    target_week_start: parsed.data.weekStart,
-    target_name: parsed.data.name,
-  });
-  if (error || !data) return { ok: false };
-
-  const row = Array.isArray(data) ? data[0] : data;
-  revalidatePath("/app/shopping");
-  return { ok: true, item: { id: row.id, category: row.category, name: row.name, position: row.position, checked: row.checked, source: "manual" } };
+  return parsed.success ? mutate(parsed.data, "add", parsed.data) : { ok: false };
 }
-
-export async function deleteManualShoppingItem(input: unknown): Promise<{ ok: boolean }> {
+export async function deleteManualShoppingItem(input: unknown): Promise<Result> {
   const parsed = deleteManualItemSchema.safeParse(input);
-  if (!parsed.success || !await isCurrentShoppingWeek(parsed.data.weekStart)) return { ok: false };
-
-  const supabase = await getSupabaseServer();
-  const { error } = await supabase.rpc("delete_manual_shopping_item", { target_item_id: parsed.data.id });
-  if (error) return { ok: false };
-  revalidatePath("/app/shopping");
-  return { ok: true };
+  return parsed.success ? mutate(parsed.data, "delete", parsed.data) : { ok: false };
 }
-
-export async function dismissSeasoningShoppingItem(input: unknown): Promise<{ ok: boolean }> {
+export async function dismissSeasoningShoppingItem(input: unknown): Promise<Result> {
   const parsed = dismissSeasoningSchema.safeParse(input);
-  if (!parsed.success) return { ok: false };
-
-  const { weekIndex, weekStart, category, name, position } = parsed.data;
-  const preferences = await getCurrentHouseholdPreferences();
-  const currentCycle = getShoppingCycle(menuData, preferences.shoppingDay);
-  const expectedName = menuData.weeks[weekIndex]?.shopping[category]?.[position];
-  if (currentCycle.weekIndex !== weekIndex || currentCycle.weekStart !== weekStart || expectedName !== name) {
-    return { ok: false };
-  }
-
-  const supabase = await getSupabaseServer();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { ok: false };
-
-  const { error } = await supabase.rpc("dismiss_seasoning_shopping_item", {
-    target_week_start: weekStart,
-    target_name: name,
-    target_position: position,
-  });
-  if (error) return { ok: false };
-  revalidatePath("/app/shopping");
-  return { ok: true };
+  return parsed.success ? mutate(parsed.data, "dismiss", parsed.data, true) : { ok: false };
 }
-
-async function isCurrentShoppingWeek(weekStart: string) {
-  const preferences = await getCurrentHouseholdPreferences();
-  return getShoppingCycle(menuData, preferences.shoppingDay).weekStart === weekStart;
+export async function changeShoppingPeriod(input: unknown): Promise<Result> {
+  const parsed = periodSchema.extend({ mode: periodMode, start: z.string().date().optional(), end: z.string().date().optional() }).safeParse(input);
+  if (!parsed.success) return { ok: false };
+  const { mode, start, end } = parsed.data;
+  if (mode === "custom" && !isShoppingRange(start ?? "", end ?? "")) return { ok: false };
+  return mutate(parsed.data, "period", { mode, start, end });
+}
+export async function restoreShoppingSeasonings(input: unknown): Promise<Result> {
+  const parsed = periodSchema.safeParse(input);
+  return parsed.success ? mutate(parsed.data, "restore") : { ok: false };
 }

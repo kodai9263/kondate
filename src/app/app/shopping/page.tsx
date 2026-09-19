@@ -1,96 +1,20 @@
-import { getBreakfastVersions } from "@/lib/breakfast/server";
-import { breakfastCategory } from "@/lib/breakfast/settings";
-import { shoppingWithBreakfast } from "@/lib/breakfast/shopping";
-import { ShoppingList, type ShoppingListGroup } from "@/components/features/shopping/ShoppingList";
-import { formatFamilyLabel, formatShoppingDay, scaleQuantityText } from "@/lib/family/servings";
-import { getCurrentHouseholdPreferences } from "@/lib/family/server";
-import { menuData } from "@/lib/menuData";
-import { buildShoppingItemKey, getShoppingCycle, orderShoppingEntries } from "@/lib/services/shoppingService";
-import { getSupabaseServer } from "@/lib/supabase/server";
+import { ShoppingPageView } from "@/components/features/shopping/ShoppingPageView";
+import { getPlannedShopping, getSavedShoppingState } from "@/lib/shopping/server";
 
 export default async function ShoppingPage() {
-  const today = new Date();
-  const [preferences, breakfastState] = await Promise.all([getCurrentHouseholdPreferences(), getBreakfastVersions()]);
-  const { weekIndex, weekStart } = getShoppingCycle(menuData, preferences.shoppingDay, today);
-  const savedState = await getSavedShoppingState(weekStart);
-  const familySize = { adultCount: preferences.adultCount, childCount: preferences.childCount };
-  const week = menuData.weeks[weekIndex];
-  const shopping = shoppingWithBreakfast(menuData, weekIndex, weekStart, breakfastState.versions);
-  const groups: ShoppingListGroup[] = orderShoppingEntries(shopping).map(([category, items]) => ({
-    category,
-    items: items.map((name, position) => ({
-      category,
-      name,
-      position,
-      label: category === breakfastCategory ? name : scaleQuantityText(name, familySize),
-    })),
-  }));
-
-  return (
-    <main className="mx-auto min-h-dvh w-full max-w-[640px] px-4 pb-28 pt-5">
-      <header className="border-b border-kondate-line pb-5">
-        <h1 className="font-mincho text-[26px] font-bold">基本の買い物リスト</h1>
-        <p className="mt-1.5 text-sm text-kondate-muted">{formatShoppingDay(preferences.shoppingDay)}曜向け・{week.label}・{formatFamilyLabel(familySize)}</p>
-      </header>
-      {breakfastState.error ? <p role="alert" className="mt-4 text-sm text-kondate-alert">朝食の買うものを読み込めませんでした。再読み込みして確認してください。</p> : null}
-      <div className="mt-5">
-        <ShoppingList
-          groups={groups}
-          initialManualItems={savedState.manualItems}
-          initialCheckedKeys={savedState.checkedKeys}
-          initialDismissedKeys={savedState.dismissedKeys}
-          listId={savedState.listId}
-          weekIndex={weekIndex}
-          weekStart={weekStart}
-          loadError={savedState.loadError}
-        />
-      </div>
-    </main>
-  );
-}
-
-type SavedShoppingState = {
-  checkedKeys: string[];
-  dismissedKeys: string[];
-  manualItems: Array<{ id: string; category: string; name: string; position: number; checked: boolean; source: "manual" }>;
-  listId: string | null;
-  loadError: boolean;
-};
-
-async function getSavedShoppingState(weekStart: string): Promise<SavedShoppingState> {
-  const supabase = await getSupabaseServer();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { checkedKeys: [], dismissedKeys: [], manualItems: [], listId: null, loadError: true };
-
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("household_id")
-    .eq("id", user.id)
-    .single();
-  if (profileError || !profile?.household_id) return { checkedKeys: [], dismissedKeys: [], manualItems: [], listId: null, loadError: true };
-
-  const { data: list, error: listError } = await supabase
-    .from("shopping_lists")
-    .upsert(
-      { household_id: profile.household_id, week_start: weekStart },
-      { onConflict: "household_id,week_start" },
-    )
-    .select("id")
-    .single();
-
-  if (listError || !list) return { checkedKeys: [], dismissedKeys: [], manualItems: [], listId: null, loadError: true };
-
-  const { data: items, error: itemsError } = await supabase
-    .from("shopping_items")
-    .select("id, category, name, position, checked, dismissed, source")
-    .eq("list_id", list.id);
-
-  if (itemsError) return { checkedKeys: [], dismissedKeys: [], manualItems: [], listId: list.id, loadError: true };
-  return {
-    checkedKeys: (items ?? []).filter((item) => item.checked).map((item) => buildShoppingItemKey(item.category, item.name)),
-    dismissedKeys: (items ?? []).filter((item) => item.dismissed).map((item) => buildShoppingItemKey(item.category, item.name)),
-    manualItems: (items ?? []).filter((item) => item.source === "manual").map((item) => ({ ...item, source: "manual" as const })),
-    listId: list.id,
-    loadError: false,
-  };
+  let shopping;
+  let saved;
+  try {
+    shopping = await getPlannedShopping();
+    saved = await getSavedShoppingState(shopping);
+  } catch {
+    return <main className="mx-auto min-h-dvh w-full max-w-[640px] px-4 pb-28 pt-5">
+      <h1 className="font-mincho text-[26px] font-bold">買い物リスト</h1>
+      <p role="alert" className="mt-5 rounded border border-kondate-alert/30 bg-kondate-alertSoft p-4 text-sm leading-7 text-kondate-alert">献立・朝食・保存状態を読み込めなかったため、買い物リストを表示できません。再読み込みしてください。</p>
+      <a href="/app/shopping" className="mt-4 inline-flex min-h-11 items-center underline">再読み込みする</a>
+    </main>;
+  }
+  const { period, groups, warnings, meals, preferences, listId } = shopping;
+  return <ShoppingPageView period={period} groups={groups} warnings={warnings} meals={meals}
+    preferences={preferences} listId={listId ?? null} saved={saved} />;
 }

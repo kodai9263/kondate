@@ -68,5 +68,6 @@ export async function saveMonthlyDinnerPlan(input: unknown): Promise<{ ok: boole
 
   revalidatePath("/app");
   revalidatePath("/app/planner");
+  revalidatePath("/app/shopping");
   return { ok: true };
 }
