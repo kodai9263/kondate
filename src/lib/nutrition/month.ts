@@ -1,9 +1,11 @@
-import type { PlannedDinner } from "@/types/nutrition";
+import type { PlannedDinner, SideMode } from "@/types/nutrition";
 
 export type SavedDinnerEntry = {
   date: string;
   recipeId: string;
   locked: boolean;
+  sideMode?: SideMode;
+  sideDishId?: string | null;
 };
 
 export function parsePlannerMonth(value: string | undefined, fallback: Date) {
@@ -34,7 +36,13 @@ export function isCompleteMonthPlan(year: number, month: number, entries: SavedD
 }
 
 export function toSavedDinnerEntries(plan: PlannedDinner[]): SavedDinnerEntry[] {
-  return plan.map((day) => ({ date: day.date, recipeId: day.recipe.id, locked: day.locked }));
+  return plan.map((day) => ({
+    date: day.date,
+    recipeId: day.recipe.id,
+    locked: day.locked,
+    sideMode: day.sideMode ?? "default",
+    sideDishId: day.sideDish?.id ?? null,
+  }));
 }
 
 function formatDate(year: number, month: number, day: number) {

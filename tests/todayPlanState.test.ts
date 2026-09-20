@@ -80,4 +80,28 @@ describe("mergeTodayPlan", () => {
 
     expect(mergeTodayPlan(fallbackToday, rows).dinner.seasonings).toEqual([]);
   });
+
+  it("自作副菜の名前と手順を今日画面へ反映する", () => {
+    const rows: DailyPlanRow[] = [{
+      plan_entry_id: "dinner-entry",
+      meal_type: "dinner",
+      recipe_name: "鮭の塩焼き",
+      prep_minutes: 0,
+      cook_minutes: 20,
+      meta: { side: "具だくさん味噌汁" },
+      steps: [{ id: "evening", phase: "evening", text: "鮭を焼く", checked: false }],
+      side_mode: "custom",
+      side_dish: {
+        id: "20000000-0000-4000-8000-000000000001",
+        name: "きゅうりの塩こんぶ和え",
+        ingredients_text: "きゅうり 2本\n塩こんぶ 10g",
+        steps_text: "きゅうりを薄切りにする\n塩こんぶと和える",
+      },
+    }];
+
+    expect(mergeTodayPlan(fallbackToday, rows).dinner).toMatchObject({
+      side: "きゅうりの塩こんぶ和え",
+      sideSteps: ["きゅうりを薄切りにする", "塩こんぶと和える"],
+    });
+  });
 });

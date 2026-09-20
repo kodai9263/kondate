@@ -1,5 +1,6 @@
 import { breakfastForDate, type BreakfastVersion } from "@/lib/breakfast/settings";
 import type { PlannedDinner } from "@/types/nutrition";
+import { resolveDinnerIngredients } from "@/lib/nutrition/sideDish";
 import { formatIngredientAmount, ingredientCategory, normalizedQuantity, parseIngredientLine } from "./ingredients";
 import { shoppingDates } from "./period";
 
@@ -30,20 +31,22 @@ export function buildPlannedShopping({ start, end, dinners, breakfastVersions, s
     }
   }
   for (const date of dates) {
-    const dinner = byDate.get(date)?.recipe;
+    const plannedDinner = byDate.get(date);
+    const dinner = plannedDinner?.recipe;
+    const dinnerIngredientsText = plannedDinner ? resolveDinnerIngredients(plannedDinner) : undefined;
     const breakfast = breakfastForDate(breakfastVersions, date);
     meals.push({ date, dinner: dinner?.name ?? null, breakfast: breakfast?.name ?? null });
     if (!dinner) warnings.push(`${date}：夕食が未設定です。`);
-    else if (!dinner.ingredientsText?.trim()) warnings.push(`${date}：${dinner.name}の材料が未登録です。メニューで確認してください。`);
+    else if (!dinnerIngredientsText?.trim()) warnings.push(`${date}：${dinner.name}の材料が未登録です。メニューで確認してください。`);
     else {
       const base = dinner.servingsBase;
       const scalable = typeof base === "number" && Number.isFinite(base) && base > 0;
       if (!scalable) warnings.push(`${date}：${dinner.name}は基準人数が不明です。材料の数量を確認してください。`);
-      for (const line of dinner.ingredientsText.split(/\r?\n/).filter((line) => line.trim())) {
+      for (const line of dinnerIngredientsText.split(/\r?\n/).filter((line) => line.trim())) {
         add(line, date, dinner.name, scalable ? servings / base : 1, !scalable);
       }
       // おかずの公式レシピに省略されている主食を、推測の数量で埋めない。
-      const hasStaple = dinner.ingredientsText.split(/\r?\n/).flatMap(parseIngredientLine)
+      const hasStaple = dinnerIngredientsText.split(/\r?\n/).flatMap(parseIngredientLine)
         .some((ingredient) => /^(米$|ごはん|ご飯|食パン|パン$|.*麺|.*うどん|.*そうめん|スパゲ|マカロニ)/.test(ingredient.name));
       if (!dinner.isCustom && !dinner.isCommunity && dinner.proteinSource !== "noodle" && !hasStaple) {
         add("ごはん（炊飯後） 適量", date, dinner.name, 1);

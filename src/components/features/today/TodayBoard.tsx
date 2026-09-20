@@ -161,6 +161,12 @@ export function TodayBoard({
         onCheckedChange={updateTask}
       /> : null}
 
+      {dinnerAvailable && today.dinner.sideSteps?.length ? <section className="border-l-2 border-kondate-eveningInk pl-4">
+        <h2 className="text-sm font-semibold">副菜の手順</h2>
+        <p className="mt-0.5 text-sm text-kondate-muted">{today.dinner.side}</p>
+        <ol className="mt-3 space-y-3 text-sm leading-7">{today.dinner.sideSteps.map((step, index) => <li key={`${index}-${step}`} className="flex gap-3"><span className="font-semibold text-kondate-accent">{index + 1}.</span><span>{step}</span></li>)}</ol>
+      </section> : null}
+
       {dinnerAvailable ? <MealFeedbackForm servedOn={today.date} recipeName={today.dinner.dinner} status={feedbackStatus} /> : null}
     </section>
   );

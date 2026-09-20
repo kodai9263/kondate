@@ -1,6 +1,7 @@
 import type { PlanMeal } from "@/types/domain";
 import type { TodayTaskBinding, TodayTaskBindings } from "@/lib/realtime/taskState";
 import { getSupabaseServer } from "@/lib/supabase/server";
+import { removeDefaultSideSteps, replaceSideIngredients } from "@/lib/nutrition/sideDish";
 
 type DailyPlanStep = {
   id: string;
@@ -17,6 +18,8 @@ export type DailyPlanRow = {
   cook_minutes: number;
   meta: Record<string, unknown> | null;
   steps: DailyPlanStep[] | null;
+  side_mode?: "default" | "none" | "custom";
+  side_dish?: { id: string; name: string; ingredients_text: string; steps_text: string } | null;
 };
 
 export type TodayPlanState = {
@@ -59,7 +62,7 @@ export async function getTodayPlanState(
 
     const { data, error } = await supabase
       .from("v_daily_plan")
-      .select("plan_entry_id,meal_type,recipe_name,prep_minutes,cook_minutes,meta,steps")
+      .select("plan_entry_id,meal_type,recipe_name,prep_minutes,cook_minutes,meta,steps,side_mode,side_dish")
       .eq("date", fallbackToday.date);
     if (error) return fallback;
 
@@ -86,27 +89,47 @@ export function mergeTodayPlan(fallbackToday: PlanMeal, rows: DailyPlanRow[]): P
 
   const meta = dinner.meta ?? {};
   const morning = getStepTexts(dinner, "morning");
-  const evening = getStepTexts(dinner, "evening");
+  const defaultEvening = getStepTexts(dinner, "evening");
   const seasoningSteps = getStepTexts(dinner, "seasoning");
-  const ingredients = seasoningSteps.length > 0 ? seasoningSteps : typeof meta.ingredients_text === "string"
+  const defaultIngredients = seasoningSteps.length > 0 ? seasoningSteps : typeof meta.ingredients_text === "string"
     ? meta.ingredients_text.split("\n").map((item) => item.trim()).filter(Boolean)
     : [];
+  const sideMode = dinner.side_mode ?? "default";
+  const evening = sideMode === "default" ? defaultEvening : removeDefaultSideSteps(
+    defaultEvening,
+    defaultIngredients.join("\n"),
+    typeof meta.side === "string" ? meta.side : "",
+  );
+  const ingredients = sideMode === "default" ? defaultIngredients : replaceSideIngredients(
+    defaultIngredients.join("\n"),
+    typeof meta.side === "string" ? meta.side : "",
+    sideMode,
+    dinner.side_dish ? {
+      id: dinner.side_dish.id,
+      name: dinner.side_dish.name,
+      ingredientsText: dinner.side_dish.ingredients_text,
+      steps: dinner.side_dish.steps_text.split(/\r?\n/).map((step) => step.trim()).filter(Boolean),
+    } : null,
+  )?.split("\n") ?? [];
 
   return {
     ...fallbackToday,
     dinner: {
       ...fallbackToday.dinner,
       dinner: dinner.recipe_name,
-      side: typeof meta.side === "string" ? meta.side : "",
+      side: dinner.side_mode === "none" ? "副菜なし" : dinner.side_mode === "custom" && dinner.side_dish
+        ? dinner.side_dish.name : typeof meta.side === "string" ? meta.side : "",
       prepMin: dinner.prep_minutes,
       cookMin: dinner.cook_minutes,
-      totalMin: meta.step_customization !== true && typeof meta.total_minutes === "number" ? meta.total_minutes : undefined,
-      recipeNotes: Array.isArray(meta.recipe_notes) ? meta.recipe_notes.filter((note): note is string => typeof note === "string") : undefined,
-      servingsBase: typeof meta.servings_base === "number" ? meta.servings_base : undefined,
+      ...(meta.step_customization !== true && typeof meta.total_minutes === "number" ? { totalMin: meta.total_minutes } : {}),
+      ...(Array.isArray(meta.recipe_notes) ? { recipeNotes: meta.recipe_notes.filter((note): note is string => typeof note === "string") } : {}),
+      ...(typeof meta.servings_base === "number" ? { servingsBase: meta.servings_base } : {}),
       ingredientsScalable: meta.recipe_detail_version === 2 && meta.step_customization !== true,
       morning,
       evening,
       seasonings: ingredients,
+      ...(dinner.side_mode === "custom" && dinner.side_dish
+        ? { sideSteps: dinner.side_dish.steps_text.split(/\r?\n/).map((step) => step.trim()).filter(Boolean) } : {}),
     },
   };
 }

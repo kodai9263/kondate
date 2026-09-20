@@ -7,5 +7,5 @@ export default async function PlannerPage({ searchParams }: { searchParams: Prom
   const { month: monthParam } = await searchParams;
   const { year, month } = parsePlannerMonth(monthParam, now);
   const context = await getHouseholdPlannerContext(year, month);
-  return <MonthlyPlanner key={`${year}-${month}`} recipes={context.recipes} initialYear={year} initialMonth={month} familySize={context.preferences} allergies={context.preferences.allergies} excludedRecipeCount={context.excludedRecipeCount} preferredRecipeIds={context.preferredRecipeIds} preferenceExcludedCount={context.preferenceExcludedCount} initialRecipeIds={context.initialRecipeIds} initialLockedRecipeIds={context.initialLockedRecipeIds} />;
+  return <MonthlyPlanner key={`${year}-${month}`} recipes={context.recipes} sideDishes={context.sideDishes} initialSideSelections={context.initialSideSelections} initialYear={year} initialMonth={month} familySize={context.preferences} allergies={context.preferences.allergies} excludedRecipeCount={context.excludedRecipeCount} preferredRecipeIds={context.preferredRecipeIds} preferenceExcludedCount={context.preferenceExcludedCount} initialRecipeIds={context.initialRecipeIds} initialLockedRecipeIds={context.initialLockedRecipeIds} />;
 }
