@@ -14,7 +14,7 @@ export default async function ShoppingPage() {
       <a href="/app/shopping" className="mt-4 inline-flex min-h-11 items-center underline">再読み込みする</a>
     </main>;
   }
-  const { period, groups, warnings, meals, preferences, listId } = shopping;
+  const { period, groups, warnings, meals, preferences, listId, latestCompletion } = shopping;
   return <ShoppingPageView period={period} groups={groups} warnings={warnings} meals={meals}
-    preferences={preferences} listId={listId ?? null} saved={saved} />;
+    preferences={preferences} listId={listId ?? null} latestCompletion={latestCompletion} saved={saved} />;
 }

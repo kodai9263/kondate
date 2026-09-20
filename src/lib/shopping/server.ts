@@ -34,24 +34,72 @@ export const getPlannedShopping = cache(async () => {
   const context = await getShoppingContext();
   const { period, preferences } = context;
   const months = [...new Set(shoppingDates(period.start, period.end).map((date) => date.slice(0, 7)))];
-  const [monthly, breakfast] = await Promise.all([
+  const [monthly, breakfast, completions] = await Promise.all([
     Promise.all(months.map(async (key) => {
       const [year, month] = key.split("-").map(Number);
       const planner = await getHouseholdPlannerContext(year, month, true);
       return resolveMonthlyDinnerPlan(year, month, planner);
     })),
     getBreakfastVersions(),
+    getShoppingCompletions(context),
   ]);
   if (breakfast.error) throw new Error("shopping_breakfast_unavailable");
+  const overlapsCurrentPeriod = (completion: { range_start: string; range_end: string }) =>
+    completion.range_start <= period.end && completion.range_end >= period.start;
+  const overlappingCompletions = completions.filter(overlapsCurrentPeriod);
+  const purchasedContributionKeys = overlappingCompletions.flatMap((completion) => completion.contributions)
+    .map((contribution) => contribution.key);
   const result = buildPlannedShopping({ start: period.start, end: period.end, dinners: monthly.flat(),
-    breakfastVersions: breakfast.versions, servings: getRecipeServings(preferences) });
+    breakfastVersions: breakfast.versions, servings: getRecipeServings(preferences), purchasedContributionKeys });
   const groups = result.groups.map((group) => ({ ...group, items: group.items.map((item) => ({
     ...item,
     // 表示名と保存キーを分離し、長文や分量変更でも古いチェックを誤適用しない。
     name: `planned-v1:${createHash("sha256").update(item.label).digest("hex")}`,
   })) }));
-  return { ...context, ...result, groups };
+  return {
+    ...context,
+    ...result,
+    groups,
+    latestCompletion: completions[0] && overlapsCurrentPeriod(completions[0])
+      ? { id: completions[0].id, completedAt: completions[0].completed_at }
+      : null,
+  };
 });
+
+type StoredContribution = { key: string; date: string; meal: string; original: string; scale: number };
+
+async function getShoppingCompletions(context: Awaited<ReturnType<typeof getShoppingContext>>) {
+  if (!context.listId) return [] as Array<{
+    id: string;
+    completed_at: string;
+    range_start: string;
+    range_end: string;
+    contributions: StoredContribution[];
+  }>;
+  const { data, error } = await context.supabase.from("shopping_completions")
+    .select("id,completed_at,range_start,range_end,contributions")
+    .eq("household_id", context.householdId)
+    .eq("list_id", context.listId)
+    .order("completed_at", { ascending: false });
+  if (error) throw new Error("shopping_completions_unavailable");
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    completed_at: row.completed_at,
+    range_start: row.range_start,
+    range_end: row.range_end,
+    contributions: Array.isArray(row.contributions)
+      ? row.contributions.filter((value): value is StoredContribution => isStoredContribution(value))
+      : [],
+  }));
+}
+
+function isStoredContribution(value: unknown): value is StoredContribution {
+  if (!value || typeof value !== "object") return false;
+  const contribution = value as Record<string, unknown>;
+  return typeof contribution.key === "string" && typeof contribution.date === "string"
+    && typeof contribution.meal === "string" && typeof contribution.original === "string"
+    && typeof contribution.scale === "number";
+}
 
 export async function getSavedShoppingState(context: Awaited<ReturnType<typeof getShoppingContext>>) {
   const empty = { checkedKeys: [] as string[], dismissedKeys: [] as string[], manualItems: [] as Array<{

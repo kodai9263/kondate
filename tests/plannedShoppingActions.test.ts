@@ -1,13 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const mock = vi.hoisted(() => ({ rpc: vi.fn(), context: vi.fn(), shopping: vi.fn() }));
-vi.mock("@/lib/shopping/server", () => ({ getShoppingContext: mock.context, getPlannedShopping: mock.shopping }));
+const mock = vi.hoisted(() => ({ rpc: vi.fn(), context: vi.fn(), shopping: vi.fn(), saved: vi.fn() }));
+vi.mock("@/lib/shopping/server", () => ({ getShoppingContext: mock.context, getPlannedShopping: mock.shopping, getSavedShoppingState: mock.saved }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
-import { setShoppingItemChecked, dismissSeasoningShoppingItem, addManualShoppingItem, changeShoppingPeriod } from "@/app/app/shopping/actions";
+import { addManualShoppingItem, changeShoppingPeriod, completeShopping, dismissSeasoningShoppingItem, setShoppingItemChecked, undoShoppingCompletion } from "@/app/app/shopping/actions";
 const item = { weekStart: "2026-09-20", rangeStart: "2026-09-19", rangeEnd: "2026-09-25", periodMode: "week", category: "肉", name: "planned-v1:actual", position: 0, checked: true };
 beforeEach(() => {
   vi.clearAllMocks();
   mock.context.mockResolvedValue({ period: { storageWeekStart: item.weekStart, start: item.rangeStart, end: item.rangeEnd, mode: item.periodMode }, supabase: { rpc: mock.rpc } });
-  mock.shopping.mockResolvedValue({ groups: [{ category: "肉", items: [{ name: item.name }] }] });
+  mock.shopping.mockResolvedValue({ groups: [{ category: "肉", items: [{ category: "肉", name: item.name, label: "豚肉 400g", position: 0,
+    contributions: [{ key: "meal-key", date: "2026-09-20", meal: "夕食", original: "豚肉 400g", scale: 1 }] }] }] });
+  mock.saved.mockResolvedValue({ checkedKeys: [`肉\u001f${item.name}`], dismissedKeys: [], manualItems: [] });
   mock.rpc.mockResolvedValue({ data: { ok: true }, error: null });
 });
 describe("買い物保存時の照合", () => {
@@ -48,5 +50,25 @@ describe("買い物保存時の照合", () => {
   it("手動品は材料データの有無に依存せず、現在の期間で保存する", async () => {
     expect(await addManualShoppingItem({ ...item, name: "洗剤" })).toEqual({ ok: true });
     expect(mock.shopping).not.toHaveBeenCalled();
+  });
+  it("チェック済み品の材料根拠をサーバーで再計算して完了保存する", async () => {
+    mock.rpc.mockResolvedValue({ data: { ok: true, completion_id: "30000000-0000-4000-8000-000000000001", completed_count: 1 }, error: null });
+    expect(await completeShopping(item)).toEqual({ ok: true, completionId: "30000000-0000-4000-8000-000000000001", completedCount: 1 });
+    expect(mock.rpc).toHaveBeenCalledWith("complete_planned_shopping", expect.objectContaining({
+      target_week_start: item.weekStart,
+      auto_items: [expect.objectContaining({ source: "auto", name: item.name, contributions: [expect.objectContaining({ key: "meal-key" })] })],
+      manual_ids: [],
+    }));
+  });
+  it("チェック済み品が現在の集計にない場合は完了を作らない", async () => {
+    mock.saved.mockResolvedValue({ checkedKeys: ["肉\u001fplanned-v1:old"], dismissedKeys: [], manualItems: [] });
+    expect(await completeShopping(item)).toEqual({ ok: false });
+    expect(mock.rpc).not.toHaveBeenCalled();
+  });
+  it("現在の期間にある直前の完了を取り消す", async () => {
+    const completionId = "30000000-0000-4000-8000-000000000001";
+    mock.rpc.mockResolvedValue({ data: { ok: true, restored_count: 2 }, error: null });
+    expect(await undoShoppingCompletion({ ...item, completionId })).toEqual({ ok: true, completedCount: 2 });
+    expect(mock.rpc).toHaveBeenCalledWith("undo_planned_shopping_completion", expect.objectContaining({ target_completion_id: completionId }));
   });
 });

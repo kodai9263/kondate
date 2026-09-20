@@ -4,26 +4,33 @@ import { resolveDinnerIngredients } from "@/lib/nutrition/sideDish";
 import { formatIngredientAmount, ingredientCategory, normalizedQuantity, parseIngredientLine } from "./ingredients";
 import { shoppingDates } from "./period";
 
-export type ShoppingContribution = { date: string; meal: string; original: string; scale: number };
+export type ShoppingContribution = { key: string; date: string; meal: string; original: string; scale: number };
 export type PlannedShoppingItem = { category: string; name: string; label: string; position: number; needsReview: boolean; contributions: ShoppingContribution[] };
 export type PlannedShoppingGroup = { category: string; items: PlannedShoppingItem[] };
 
 const categoryOrder = ["肉", "魚", "野菜・その他", "豆腐・卵・乳", "米・麺・パン", "冷凍・缶詰・乾物", "調味料(在庫確認)", "水・氷（調理用）"];
 
-export function buildPlannedShopping({ start, end, dinners, breakfastVersions, servings }: {
+export function buildPlannedShopping({ start, end, dinners, breakfastVersions, servings, purchasedContributionKeys }: {
   start: string; end?: string; dinners: PlannedDinner[]; breakfastVersions: BreakfastVersion[]; servings: number;
+  purchasedContributionKeys?: Iterable<string>;
 }) {
   const dates = shoppingDates(start, end);
   const byDate = new Map(dinners.map((day) => [day.date, day]));
   const entries = new Map<string, { name: string; unit: string; note: string; amount: number | null; contributions: ShoppingContribution[]; unscaled: boolean }>();
+  const purchasedKeys = new Set(purchasedContributionKeys ?? []);
+  const contributionOccurrences = new Map<string, number>();
   const warnings: string[] = [];
   const meals: Array<{ date: string; dinner: string | null; breakfast: string | null }> = [];
   function add(line: string, date: string, meal: string, scale: number, unscaled = false) {
     for (const ingredient of parseIngredientLine(line)) {
       const [amount, unit] = ingredient.amount === null ? [null, ""] : normalizedQuantity(ingredient.amount * scale, ingredient.unit);
+      const contributionBase = JSON.stringify([date, meal, ingredient.original, ingredient.name, amount, unit, ingredient.note, scale, unscaled]);
+      const occurrence = contributionOccurrences.get(contributionBase) ?? 0;
+      contributionOccurrences.set(contributionBase, occurrence + 1);
+      const contribution = { key: JSON.stringify([contributionBase, occurrence]), date, meal, original: ingredient.original, scale };
+      if (purchasedKeys.has(contribution.key)) continue;
       const key = JSON.stringify([ingredient.name, unit, ingredient.note, unscaled]);
       const existing = entries.get(key);
-      const contribution = { date, meal, original: ingredient.original, scale };
       if (existing) {
         if (amount !== null && existing.amount !== null) existing.amount += amount;
         existing.contributions.push(contribution);
