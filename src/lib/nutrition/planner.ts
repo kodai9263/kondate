@@ -1,4 +1,4 @@
-import type { Nutrition, NutritionRecipe, NutritionSummary, PlannedDinner, ProteinSource } from "@/types/nutrition";
+import type { Nutrition, NutritionRecipe, NutritionSummary, PlannedDinner, ProteinSource, SideDish, SideSelection } from "@/types/nutrition";
 import { isDinnerCandidate } from "@/lib/nutrition/cookingTime";
 
 export const dinnerNutritionTarget: Nutrition = {
@@ -42,7 +42,7 @@ export function generateMonthlyDinnerPlan({
     const date = formatDate(year, month, day);
     const lockedRecipe = byId.get(lockedRecipeIds[date]);
     if (lockedRecipe) {
-      plan.push({ date, recipe: lockedRecipe, locked: true });
+      plan.push({ date, recipe: lockedRecipe, locked: true, sideMode: "default", sideDish: null });
       continue;
     }
     if (candidates.length === 0) continue;
@@ -54,7 +54,7 @@ export function generateMonthlyDinnerPlan({
       .sort((a, b) => a.score - b.score);
     const poolSize = Math.min(3, ranked.length);
     const selected = ranked[Math.floor(random() * poolSize)].recipe;
-    plan.push({ date, recipe: selected, locked: false });
+    plan.push({ date, recipe: selected, locked: false, sideMode: "default", sideDish: null });
   }
 
   return plan;
@@ -71,7 +71,7 @@ export function materializeDinnerPlan(
   // 候補がゼロになった場合も、保存済みの日付と料理は読み出せるようにする。
   for (const [date, recipeId] of Object.entries(changedRecipeIds)) {
     const recipe = recipeById.get(recipeId);
-    if (recipe && !days.has(date)) days.set(date, { date, recipe, locked: Boolean(lockedRecipeIds[date]) });
+    if (recipe && !days.has(date)) days.set(date, { date, recipe, locked: Boolean(lockedRecipeIds[date]), sideMode: "default", sideDish: null });
   }
   return [...days.values()].sort((a, b) => a.date.localeCompare(b.date)).map((day) => ({
     ...day,
@@ -84,10 +84,32 @@ export function materializeDinnerPlan(
 export function resolveMonthlyDinnerPlan(year: number, month: number, context: {
   recipes: NutritionRecipe[]; preferredRecipeIds: string[];
   initialRecipeIds: Record<string, string>; initialLockedRecipeIds: Record<string, string>;
+  sideDishes?: SideDish[]; initialSideSelections?: Record<string, SideSelection>;
 }) {
   const generated = generateMonthlyDinnerPlan({ year, month, recipes: context.recipes,
     preferredRecipeIds: context.preferredRecipeIds, lockedRecipeIds: context.initialLockedRecipeIds, seed: 1 });
-  return materializeDinnerPlan(generated, context.recipes, context.initialRecipeIds, context.initialLockedRecipeIds);
+  return applySideSelections(
+    materializeDinnerPlan(generated, context.recipes, context.initialRecipeIds, context.initialLockedRecipeIds),
+    context.initialSideSelections ?? {},
+    context.sideDishes ?? [],
+  );
+}
+
+export function applySideSelections(plan: PlannedDinner[], selections: Record<string, SideSelection>, sideDishes: SideDish[]) {
+  const sideDishById = new Map(sideDishes.map((sideDish) => [sideDish.id, sideDish]));
+  return plan.map((day) => {
+    const selection = selections[day.date];
+    if (!selection || selection.mode === "default") return { ...day, sideMode: "default" as const, sideDish: null };
+    if (selection.mode === "none") return { ...day, sideMode: "none" as const, sideDish: null };
+    const sideDish = selection.sideDishId ? sideDishById.get(selection.sideDishId) ?? null : null;
+    return sideDish ? { ...day, sideMode: "custom" as const, sideDish } : { ...day, sideMode: "default" as const, sideDish: null };
+  });
+}
+
+export function plannedSideName(day: PlannedDinner) {
+  if (day.sideMode === "none") return "副菜なし";
+  if (day.sideMode === "custom" && day.sideDish) return day.sideDish.name;
+  return day.recipe.side;
 }
 
 export function isRecipeInSeason(recipe: NutritionRecipe, month: number) {

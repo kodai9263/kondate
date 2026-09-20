@@ -4,7 +4,7 @@ import { officialNutritionRecipes } from "@/lib/nutrition/catalog";
 import { databaseRecipeTime } from "@/lib/nutrition/cookingTime";
 import { getMonthDateRange } from "@/lib/nutrition/month";
 import { getSupabaseServer } from "@/lib/supabase/server";
-import type { NutritionRecipe, ProteinSource } from "@/types/nutrition";
+import type { NutritionRecipe, ProteinSource, SideDish, SideSelection } from "@/types/nutrition";
 
 export async function getHouseholdPlannerContext(year: number, month: number, strict = false) {
   const { firstDate, lastDate } = getMonthDateRange(year, month);
@@ -14,11 +14,12 @@ export async function getHouseholdPlannerContext(year: number, month: number, st
     supabase.from("recipes").select("id,name,cook_minutes,servings_base,image_url,protein_source,meta,recipe_nutrition(energy_kcal,protein_g,fat_g,carbs_g,fiber_g,salt_g,vegetables_g)").not("household_id", "is", null).neq("category", "breakfast").is("archived_at", null),
     supabase.from("recipes").select("id,name,cook_minutes,servings_base,image_url,protein_source,meta,recipe_nutrition(energy_kcal,protein_g,fat_g,carbs_g,fiber_g,salt_g,vegetables_g)").is("household_id", null).is("archived_at", null),
     supabase.from("meal_preferences").select("recipe_name,rating,updated_at").order("updated_at", { ascending: false }).limit(500),
-    supabase.from("plan_entries").select("date,recipe_id,locked").eq("meal_type", "dinner").gte("date", firstDate).lte("date", lastDate),
+    supabase.from("plan_entries").select("date,recipe_id,locked,side_mode,side_dish_id").eq("meal_type", "dinner").gte("date", firstDate).lte("date", lastDate),
     supabase.from("household_recipe_exclusions").select("recipe_key"),
+    supabase.from("side_dishes").select("id,name,ingredients_text,steps_text").is("archived_at", null).order("created_at", { ascending: false }),
   ]);
   if (strict && results.some((result) => result.error)) throw new Error("shopping_plan_unavailable");
-  const [{ data: rows }, { data: officialRows }, { data: feedbackRows }, { data: savedRows }, { data: exclusions }] = results;
+  const [{ data: rows }, { data: officialRows }, { data: feedbackRows }, { data: savedRows }, { data: exclusions }, { data: sideDishRows }] = results;
 
   const stepCustomizationIds = new Map<string, string>();
   const customizationRows = new Map<string, Record<string, unknown>>();
@@ -79,11 +80,21 @@ export async function getHouseholdPlannerContext(year: number, month: number, st
   const availableRecipeIds = new Set(recipes.map((recipe) => recipe.id));
   const initialRecipeIds: Record<string, string> = {};
   const initialLockedRecipeIds: Record<string, string> = {};
+  const initialSideSelections: Record<string, SideSelection> = {};
   for (const row of savedRows ?? []) {
     if (!availableRecipeIds.has(row.recipe_id)) continue;
     initialRecipeIds[row.date] = row.recipe_id;
     if (row.locked) initialLockedRecipeIds[row.date] = row.recipe_id;
+    if (row.side_mode === "none") initialSideSelections[row.date] = { mode: "none", sideDishId: null };
+    if (row.side_mode === "custom" && row.side_dish_id) initialSideSelections[row.date] = { mode: "custom", sideDishId: row.side_dish_id };
   }
+
+  const sideDishes: SideDish[] = (sideDishRows ?? []).map((row) => ({
+    id: row.id,
+    name: row.name,
+    ingredientsText: row.ingredients_text,
+    steps: row.steps_text.split(/\r?\n/).map((step: string) => step.trim()).filter(Boolean),
+  }));
 
   return {
     preferences,
@@ -91,6 +102,8 @@ export async function getHouseholdPlannerContext(year: number, month: number, st
     preferredRecipeIds,
     initialRecipeIds,
     initialLockedRecipeIds,
+    initialSideSelections,
+    sideDishes,
     excludedRecipeCount: filtered.excluded.length,
     preferenceExcludedCount: filtered.allowed.length - recipes.length,
   };

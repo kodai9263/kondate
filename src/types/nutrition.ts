@@ -29,10 +29,26 @@ export type NutritionRecipe = {
   isCommunity?: boolean;
 };
 
+export type SideDish = {
+  id: string;
+  name: string;
+  ingredientsText: string;
+  steps: string[];
+};
+
+export type SideMode = "default" | "none" | "custom";
+
+export type SideSelection = {
+  mode: SideMode;
+  sideDishId: string | null;
+};
+
 export type PlannedDinner = {
   date: string;
   recipe: NutritionRecipe;
   locked: boolean;
+  sideMode?: SideMode;
+  sideDish?: SideDish | null;
 };
 
 export type NutritionSummary = {

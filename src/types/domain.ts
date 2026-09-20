@@ -21,6 +21,7 @@ export type Dinner = {
   morning: string[];
   evening: string[];
   seasonings: string[];
+  sideSteps?: string[];
 };
 
 export type ShoppingByCategory = Record<string, string[]>;
