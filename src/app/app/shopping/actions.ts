@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { seasoningShoppingCategory } from "@/lib/services/shoppingService";
-import { getPlannedShopping, getShoppingContext } from "@/lib/shopping/server";
+import { buildShoppingItemKey, seasoningShoppingCategory } from "@/lib/services/shoppingService";
+import { getPlannedShopping, getSavedShoppingState, getShoppingContext } from "@/lib/shopping/server";
 import { isShoppingRange } from "@/lib/shopping/period";
 
 const periodMode = z.enum(["today", "week", "custom"]);
@@ -18,8 +18,10 @@ const manualItemSchema = z.object({ ...periodFields, name: z.string().trim().min
 const deleteManualItemSchema = z.object({ ...periodFields, id: z.string().uuid() });
 const dismissSeasoningSchema = z.object({ ...periodFields, category: z.literal(seasoningShoppingCategory),
   name: z.string().trim().min(1).max(200), position: z.number().int().min(0).max(500) });
+const undoCompletionSchema = z.object({ ...periodFields, completionId: z.string().uuid() });
 
-type Result = { ok: boolean; item?: { id: string; category: string; name: string; position: number; checked: boolean; source: "manual" } };
+type Result = { ok: boolean; item?: { id: string; category: string; name: string; position: number; checked: boolean; source: "manual" };
+  completionId?: string; completedCount?: number };
 type PeriodInput = z.infer<typeof periodSchema>;
 
 async function mutate(input: PeriodInput, operation: string, item: Record<string, unknown> = {}, checkAuto = false): Promise<Result> {
@@ -71,4 +73,64 @@ export async function changeShoppingPeriod(input: unknown): Promise<Result> {
 export async function restoreShoppingSeasonings(input: unknown): Promise<Result> {
   const parsed = periodSchema.safeParse(input);
   return parsed.success ? mutate(parsed.data, "restore") : { ok: false };
+}
+
+export async function completeShopping(input: unknown): Promise<Result> {
+  const parsed = periodSchema.safeParse(input);
+  if (!parsed.success) return { ok: false };
+  try {
+    const context = await getShoppingContext();
+    if (!matchesCurrentPeriod(parsed.data, context.period)) return { ok: false };
+    const [shopping, saved] = await Promise.all([getPlannedShopping(), getSavedShoppingState(context)]);
+    const checkedKeys = new Set(saved.checkedKeys);
+    const autoItems = shopping.groups.flatMap((group) => group.items)
+      .filter((item) => checkedKeys.has(buildShoppingItemKey(item.category, item.name)))
+      .map(({ category, name, label, position, contributions }) => ({ source: "auto", category, name, label, position, contributions }));
+    const manualItems = saved.manualItems.filter((item) => item.checked);
+    if (autoItems.length + manualItems.length === 0) return { ok: false };
+    const { data, error } = await context.supabase.rpc("complete_planned_shopping", {
+      target_week_start: parsed.data.weekStart,
+      expected_range_start: parsed.data.rangeStart,
+      expected_range_end: parsed.data.rangeEnd,
+      expected_period_mode: parsed.data.periodMode,
+      auto_items: autoItems,
+      manual_ids: manualItems.map((item) => item.id),
+    });
+    if (error || data?.ok !== true) return { ok: false };
+    revalidateShopping();
+    return { ok: true, completionId: data.completion_id, completedCount: data.completed_count };
+  } catch {
+    return { ok: false };
+  }
+}
+
+export async function undoShoppingCompletion(input: unknown): Promise<Result> {
+  const parsed = undoCompletionSchema.safeParse(input);
+  if (!parsed.success) return { ok: false };
+  try {
+    const context = await getShoppingContext();
+    if (!matchesCurrentPeriod(parsed.data, context.period)) return { ok: false };
+    const { data, error } = await context.supabase.rpc("undo_planned_shopping_completion", {
+      target_completion_id: parsed.data.completionId,
+      target_week_start: parsed.data.weekStart,
+      expected_range_start: parsed.data.rangeStart,
+      expected_range_end: parsed.data.rangeEnd,
+      expected_period_mode: parsed.data.periodMode,
+    });
+    if (error || data?.ok !== true) return { ok: false };
+    revalidateShopping();
+    return { ok: true, completedCount: data.restored_count };
+  } catch {
+    return { ok: false };
+  }
+}
+
+function matchesCurrentPeriod(input: PeriodInput, period: Awaited<ReturnType<typeof getShoppingContext>>["period"]) {
+  return input.weekStart === period.storageWeekStart && input.rangeStart === period.start
+    && input.rangeEnd === period.end && input.periodMode === period.mode;
+}
+
+function revalidateShopping() {
+  revalidatePath("/app/shopping");
+  revalidatePath("/app");
 }

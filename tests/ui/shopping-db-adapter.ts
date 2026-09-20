@@ -1,8 +1,9 @@
 // ローカル画面検証専用。Authと通信層だけを差し替え、一時Postgresに接続する。
 import { execFileSync } from "node:child_process";
-const tables = new Set(["profiles", "household_settings", "shopping_lists", "shopping_items", "recipes", "plan_entries", "household_recipe_exclusions", "meal_preferences", "household_breakfast_versions"]);
+const tables = new Set(["profiles", "household_settings", "shopping_lists", "shopping_items", "shopping_completions", "recipes", "plan_entries", "household_recipe_exclusions", "meal_preferences", "household_breakfast_versions", "side_dishes"]);
 const userId = "10000000-0000-4000-8000-000000000021";
 const quote = (value: unknown) => value === null ? "null" : `'${String(value).replace(/'/g, "''")}'`;
+const uuidArray = (values: unknown) => `array[${(Array.isArray(values) ? values : []).map(quote).join(",")}]::uuid[]`;
 const ident = (name: string) => { if (!/^[a-z_]+$/.test(name)) throw new Error("invalid identifier"); return `"${name}"`; };
 export function query(statement: string) {
   const output = execFileSync("psql", ["-X", "-q", "-At", "-v", "ON_ERROR_STOP=1", "-h", process.env.SHOPPING_TEST_SOCKET!, "-d", "postgres", "-c", `set role authenticated; select set_config('request.jwt.claim.sub','${userId}',false); ${statement}`], { encoding: "utf8" });
@@ -12,9 +13,17 @@ export async function getSupabaseServer() {
   return {
     auth: { getUser: async () => ({ data: { user: { id: userId } }, error: null }) },
     rpc: async (name: string, args: Record<string, unknown>) => {
-      if (name !== "update_planned_shopping") throw new Error("unexpected rpc");
       try {
-        return { data: query(`select update_planned_shopping(${quote(args.target_week_start)},${quote(args.expected_range_start)},${quote(args.expected_range_end)},${quote(args.expected_period_mode)},${quote(args.operation)},${quote(JSON.stringify(args.item))}::jsonb)`), error: null };
+        if (name === "update_planned_shopping") {
+          return { data: query(`select update_planned_shopping(${quote(args.target_week_start)},${quote(args.expected_range_start)},${quote(args.expected_range_end)},${quote(args.expected_period_mode)},${quote(args.operation)},${quote(JSON.stringify(args.item))}::jsonb)`), error: null };
+        }
+        if (name === "complete_planned_shopping") {
+          return { data: query(`select complete_planned_shopping(${quote(args.target_week_start)},${quote(args.expected_range_start)},${quote(args.expected_range_end)},${quote(args.expected_period_mode)},${quote(JSON.stringify(args.auto_items))}::jsonb,${uuidArray(args.manual_ids)})`), error: null };
+        }
+        if (name === "undo_planned_shopping_completion") {
+          return { data: query(`select undo_planned_shopping_completion(${quote(args.target_completion_id)}::uuid,${quote(args.target_week_start)},${quote(args.expected_range_start)},${quote(args.expected_range_end)},${quote(args.expected_period_mode)})`), error: null };
+        }
+        throw new Error("unexpected rpc");
       } catch { return { data: null, error: { message: "fixture database error" } }; }
     },
     from: (table: string) => {

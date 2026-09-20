@@ -97,9 +97,9 @@ describe("献立からの材料集計", () => {
     ]);
     expect(seasonings[0].contributions).toHaveLength(3);
     expect(seasonings[0].contributions).toEqual(expect.arrayContaining([
-      { date: "2026-09-19", meal: recipe("hamburg").name, original: "塩 小さじ0.5", scale: 0.5 },
-      { date: "2026-09-19", meal: recipe("hamburg").name, original: "塩 少々", scale: 0.5 },
-      { date: "2026-09-20", meal: recipe("hamburg").name, original: "塩 大さじ1", scale: 0.5 },
+      expect.objectContaining({ date: "2026-09-19", meal: recipe("hamburg").name, original: "塩 小さじ0.5", scale: 0.5 }),
+      expect.objectContaining({ date: "2026-09-19", meal: recipe("hamburg").name, original: "塩 少々", scale: 0.5 }),
+      expect.objectContaining({ date: "2026-09-20", meal: recipe("hamburg").name, original: "塩 大さじ1", scale: 0.5 }),
     ]));
     expect(seasonings[1].contributions.map((source) => source.original)).toEqual([
       "油 適量(フライパンと手に薄く塗る)", "油 小さじ1",
@@ -151,6 +151,27 @@ describe("献立からの材料集計", () => {
     expect(result).toContain("牛乳 1400ml");
     // mlとさじは密度や換算を決めず、異なる単位のまま残す。
     expect(result.some((line) => line === "牛乳 大さじ3")).toBe(true);
+  });
+  it("購入済みの利用日だけを差し引き、期間を延ばした分は新しく表示する", () => {
+    const dinners = ["2026-09-19", "2026-09-20", "2026-09-21", "2026-09-22"].map((date) => ({
+      date, locked: false, recipe: { ...recipe("hamburg"), name: "夕食", ingredientsText: "にんじん 1本", servingsBase: 4, isCustom: true },
+    }));
+    const first = buildPlannedShopping({ start: "2026-09-19", end: "2026-09-21", dinners, breakfastVersions: [], servings: 4 });
+    const bought = first.groups[0].items[0].contributions.filter((contribution) => contribution.date < "2026-09-21").map((contribution) => contribution.key);
+    const sameRange = buildPlannedShopping({ start: "2026-09-19", end: "2026-09-21", dinners, breakfastVersions: [], servings: 4, purchasedContributionKeys: bought });
+    const extended = buildPlannedShopping({ start: "2026-09-19", end: "2026-09-22", dinners, breakfastVersions: [], servings: 4, purchasedContributionKeys: bought });
+    expect(labels(sameRange)).toEqual(["にんじん 1本"]);
+    expect(sameRange.groups[0].items[0].contributions.map((contribution) => contribution.date)).toEqual(["2026-09-21"]);
+    expect(labels(extended)).toEqual(["にんじん 2本"]);
+  });
+  it("翌週の同じ食材や購入後に変更した献立は消さない", () => {
+    const oldDinner = { date: "2026-09-19", locked: false, recipe: { ...recipe("hamburg"), name: "旧献立", ingredientsText: "卵 1個", servingsBase: 4, isCustom: true } };
+    const boughtKey = buildPlannedShopping({ start: "2026-09-19", end: "2026-09-19", dinners: [oldDinner], breakfastVersions: [], servings: 4 })
+      .groups[0].items[0].contributions[0].key;
+    const changed = { ...oldDinner, recipe: { ...oldDinner.recipe, name: "新献立" } };
+    const nextWeek = { ...oldDinner, date: "2026-09-26" };
+    expect(labels(buildPlannedShopping({ start: "2026-09-19", end: "2026-09-19", dinners: [changed], breakfastVersions: [], servings: 4, purchasedContributionKeys: [boughtKey] }))).toEqual(["卵 1個"]);
+    expect(labels(buildPlannedShopping({ start: "2026-09-26", end: "2026-09-26", dinners: [nextWeek], breakfastVersions: [], servings: 4, purchasedContributionKeys: [boughtKey] }))).toEqual(["卵 1個"]);
   });
   it("朝食の週途中の変更・無効化をその日から反映する", () => {
     const old = breakfast(["卵 2個"]);

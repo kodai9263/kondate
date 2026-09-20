@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Check, Plus, Trash2 } from "lucide-react";
+import { Check, CheckCheck, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { addManualShoppingItem, deleteManualShoppingItem, dismissSeasoningShoppingItem, restoreShoppingSeasonings, setShoppingItemChecked } from "@/app/app/shopping/actions";
+import { addManualShoppingItem, completeShopping, deleteManualShoppingItem, dismissSeasoningShoppingItem, restoreShoppingSeasonings, setShoppingItemChecked, undoShoppingCompletion } from "@/app/app/shopping/actions";
 import { getShoppingBroadcastRecord, type ShoppingBroadcastItem } from "@/lib/realtime/shoppingItems";
 import { buildShoppingItemKey, seasoningShoppingCategory } from "@/lib/services/shoppingService";
 import type { ShoppingPeriodMode } from "@/lib/shopping/period";
@@ -36,6 +36,7 @@ export function ShoppingList({
   rangeEnd,
   periodMode,
   weekStart,
+  latestCompletionId,
   loadError = false,
 }: {
   groups: ShoppingListGroup[];
@@ -47,6 +48,7 @@ export function ShoppingList({
   rangeEnd: string;
   periodMode: ShoppingPeriodMode;
   weekStart: string;
+  latestCompletionId: string | null;
   loadError?: boolean;
 }) {
   const router = useRouter();
@@ -56,6 +58,9 @@ export function ShoppingList({
   const [pendingKeys, setPendingKeys] = useState(() => new Set<string>());
   const [newItemName, setNewItemName] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [isUndoing, setIsUndoing] = useState(false);
+  const [notice, setNotice] = useState("");
   const [error, setError] = useState(loadError ? "チェック状態を読み込めませんでした。" : "");
   const incomingState = JSON.stringify([initialCheckedKeys, initialDismissedKeys, initialManualItems]);
   const [appliedState, setAppliedState] = useState(incomingState);
@@ -86,7 +91,7 @@ export function ShoppingList({
       channel = supabase.channel(`shopping-list:${listId}:member:${user.id}`, { config: { private: true } });
       channel
         .on("broadcast", { event: "*" }, (payload) => {
-          if (payload.event === "PERIOD_CHANGED") { router.refresh(); return; }
+          if (payload.event === "PERIOD_CHANGED" || payload.event === "COMPLETION_CHANGED") { router.refresh(); return; }
           const row = getShoppingBroadcastRecord(payload);
           if (!row) return;
           const itemKey = buildShoppingItemKey(row.category, row.name);
@@ -205,6 +210,37 @@ export function ShoppingList({
     }
   }
 
+  async function completeCheckedItems() {
+    if (checkedCount === 0 || isCompleting) return;
+    setError("");
+    setNotice("");
+    setIsCompleting(true);
+    const result = await completeShopping({ weekStart, rangeStart, rangeEnd, periodMode });
+    setIsCompleting(false);
+    if (!result.ok) {
+      setError("買い物の完了を保存できませんでした。リストを再読み込みして、もう一度お試しください。");
+      return;
+    }
+    setCheckedKeys(new Set());
+    setNotice(`${result.completedCount ?? checkedCount}品を購入済みとして保存しました。`);
+    router.refresh();
+  }
+
+  async function undoCompletion() {
+    if (!latestCompletionId || isUndoing) return;
+    setError("");
+    setNotice("");
+    setIsUndoing(true);
+    const result = await undoShoppingCompletion({ completionId: latestCompletionId, weekStart, rangeStart, rangeEnd, periodMode });
+    setIsUndoing(false);
+    if (!result.ok) {
+      setError("直前の買い物完了を取り消せませんでした。再読み込みして、もう一度お試しください。");
+      return;
+    }
+    setNotice("直前の買い物完了を取り消しました。");
+    router.refresh();
+  }
+
   return (
     <div className="space-y-6">
       <form onSubmit={addItem} className="flex gap-2" aria-label="買うものを追加">
@@ -222,6 +258,17 @@ export function ShoppingList({
         </div>
         <div className="mt-3 h-[3px] overflow-hidden rounded-full bg-kondate-line"><div className="h-full rounded-full bg-kondate-done transition-[width] duration-200 motion-reduce:transition-none" style={{ width: totalCount === 0 ? "0%" : `${(checkedCount / totalCount) * 100}%` }} /></div>
       </section>
+
+      {totalCount > 0 ? <Button variant="primary" fullWidth disabled={checkedCount === 0 || isCompleting || isUndoing || pendingKeys.size > 0}
+        onClick={completeCheckedItems}><CheckCheck size={19} aria-hidden="true" />{isCompleting ? "保存中…" : `買い物を完了（${checkedCount}品）`}</Button>
+        : <p className="rounded-lg border border-kondate-done/30 bg-kondate-done/10 p-4 text-sm leading-7 text-kondate-ink">
+          {latestCompletionId ? "この期間で買うものは完了しています。" : "この期間で買うものはありません。"}
+        </p>}
+
+      {latestCompletionId ? <Button variant="secondary" size="sm" disabled={isCompleting || isUndoing || pendingKeys.size > 0}
+        onClick={undoCompletion}><RotateCcw size={15} aria-hidden="true" />{isUndoing ? "取り消し中…" : "直前の完了を取り消す"}</Button> : null}
+
+      {notice ? <p role="status" className="rounded border border-kondate-done/30 bg-kondate-done/10 p-3 text-sm text-kondate-ink">{notice}</p> : null}
 
       {error ? <p role="alert" className="rounded border border-kondate-alert/30 bg-kondate-alertSoft p-3 text-sm text-kondate-alert">{error}</p> : null}
 

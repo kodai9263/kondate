@@ -36,6 +36,26 @@ select :'cycle'::date + 6 as cycle_end \gset
 select :'today'::date + 13 as custom_end \gset
 select pg_temp.check_true((update_planned_shopping(:'storage', :'cycle', :'cycle_end', 'week', 'check', '{"category":"肉","name":"planned-v1:amount100","position":0,"checked":true}') ->> 'ok')::boolean, '自動品を保存');
 select pg_temp.check_true((select checked from shopping_items where name = 'planned-v1:amount100'), 'チェック状態が永続化');
+select set_manual_shopping_item_checked(:'old_manual', true);
+select complete_planned_shopping(
+  :'storage', :'cycle', :'cycle_end', 'week',
+  jsonb_build_array(jsonb_build_object(
+    'source','auto','category','肉','name','planned-v1:amount100','label','豚肉 100g','position',0,
+    'contributions',jsonb_build_array(jsonb_build_object(
+      'key','meal-key-1','date',:'cycle','meal','夕食','original','豚肉 100g','scale',1
+    ))
+  )),
+  array[:'old_manual'::uuid]
+) ->> 'completion_id' as completion_id \gset
+select pg_temp.check_true((select count(*) = 1 from shopping_completions where id = :'completion_id'), '買い物完了を家族に保存');
+select pg_temp.check_true((select count(*) = 0 from shopping_items where id = :'old_manual' or name = 'planned-v1:amount100'), '購入済み品を現在のリストから除外');
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000022', false);
+select pg_temp.check_true((select count(*) = 0 from shopping_completions where id = :'completion_id'), '別家庭は買い物完了を読めない');
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000021', false);
+select pg_temp.check_true((undo_planned_shopping_completion(:'completion_id', :'storage', :'cycle', :'cycle_end', 'week') ->> 'ok')::boolean, '直前の買い物完了を取り消す');
+select pg_temp.check_true((select count(*) = 0 from shopping_completions where id = :'completion_id'), '取り消した完了記録を削除');
+select pg_temp.check_true((select checked from shopping_items where name = 'planned-v1:amount100'), '自動品のチェックを復元');
+select pg_temp.check_true((select checked from shopping_items where name = '洗剤'), '手動品のチェックを復元');
 select update_planned_shopping(:'storage', :'cycle', :'cycle_end', 'week', 'period', '{"mode":"today"}');
 select pg_temp.check_true((select shopping_period_mode = 'today' from household_settings where household_id = :'home'), '今日だけを保存');
 select pg_temp.check_true((select id = :'old_list' from shopping_lists where week_start = :'storage'), '期間変更時に既存リストを維持');
@@ -80,3 +100,4 @@ reset role;
 select pg_temp.check_true((select count(*) >= 2 from realtime.test_broadcasts where event = 'PERIOD_CHANGED'), '期間変更を家族向けに通知');
 set role anon;
 select pg_temp.expect_error(format('select update_planned_shopping(%L,%L,%L,%L,%L)', :'storage', :'cycle', :'cycle_end', 'week', 'restore'), 'permission denied');
+select pg_temp.expect_error(format('select complete_planned_shopping(%L,%L,%L,%L,%L,%L)', :'storage', :'cycle', :'cycle_end', 'week', '[]'::jsonb, array[]::uuid[]), 'permission denied');

@@ -114,6 +114,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      shopping_completions: {
+        Row: {
+          id: string;
+          household_id: string;
+          list_id: string;
+          range_start: string;
+          range_end: string;
+          period_mode: "today" | "week" | "custom";
+          items: Json;
+          contributions: Json;
+          completed_by: string;
+          completed_at: string;
+        };
+        Insert: {
+          id?: string;
+          household_id: string;
+          list_id: string;
+          range_start: string;
+          range_end: string;
+          period_mode: "today" | "week" | "custom";
+          items: Json;
+          contributions: Json;
+          completed_by: string;
+          completed_at?: string;
+        };
+        Update: {
+          id?: string;
+          household_id?: string;
+          list_id?: string;
+          range_start?: string;
+          range_end?: string;
+          period_mode?: "today" | "week" | "custom";
+          items?: Json;
+          contributions?: Json;
+          completed_by?: string;
+          completed_at?: string;
+        };
+        Relationships: [];
+      };
       shopping_lists: {
         Row: {
           id: string;
@@ -186,6 +225,17 @@ export type Database = {
         };
         Returns: string;
       };
+      complete_planned_shopping: {
+        Args: {
+          target_week_start: string;
+          expected_range_start: string;
+          expected_range_end: string;
+          expected_period_mode: string;
+          auto_items: Json;
+          manual_ids: string[];
+        };
+        Returns: Json;
+      };
       dismiss_seasoning_shopping_item: {
         Args: {
           target_week_start: string;
@@ -252,6 +302,16 @@ export type Database = {
           target_checked: boolean;
         };
         Returns: boolean;
+      };
+      undo_planned_shopping_completion: {
+        Args: {
+          target_completion_id: string;
+          target_week_start: string;
+          expected_range_start: string;
+          expected_range_end: string;
+          expected_period_mode: string;
+        };
+        Returns: Json;
       };
       update_current_household_account: {
         Args: {

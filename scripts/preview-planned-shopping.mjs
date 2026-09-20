@@ -20,22 +20,22 @@ await build({ entryPoints: ['tests/ui/shopping-preview.tsx'], outfile: join(out,
   b.onResolve({ filter: /app\/app\/shopping\/actions$/ }, () => ({ path: 'actions', namespace: 'transport' }));
   b.onResolve({ filter: /lib\/supabase\/client$/ }, () => ({ path: 'supabase', namespace: 'transport' }));
   b.onResolve({ filter: /^next\/(navigation|link)$/ }, (a) => ({ path: a.path, namespace: 'transport' }));
-  b.onLoad({ filter: /.*/, namespace: 'transport' }, (a) => ({ contents: a.path === 'actions' ? ['setShoppingItemChecked','addManualShoppingItem','deleteManualShoppingItem','dismissSeasoningShoppingItem','changeShoppingPeriod','restoreShoppingSeasonings'].map((name) => `export async function ${name}(input){ return (await fetch('/action/${name}',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input)})).json(); }`).join('\n')
+  b.onLoad({ filter: /.*/, namespace: 'transport' }, (a) => ({ contents: a.path === 'actions' ? ['setShoppingItemChecked','addManualShoppingItem','deleteManualShoppingItem','dismissSeasoningShoppingItem','changeShoppingPeriod','restoreShoppingSeasonings','completeShopping','undoShoppingCompletion'].map((name) => `export async function ${name}(input){ return (await fetch('/action/${name}',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input)})).json(); }`).join('\n')
     : a.path === 'supabase' ? 'export const getSupabaseBrowser = () => null;'
     : a.path === 'next/navigation' ? 'const router={refresh:()=>window.dispatchEvent(new Event("shopping-refresh"))}; export const useRouter=()=>router;'
     : 'import React from "react"; export default function Link({prefetch,...props}){return React.createElement("a",props)}', loader: 'js', resolveDir: root }));
 } }] });
 execFileSync(process.execPath, [resolve('node_modules/tailwindcss/lib/cli.js'), '-i', 'src/app/globals.css', '-o', join(out,'app.css'), '--minify'], { stdio: 'pipe' });
-const allowed = new Set(['setShoppingItemChecked','addManualShoppingItem','deleteManualShoppingItem','dismissSeasoningShoppingItem','changeShoppingPeriod','restoreShoppingSeasonings']);
+const allowed = new Set(['setShoppingItemChecked','addManualShoppingItem','deleteManualShoppingItem','dismissSeasoningShoppingItem','changeShoppingPeriod','restoreShoppingSeasonings','completeShopping','undoShoppingCompletion']);
 createServer(async (req, res) => {
   try {
     const url = new URL(req.url, 'http://127.0.0.1:4319');
     if (url.pathname === '/state') {
       const shopping = await service.getPlannedShopping();
       const saved = await service.getSavedShoppingState(shopping);
-      const { period, groups, warnings, meals, preferences, listId } = shopping;
+      const { period, groups, warnings, meals, preferences, listId, latestCompletion } = shopping;
       const revision = createHash('sha256').update(JSON.stringify([period,groups,saved])).digest('hex');
-      res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify({ period, groups, warnings, meals, preferences, listId: listId ?? null, saved, revision }));
+      res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify({ period, groups, warnings, meals, preferences, listId: listId ?? null, latestCompletion, saved, revision }));
     } else if (req.method === 'POST' && allowed.has(url.pathname.slice('/action/'.length))) {
       let body = ''; for await (const chunk of req) { body += chunk; if (body.length > 100000) throw new Error('too large'); }
       res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(await service[url.pathname.slice('/action/'.length)](JSON.parse(body))));
@@ -44,5 +44,5 @@ createServer(async (req, res) => {
     } else {
       res.setHeader('Content-Type', 'text/html; charset=utf-8'); res.end('<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>買い物リスト · ローカル検証</title><link rel="stylesheet" href="/app.css"><body><div id="root"></div><script type="module" src="/app.js"></script></body></html>');
     }
-  } catch (error) { res.statusCode = 500; res.end(String(error.message)); }
+  } catch (error) { console.error(error); res.statusCode = 500; res.end(String(error.message)); }
 }).listen(4319, '127.0.0.1', () => console.log('買い物リスト検証: http://127.0.0.1:4319'));

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const mock = vi.hoisted(() => ({ settings: {} as Record<string, unknown>, planner: vi.fn(), resolve: vi.fn() }));
+const mock = vi.hoisted(() => ({ settings: {} as Record<string, unknown>, completions: [] as Array<Record<string, unknown>>, planner: vi.fn(), resolve: vi.fn() }));
 vi.mock("@/lib/family/server", () => ({ getCurrentHouseholdPreferences: async () => ({ shoppingDay: 6, adultCount: 4, childCount: 0 }) }));
 vi.mock("@/lib/breakfast/server", () => ({ getBreakfastVersions: async () => ({ versions: [], error: null }) }));
 vi.mock("@/lib/nutrition/server", () => ({ getHouseholdPlannerContext: mock.planner }));
@@ -8,7 +8,9 @@ vi.mock("@/lib/supabase/server", () => ({ getSupabaseServer: async () => ({
   auth: { getUser: async () => ({ data: { user: { id: "member" } } }) },
   from: (table: string) => {
     const result = () => ({ data: table === "profiles" ? { household_id: "family" } : table === "household_settings" ? mock.settings : { id: "existing-list" }, error: null });
-    const query = { select: () => query, eq: () => query, single: async () => result(), maybeSingle: async () => result() };
+    const query = { select: () => query, eq: () => query, lte: () => query, gte: () => query,
+      order: async () => ({ data: table === "shopping_completions" ? mock.completions : [], error: null }),
+      single: async () => result(), maybeSingle: async () => result() };
     return query;
   },
 }) }));
@@ -17,6 +19,7 @@ import { getPlannedShopping } from "@/lib/shopping/server";
 beforeEach(() => {
   vi.clearAllMocks();
   mock.settings = { shopping_day: 6, shopping_period_mode: "custom", shopping_range_start: "2026-09-30", shopping_range_end: "2026-11-01" };
+  mock.completions = [];
   mock.planner.mockImplementation(async (year, month) => ({ year, month }));
   mock.resolve.mockImplementation((year: number, month: number) => {
     const dates = month === 9 ? ["2026-09-29", "2026-09-30"] : month === 10 ? ["2026-10-01", "2026-10-31"] : ["2026-11-01", "2026-11-02"];
@@ -62,5 +65,26 @@ describe("買い物の対象月と集計", () => {
   it("対象月の読み込み失敗で一部分だけのリストを表示しない", async () => {
     mock.planner.mockRejectedValueOnce(new Error("unavailable"));
     await expect(getPlannedShopping()).rejects.toThrow("unavailable");
+  });
+  it("購入完了した材料根拠を次回集計から除き、直前の完了IDを返す", async () => {
+    mock.settings.shopping_range_end = "2026-09-30";
+    const before = await getPlannedShopping();
+    const contribution = before.groups[0].items[0].contributions[0];
+    mock.completions = [{ id: "completion", completed_at: "2026-09-20T00:00:00Z", range_start: "2026-09-30", range_end: "2026-09-30", contributions: [contribution] }];
+    const after = await getPlannedShopping();
+    expect(after.groups).toEqual([]);
+    expect(after.latestCompletion).toEqual({ id: "completion", completedAt: "2026-09-20T00:00:00Z" });
+  });
+  it("別期間の新しい完了がある場合は現在期間に取り消しを表示しない", async () => {
+    mock.settings.shopping_range_end = "2026-09-30";
+    const before = await getPlannedShopping();
+    const contribution = before.groups[0].items[0].contributions[0];
+    mock.completions = [
+      { id: "newer", completed_at: "2026-09-21T00:00:00Z", range_start: "2026-10-01", range_end: "2026-10-01", contributions: [] },
+      { id: "overlapping", completed_at: "2026-09-20T00:00:00Z", range_start: "2026-09-30", range_end: "2026-09-30", contributions: [contribution] },
+    ];
+    const after = await getPlannedShopping();
+    expect(after.groups).toEqual([]);
+    expect(after.latestCompletion).toBeNull();
   });
 });

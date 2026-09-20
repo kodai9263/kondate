@@ -8,12 +8,13 @@ export type ShoppingPageData = {
   period: ShoppingPeriod; groups: PlannedShoppingGroup[]; warnings: string[];
   meals: Array<{ date: string; dinner: string | null; breakfast: string | null }>;
   preferences: FamilySize; listId: string | null;
+  latestCompletion: { id: string; completedAt: string } | null;
   saved: { checkedKeys: string[]; dismissedKeys: string[]; manualItems: Array<{
     id: string; category: string; name: string; position: number; checked: boolean; source: "manual";
   }> };
 };
 
-export function ShoppingPageView({ period, groups, warnings, preferences, listId, saved }: ShoppingPageData) {
+export function ShoppingPageView({ period, groups, warnings, preferences, listId, latestCompletion, saved }: ShoppingPageData) {
   const listGroups = groups.map((group) => ({ category: group.category, items: group.items.map(({ category, name, label, position }) => ({ category, name, label, position })) }));
   return <main className="mx-auto min-h-dvh w-full max-w-[640px] px-4 pb-28 pt-5">
     <header className="border-b border-kondate-line pb-5">
@@ -28,6 +29,7 @@ export function ShoppingPageView({ period, groups, warnings, preferences, listId
     </details> : null}
     <div className="mt-5"><ShoppingList key={period.storageWeekStart} groups={listGroups}
       initialManualItems={saved.manualItems} initialCheckedKeys={saved.checkedKeys} initialDismissedKeys={saved.dismissedKeys}
-      listId={listId} weekStart={period.storageWeekStart} rangeStart={period.start} rangeEnd={period.end} periodMode={period.mode} /></div>
+      listId={listId} weekStart={period.storageWeekStart} rangeStart={period.start} rangeEnd={period.end} periodMode={period.mode}
+      latestCompletionId={latestCompletion?.id ?? null} /></div>
   </main>;
 }
