@@ -1,4 +1,4 @@
-import { ArrowRight, Check, ChefHat, Clock3, ListChecks, ShoppingBasket, Users } from "lucide-react";
+import { ArrowRight, Check, ChefHat } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { buttonClass } from "@/components/ui/Button";
@@ -7,100 +7,162 @@ import { menuData } from "@/lib/menuData";
 import { findTodayPlan } from "@/lib/services/planService";
 
 const features = [
-  { number: "01", icon: Clock3, title: "今日だけ見れば、動ける", body: "朝の仕込みと夜の手順を、やる順番に。レシピを何度も読み返さなくて済みます。" },
-  { number: "02", icon: ListChecks, title: "献立は、4週間まとめて", body: "家族向けに組んだローテーションから始めるので、毎日の献立会議がなくなります。" },
-  { number: "03", icon: ShoppingBasket, title: "買うものまで、ひと続き", body: "定番献立の買い物目安を売り場ごとに確認。足りないものを追加し、その場でチェックできます。" },
+  { title: "4週間分の献立", body: "用意された献立をもとに、家族の好みに合わせて変更できます。毎日、一から考える手間を減らせます。" },
+  { title: "今日の手順を確認", body: "朝に準備することと、夜に作る手順をまとめています。終わったところにチェックを入れながら進められます。" },
+  { title: "買うものをリストに", body: "食材を売り場ごとに確認できます。足りないものは追加して、買ったものにはその場でチェック。" },
 ];
 
 export default async function LandingPage() {
   const isAuthenticated = await hasAuthenticatedSession();
   const today = findTodayPlan(menuData);
   const week = menuData.weeks[0];
+  const shoppingExamples = [
+    { label: "肉・魚", items: [...week.shopping.肉.slice(0, 2), ...week.shopping.魚.slice(0, 1)] },
+    { label: "野菜・果物", items: week.shopping["野菜・果物"].slice(0, 2) },
+  ];
   const primaryHref = isAuthenticated ? "/app" : "/signup";
   const primaryLabel = isAuthenticated ? "献立を開く" : "無料で始める";
 
   return (
-    <main className="min-h-dvh bg-white">
-      <header className="border-b-2 border-kondate-ink bg-white">
-        <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Link href="/" aria-label="きょうのごはん トップ" className="flex min-h-11 shrink-0 items-center gap-2 text-kondate-ink">
-            <ChefHat size={20} className="text-kondate-accent" aria-hidden="true" />
-            <span className="font-mincho hidden whitespace-nowrap text-lg font-bold sm:inline">きょうのごはん</span>
+    <main className="min-h-dvh bg-[#faf9f6] text-kondate-ink">
+      <header className="mx-auto flex min-h-20 max-w-6xl items-center justify-between gap-4 px-5 sm:px-8">
+        <Link href="/" aria-label="きょうのごはん トップ" className="inline-flex min-h-11 shrink-0 items-center gap-2">
+          <ChefHat size={20} strokeWidth={1.5} className="text-kondate-accent" aria-hidden="true" />
+          <span className="font-mincho text-base font-bold sm:text-lg">きょうのごはん</span>
+        </Link>
+        <nav aria-label="メインナビゲーション" className="flex items-center gap-3 text-sm sm:gap-6">
+          <Link href="/pricing" className="inline-flex min-h-11 items-center text-kondate-muted hover:text-kondate-ink">料金</Link>
+          <Link href={isAuthenticated ? "/app" : "/login"} className="inline-flex min-h-11 items-center hover:underline underline-offset-4">
+            {isAuthenticated ? "献立を開く" : "ログイン"}
           </Link>
-          <nav aria-label="メインナビゲーション" className="flex items-center gap-1 sm:gap-3">
-            <Link href="/pricing" className="hidden min-h-11 items-center px-3 text-sm font-black text-kondate-muted sm:inline-flex">料金</Link>
-            {!isAuthenticated ? <Link href="/login" className="inline-flex min-h-11 shrink-0 items-center whitespace-nowrap px-3 text-sm font-black text-kondate-ink">ログイン</Link> : null}
-            <Link href={primaryHref} className={buttonClass({ variant: "ink", className: "min-h-11 shrink-0 whitespace-nowrap px-4 text-sm" })}>{primaryLabel}</Link>
-          </nav>
-        </div>
+          {!isAuthenticated ? <Link href={primaryHref} className={buttonClass({ className: "hidden sm:inline-flex" })}>無料で始める</Link> : null}
+        </nav>
       </header>
 
-      <section className="relative h-[calc(100dvh-96px)] min-h-[560px] max-h-[760px] overflow-hidden border-b-2 border-kondate-ink">
-        <Image src="/images/family-dinner.png" alt="鮭の塩焼き、具だくさん味噌汁、野菜のおかずが並ぶ家庭の食卓" fill loading="eager" sizes="100vw" className="object-cover" />
-        <div className="absolute inset-0 bg-black/35" />
-        <div className="relative mx-auto flex h-full max-w-6xl flex-col justify-end px-4 pb-10 text-white sm:px-6 sm:pb-14">
-          <div className="max-w-3xl border-l-4 border-[#ff6a3d] pl-4 sm:pl-6">
-            <p className="text-sm font-black text-[#ffe7dc]">家族の献立Todo</p>
-            <h1 className="font-mincho mt-2 text-[40px] font-black leading-none sm:text-7xl">きょうのごはん</h1>
-            <p className="font-mincho mt-5 text-xl font-bold leading-9 sm:text-2xl">考えるのは、週に一度。<br className="sm:hidden" />あとは今日の段取りを見るだけ。</p>
+      <section className="mx-auto grid max-w-6xl gap-9 px-5 pb-12 pt-6 sm:px-8 sm:pt-12 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-12 lg:pb-20 lg:pt-12">
+        <div>
+          <p className="text-sm font-semibold text-kondate-ink">献立と買い物リストで、食費を見直す。</p>
+          <h1 className="font-mincho mt-5 text-[44px] font-bold !leading-[1.2] sm:text-[64px] xl:text-[72px]">
+            買いすぎを、<br /><span className="text-kondate-accent">減らそう。</span>
+          </h1>
+          <p className="mt-6 text-base leading-8 text-kondate-muted">
+            献立を決めて、買うものをリストに。<br />
+            「念のため」の買い足しを減らす。<br />
+            節約は、いつもの買い物から。
+          </p>
+          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-l-2 border-kondate-accent pl-4">
+            <p className="text-sm leading-6">家族みんなで<br /><span className="text-kondate-muted">家族プラン</span></p>
+            <p className="flex items-baseline gap-1"><span className="text-sm">月</span><span className="text-[38px] font-semibold leading-none tabular-nums">480</span><span className="text-sm">円</span></p>
+            <span className="text-xs text-kondate-muted">ひとりで試せる無料版も</span>
           </div>
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:pl-7">
-            <Link href={primaryHref} className={buttonClass({ className: "px-6" })}>{isAuthenticated ? "献立の続きを開く" : "無料で使ってみる"} <ArrowRight size={18} aria-hidden="true" /></Link>
-            <Link href="/demo/planner" className={buttonClass({ variant: "secondary", className: "border-white bg-white px-6 text-kondate-ink hover:border-white hover:bg-kondate-bg" })}>献立生成を試す</Link>
+          <div className="mt-7">
+            <Link href={primaryHref} className={buttonClass({ className: "min-h-14 w-full justify-between px-6 sm:w-64" })}>{primaryLabel}<ArrowRight size={18} aria-hidden="true" /></Link>
+            <p className="mt-2 text-xs leading-6 text-kondate-muted">{isAuthenticated ? "保存した献立の続きから使えます。" : "カード登録不要。まずは無料版で試せます。"}</p>
+            <Link href="/demo/planner" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm underline decoration-kondate-line underline-offset-8 hover:decoration-kondate-muted">登録せずに献立生成を試す<ArrowRight size={15} aria-hidden="true" /></Link>
           </div>
+        </div>
+
+        <div className="relative aspect-[4/3] w-full overflow-hidden lg:aspect-[4/5]">
+          <Image
+            src="/images/family-dinner.png"
+            alt="鮭の塩焼き、具だくさん味噌汁、野菜のおかずが並ぶ家庭の食卓"
+            fill
+            loading="eager"
+            sizes="(min-width: 1024px) 540px, (min-width: 640px) 90vw, 100vw"
+            className="object-cover"
+          />
         </div>
       </section>
 
-      <section className="border-b border-kondate-line bg-kondate-bg">
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
-          <div className="border-2 border-kondate-ink bg-white" aria-label="アプリ画面のプレビュー">
-            <div className="grid border-b-2 border-kondate-ink sm:grid-cols-[220px_1fr]">
-              <div className="bg-kondate-ink p-5 text-white">
-                <p className="text-xs font-black">TODAY</p>
-                <p className="font-mincho mt-2 text-2xl font-black">{today.date}</p>
-                <p className="mt-8 text-sm text-[#dce2dc]">5人分 / 夜 {today.dinner.cookMin}分</p>
-              </div>
-              <div className="grid sm:grid-cols-2">
-                <div className="border-b border-kondate-ink bg-kondate-morning p-5 sm:border-b-0 sm:border-r"><p className="text-xs font-black text-[#765708]">朝の仕込み</p><p className="font-mincho mt-2 text-xl font-black">{today.dinner.dinner}</p><p className="mt-3 text-sm leading-6 text-kondate-muted">{today.dinner.morning[0]}</p></div>
-                <div className="bg-kondate-evening p-5"><p className="text-xs font-black text-[#3155a4]">夜の手順</p><p className="font-mincho mt-2 text-xl font-black">{today.dinner.side}</p><p className="mt-3 text-sm leading-6 text-kondate-muted">{today.dinner.evening[0]}</p></div>
-              </div>
-            </div>
-
-            <div className="grid lg:grid-cols-[1fr_320px]">
-              <div className="p-5 sm:p-6 lg:border-r lg:border-kondate-ink">
-                <div className="mb-4 flex items-end justify-between gap-3"><div><p className="text-xs font-black text-kondate-accent">WEEK 1</p><h2 className="font-mincho mt-1 text-xl font-black">今週の夕ごはん</h2></div><p className="text-xs font-bold text-kondate-muted">土曜にまとめ買い</p></div>
-                <div className="grid grid-cols-2 border-l border-t border-kondate-line sm:grid-cols-4 lg:grid-cols-7">
-                  {week.days.map((day) => <div key={day.dow} className="min-h-28 border-b border-r border-kondate-line p-3"><p className="text-xs font-black text-kondate-accent">{day.dow}</p><p className="mt-3 text-sm font-black leading-5">{day.dinner}</p><p className="mt-1 text-xs leading-5 text-kondate-muted">{day.side}</p></div>)}
+      <section className="border-y border-[#e6e2d9] bg-white">
+        <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:px-8 sm:py-20 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+          <div>
+            <p className="text-sm text-kondate-muted">「何を買うんだっけ？」を減らす。</p>
+            <h2 className="font-mincho mt-4 text-2xl font-medium sm:text-3xl">買い物には、<br />このリストを持って。</h2>
+            <p className="mt-5 max-w-md text-base leading-8 text-kondate-muted">売り場ごとに食材を確認して、買ったらチェック。必要なものを見ながら選べるので、買いすぎを防ぎやすくなります。</p>
+            <div className="mt-8 space-y-7">
+              {features.map(({ title, body }) => (
+                <div key={title}>
+                  <h3 className="text-base font-semibold">{title}</h3>
+                  <p className="mt-2 max-w-md text-sm leading-7 text-kondate-muted">{body}</p>
                 </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div className="w-full" aria-label="買い物リストの表示例">
+              <div className="border border-[#e6e2d9] bg-white px-6 py-7 sm:px-8">
+                <div className="flex items-baseline justify-between gap-3 border-b border-kondate-line pb-5">
+                  <h3 className="font-mincho text-xl">買い物リスト</h3>
+                  <span className="text-xs text-kondate-muted">ある週の買うもの</span>
+                </div>
+                {shoppingExamples.map(({ label, items }) => (
+                  <div key={label} className="mt-5">
+                    <p className="text-xs text-kondate-muted">{label}</p>
+                    <ul className="mt-1">
+                      {items.map((item) => (
+                        <li key={item} className="flex items-start gap-3 border-b border-kondate-line py-3 text-[15px] leading-7">
+                          <span className="mt-1.5 size-4 shrink-0 rounded-sm border border-kondate-faint" aria-hidden="true" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+                <p className="mt-6 flex items-center gap-2 text-xs text-kondate-muted"><Check size={14} aria-hidden="true" />買ったものからチェック</p>
               </div>
-              <div className="border-t border-kondate-ink bg-kondate-sage p-5 lg:border-t-0">
-                <p className="flex items-center gap-2 text-xs font-black text-[#285b35]"><ShoppingBasket size={16} /> 買い物メモ</p>
-                <ul className="mt-4 space-y-3">{week.shopping.肉.slice(0, 3).map((item) => <li key={item} className="flex gap-3 border-b border-[#bfd0c1] pb-3 text-sm font-bold"><span className="mt-0.5 size-4 shrink-0 border-2 border-[#285b35]" />{item}</li>)}</ul>
-              </div>
+              <p className="mt-3 text-right text-xs text-kondate-muted">買い物リストの一部を使った表示例です</p>
+            </div>
+            <div className="mt-8 border-l-2 border-kondate-line pl-5">
+              <p className="text-xs text-kondate-muted">料理の手順の一例</p>
+              <h3 className="font-mincho mt-2 text-xl">{today.dinner.dinner}</h3>
+              <dl className="mt-4 space-y-4 text-sm leading-7">
+                <div><dt className="font-semibold">朝の仕込み</dt><dd className="mt-1 text-kondate-muted">{today.dinner.morning[0]}</dd></div>
+                <div><dt className="font-semibold">夜の手順</dt><dd className="mt-1 text-kondate-muted">{today.dinner.evening[0]}</dd></div>
+              </dl>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="border-b-2 border-kondate-ink bg-white px-4 py-16 sm:px-6 sm:py-24">
-        <div className="mx-auto max-w-6xl">
-          <div className="grid gap-8 md:grid-cols-[260px_1fr]"><div><p className="text-sm font-black text-kondate-accent">毎日の段取り</p><h2 className="font-mincho mt-2 text-3xl font-black leading-tight">献立表で終わらせない。</h2></div><div className="border-t-2 border-kondate-ink">{features.map(({ number, icon: Icon, title, body }) => <article key={number} className="grid gap-3 border-b border-kondate-ink py-6 sm:grid-cols-[64px_1fr_1.3fr] sm:items-start"><p className="font-mincho text-2xl font-black text-kondate-accent">{number}</p><h3 className="flex items-center gap-2 text-lg font-black"><Icon size={20} aria-hidden="true" />{title}</h3><p className="text-sm leading-7 text-kondate-muted">{body}</p></article>)}</div></div>
+      <section className="mx-auto grid max-w-6xl gap-9 px-5 py-14 sm:px-8 sm:py-20 md:grid-cols-[1fr_300px] md:items-center md:gap-16">
+        <div>
+          <p className="text-sm text-kondate-muted">家族プラン</p>
+          <h2 className="font-mincho mt-4 text-2xl font-medium sm:text-3xl">月480円分のムダ買いが<br />減れば、利用料の分に。</h2>
+          <p className="mt-5 max-w-xl leading-8 text-kondate-muted">買い物リストも、料理の進み具合も家族で共有。「これ、もう買った？」の確認も、アプリで済ませられます。</p>
+          <p className="mt-2 text-xs leading-6 text-kondate-muted">節約効果を保証するものではありません。</p>
+        </div>
+        <div className="border border-[#e6e2d9] bg-white p-7 sm:p-8">
+          <p className="text-sm text-kondate-muted">家族みんなで</p>
+          <p className="mt-2 flex items-baseline gap-1"><span className="text-sm">月</span><span className="text-5xl font-medium tabular-nums">480</span><span className="text-sm">円</span></p>
+          <p className="mt-2 text-xs text-kondate-muted">1契約で、家族みんなが使えます。</p>
+          <ul className="mt-5 space-y-2 text-sm text-kondate-muted">
+            {["献立・買い物共有", "チェック状態の同期", "わが家のメニュー登録"].map((item) => <li key={item} className="flex items-center gap-2"><Check size={14} aria-hidden="true" />{item}</li>)}
+          </ul>
+          <Link href="/pricing" className={buttonClass({ variant: "ink", fullWidth: true, className: "mt-6" })}>家族プランを見る<ArrowRight size={15} aria-hidden="true" /></Link>
         </div>
       </section>
 
-      <section className="border-b-2 border-kondate-ink bg-kondate-sage px-4 py-16 sm:px-6 sm:py-20">
-        <div className="mx-auto max-w-6xl">
-          <div className="flex items-center gap-2 text-sm font-black text-[#285b35]"><Users size={18} aria-hidden="true" />家族プラン</div>
-          <div className="mt-4 grid gap-8 border-t-2 border-kondate-ink pt-6 md:grid-cols-[1fr_auto] md:items-end">
-            <div><h2 className="font-mincho text-3xl font-black leading-tight sm:text-4xl">「やった」が、家族みんなに伝わる。</h2><p className="mt-4 max-w-2xl leading-7 text-kondate-muted">買ったものも、終わった仕込みもリアルタイムで共有。ひとりに集中していたごはん管理を、家族の共同作業に変えます。</p><ul className="mt-6 flex flex-col gap-3 text-sm font-bold sm:flex-row sm:gap-6">{["献立・買い物共有", "チェック状態の同期", "季節テンプレート"].map(item => <li key={item} className="flex gap-2"><Check size={18} className="shrink-0 text-[#285b35]" />{item}</li>)}</ul></div>
-            <div className="border-l-4 border-kondate-accent pl-5"><p className="text-sm font-black">家族みんなで</p><p className="mt-1 text-4xl font-black">月480円</p><Link href="/pricing" className={buttonClass({ variant: "ink", className: "mt-5 px-6" })}>詳しく見る <ArrowRight size={18} /></Link></div>
+      <section className="mx-auto max-w-6xl px-5 pb-14 sm:px-8 sm:pb-20">
+        <div className="flex flex-col gap-6 border-t border-[#e6e2d9] pt-10 sm:flex-row sm:items-center sm:justify-between">
+          <div><p className="font-mincho text-2xl">次の買い物から、使ってみませんか。</p><p className="mt-2 text-sm text-kondate-muted">{isAuthenticated ? "保存した献立の続きから始められます。" : "カード登録なし。無料版から始められます。"}</p></div>
+          <Link href={primaryHref} className={buttonClass({ className: "self-start px-7 sm:shrink-0 sm:self-auto" })}>{primaryLabel}<ArrowRight size={16} aria-hidden="true" /></Link>
+        </div>
+      </section>
+
+      <footer className="border-t border-[#e6e2d9] px-5 py-7 text-xs text-kondate-muted sm:px-8">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="font-mincho text-sm text-kondate-ink">きょうのごはん</p>
+          <div className="flex flex-wrap gap-x-5 gap-y-1">
+            <Link className="inline-flex min-h-11 items-center hover:underline" href="/pricing">料金</Link>
+            <Link className="inline-flex min-h-11 items-center hover:underline" href="/business">運営サービス</Link>
+            <Link className="inline-flex min-h-11 items-center hover:underline" href="/terms">利用規約</Link>
+            <Link className="inline-flex min-h-11 items-center hover:underline" href="/privacy">プライバシー</Link>
+            <Link className="inline-flex min-h-11 items-center hover:underline" href="/legal">特商法表記</Link>
           </div>
         </div>
-      </section>
-
-      <section className="bg-kondate-accent px-4 py-14 text-white sm:px-6"><div className="mx-auto flex max-w-6xl flex-col gap-6 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-mincho text-3xl font-black">次のごはんから、迷わない。</p><p className="mt-2 text-sm font-bold text-[#ffe4d8]">{isAuthenticated ? "保存した献立の続きから始められます。" : "カード登録なし。無料版から始められます。"}</p></div><Link href={primaryHref} className={buttonClass({ variant: "secondary", className: "shrink-0 border-white bg-white px-7 text-kondate-ink hover:border-white hover:bg-kondate-bg" })}>{primaryLabel} <ArrowRight size={18} /></Link></div></section>
-
-      <footer className="border-t-2 border-kondate-ink bg-white px-4 py-8 text-sm text-kondate-muted"><div className="mx-auto flex max-w-6xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><p className="font-mincho text-base font-bold text-kondate-ink">きょうのごはん</p><div className="flex flex-wrap gap-x-5 gap-y-2"><Link href="/pricing">料金</Link><Link href="/business">運営サービス</Link><Link href="/terms">利用規約</Link><Link href="/privacy">プライバシー</Link><Link href="/legal">特商法表記</Link></div></div></footer>
+      </footer>
     </main>
   );
 }
