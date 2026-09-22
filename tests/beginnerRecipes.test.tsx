@@ -8,6 +8,7 @@ import { auditedCommunityRecipe } from "@/lib/recipes/communityRecipeDetails";
 import { mergeTodayPlan, type DailyPlanRow } from "@/lib/today/server";
 import { menuData } from "@/lib/menuData";
 import { findTodayPlan } from "@/lib/services/planService";
+import { getSeasoningGroups, getStepSeasoningIds } from "@/lib/recipes/seasoningGroups";
 
 describe("初心者向けレシピの分量と表示", () => {
   it("4人分を2人分にすると、少量の調味料や端数の材料も同じ比率になる", () => {
@@ -34,7 +35,9 @@ describe("初心者向けレシピの分量と表示", () => {
       expect(html).toContain("材料・調味料");
       expect(html).toContain(`工程${recipe.steps.length}：`);
       expect(html).toContain("作る人数");
-      expect(recipe.steps.join("\n")).not.toMatch(/【[A-Z]】|\bAを|工程\d+の材料/);
+      expect(recipe.steps.join("\n")).not.toMatch(/工程\d+の材料/);
+      const groupIds = new Set(getSeasoningGroups(recipe.ingredients).map((group) => group.id));
+      expect(recipe.steps.flatMap(getStepSeasoningIds).every((id) => groupIds.has(id))).toBe(true);
       expect(recipe.totalMinutes).toBeGreaterThanOrEqual(25);
     }
   });

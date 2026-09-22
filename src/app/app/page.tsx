@@ -8,7 +8,7 @@ import { TodayBoard } from "@/components/features/today/TodayBoard";
 import { formatShoppingDay, getAdultEquivalent } from "@/lib/family/servings";
 import { menuData } from "@/lib/menuData";
 import { plannedSideName, resolveMonthlyDinnerPlan } from "@/lib/nutrition/planner";
-import { resolveDinnerIngredients, resolveDinnerSteps } from "@/lib/nutrition/sideDish";
+import { resolveCustomSideSteps, resolveDinnerIngredients, resolveDinnerSteps } from "@/lib/nutrition/sideDish";
 import { getHouseholdPlannerContext } from "@/lib/nutrition/server";
 import { findTodayPlan } from "@/lib/services/planService";
 import { getPlannedShopping } from "@/lib/shopping/server";
@@ -39,7 +39,7 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
     morning: [],
     evening: plannedDinner ? resolveDinnerSteps(plannedDinner) ?? [] : [],
     seasonings: selectedIngredientsText?.split("\n").filter(Boolean) ?? [],
-    sideSteps: plannedDinner?.sideDish?.steps ?? [],
+    sideSteps: resolveCustomSideSteps(plannedDinner?.sideDish),
   } };
   const preferences = plannerContext.preferences;
   const planState = await getTodayPlanState(selectedToday, plannedDinner ? {

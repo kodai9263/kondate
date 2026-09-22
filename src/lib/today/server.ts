@@ -1,7 +1,7 @@
 import type { PlanMeal } from "@/types/domain";
 import type { TodayTaskBinding, TodayTaskBindings } from "@/lib/realtime/taskState";
 import { getSupabaseServer } from "@/lib/supabase/server";
-import { removeDefaultSideSteps, replaceSideIngredients } from "@/lib/nutrition/sideDish";
+import { removeDefaultSideSteps, replaceSideIngredients, resolveCustomSideSteps } from "@/lib/nutrition/sideDish";
 
 type DailyPlanStep = {
   id: string;
@@ -34,7 +34,7 @@ export async function getTodayPlanState(
 ): Promise<TodayPlanState> {
   const fallback = {
     today: fallbackToday,
-    taskBindings: buildBindings(fallbackToday, []),
+    taskBindings: buildTodayTaskBindings(fallbackToday, []),
     loadError: true,
   };
 
@@ -70,7 +70,7 @@ export async function getTodayPlanState(
     const today = mergeTodayPlan(fallbackToday, rows);
     return {
       today,
-      taskBindings: buildBindings(today, rows),
+      taskBindings: buildTodayTaskBindings(today, rows),
     };
   } catch {
     return fallback;
@@ -129,12 +129,12 @@ export function mergeTodayPlan(fallbackToday: PlanMeal, rows: DailyPlanRow[]): P
       evening,
       seasonings: ingredients,
       ...(dinner.side_mode === "custom" && dinner.side_dish
-        ? { sideSteps: dinner.side_dish.steps_text.split(/\r?\n/).map((step) => step.trim()).filter(Boolean) } : {}),
+        ? { sideSteps: resolveCustomSideSteps({ ingredientsText: dinner.side_dish.ingredients_text, steps: dinner.side_dish.steps_text.split(/\r?\n/).map((step) => step.trim()).filter(Boolean) }) } : {}),
     },
   };
 }
 
-function buildBindings(today: PlanMeal, rows: DailyPlanRow[]): TodayTaskBindings {
+export function buildTodayTaskBindings(today: PlanMeal, rows: DailyPlanRow[]): TodayTaskBindings {
   const breakfast = rows.find((row) => row.meal_type === "breakfast");
   const dinner = rows.find((row) => row.meal_type === "dinner");
 
@@ -148,8 +148,20 @@ function buildBindings(today: PlanMeal, rows: DailyPlanRow[]): TodayTaskBindings
 
 function bindTasks(texts: string[], row: DailyPlanRow | undefined, phase: DailyPlanStep["phase"]): TodayTaskBinding[] {
   const steps = (row?.steps ?? []).filter((step) => step.phase === phase);
-  return texts.map((text, index) => {
-    const step = steps[index]?.text === text ? steps[index] : undefined;
+  const sideChanged = row?.side_mode && row.side_mode !== "default";
+  const ingredients = (row ? getStepTexts(row, "seasoning").join("\n") : "") || (typeof row?.meta?.ingredients_text === "string" ? row.meta.ingredients_text : "");
+  const sideName = typeof row?.meta?.side === "string" ? row.meta.side : "";
+  const candidates = steps.map((step) => ({
+    step,
+    text: sideChanged && phase === "evening" ? removeDefaultSideSteps([step.text], ingredients, sideName)[0]
+      : sideChanged && phase === "seasoning" ? replaceSideIngredients(step.text, sideName, "none", null)
+      : step.text,
+  }));
+  const boundIds = new Set<string>();
+  return texts.map((text) => {
+    // 副菜を除いた後の表示順ではなく、元の保存済み工程IDへ結び付ける。
+    const step = candidates.find((candidate) => candidate.text === text && !boundIds.has(candidate.step.id))?.step;
+    if (step) boundIds.add(step.id);
     return {
       planEntryId: step ? row?.plan_entry_id ?? null : null,
       stepId: step?.id ?? null,
