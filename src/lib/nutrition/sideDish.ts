@@ -1,6 +1,7 @@
 import type { PlannedDinner, SideDish, SideMode } from "@/types/nutrition";
+import { getSeasoningGroups, getStepSeasoningIds, parseSeasoningLine, scopeSideSeasonings } from "@/lib/recipes/seasoningGroups";
 
-const sideSectionPattern = /味噌汁|すまし汁|スープ|ナムル|付け合わせ|ごま和え|おひたし|浅漬け|サラダ|冷ややっこ|酢の物|甘酢|白和え|和え物|和え衣|きんぴら|かきたま汁/;
+const sideSectionPattern = /副菜|味噌汁|すまし汁|スープ|ナムル|付け合わせ|ごま和え|おひたし|浅漬け|サラダ|冷ややっこ|酢の物|甘酢|白和え|和え物|和え衣|きんぴら|かきたま汁/;
 
 export function resolveDinnerIngredients(day: PlannedDinner) {
   const mode = day.sideMode ?? "default";
@@ -24,13 +25,20 @@ export function replaceSideIngredients(
     .split(/\r?\n/)
     .filter((line) => !isDefaultSideIngredientLine(line, defaultSideName));
   const customIngredients = mode === "custom" && sideDish?.ingredientsText.trim()
-    ? sideDish.ingredientsText.trim().split(/\r?\n/)
+    ? scopeSideSeasonings(sideDish.ingredientsText.trim().split(/\r?\n/), sideDish.steps).ingredients
     : [];
   const combined = [...mainIngredients, ...customIngredients].filter((line) => line.trim());
   return combined.length > 0 ? combined.join("\n") : undefined;
 }
 
+export function resolveCustomSideSteps(sideDish: Pick<SideDish, "ingredientsText" | "steps"> | null | undefined) {
+  return sideDish ? scopeSideSeasonings(sideDish.ingredientsText.split(/\r?\n/), sideDish.steps).steps : [];
+}
+
 function isDefaultSideIngredientLine(line: string, sideName: string) {
+  const group = parseSeasoningLine(line);
+  if (group?.name.startsWith("副菜の")) return true;
+  if (group?.name.startsWith("主菜の")) return false;
   const label = line.match(/^【([^】]+)】/)?.[1];
   if (!label) return false;
   if (sideSectionPattern.test(label)) return true;
@@ -48,15 +56,26 @@ export function removeDefaultSideSteps(steps: string[], ingredientsText: string 
   const sideLabels = sideLines.flatMap((line) => line.match(/^【([^】]+)】/)?.[1] ?? []);
   const sideTerms = ingredientTerms(sideLines);
   const mainTerms = ingredientTerms(mainLines);
+  const sideGroupIds = new Set(getSeasoningGroups(sideLines).map((group) => group.id));
   const riceSide = /ご飯|ごはん|炊き込み|混ぜご飯/.test(sideName);
 
   return steps.flatMap((step) => {
+    let previousWasSide = false;
     const kept = step.split(/(?<=。)/).filter((sentence) => {
-      if (sideLabels.some((label) => label.length >= 2 && sentence.includes(label))) return false;
-      if (riceSide && /炊飯|ご飯|ごはん|米を|米・/.test(sentence)) return false;
       const hasSideTerm = sideTerms.some((term) => sentence.includes(term));
       const hasMainTerm = mainTerms.some((term) => sentence.includes(term));
-      return !hasSideTerm || hasMainTerm;
+      const groupIds = getStepSeasoningIds(sentence);
+      const explicitMain = /主菜/.test(sentence) || groupIds.some((id) => !sideGroupIds.has(id));
+      const explicitSide = /副菜|汁物/.test(sentence)
+        || groupIds.some((id) => sideGroupIds.has(id))
+        || sideLabels.some((label) => label.length >= 2 && sentence.includes(label))
+        || (riceSide && /炊飯|ご飯|ごはん|米を|米・/.test(sentence));
+      if (explicitMain) { previousWasSide = false; return true; }
+      if (explicitSide || (hasSideTerm && !hasMainTerm)) { previousWasSide = true; return false; }
+      // 「硬ければ追加加熱する」など、直前に除いた副菜の続きだけが残らないようにする。
+      if (previousWasSide && !hasMainTerm) return false;
+      previousWasSide = false;
+      return true;
     }).join("").trim();
     return kept ? [kept] : [];
   });

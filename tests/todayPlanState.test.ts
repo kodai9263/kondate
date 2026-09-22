@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { mergeTodayPlan, type DailyPlanRow } from "@/lib/today/server";
+import { buildTodayTaskBindings, mergeTodayPlan, type DailyPlanRow } from "@/lib/today/server";
+import { officialRecipeDetails } from "@/lib/nutrition/recipeDetails";
 import type { PlanMeal } from "@/types/domain";
 
 const fallbackToday: PlanMeal = {
@@ -22,6 +23,25 @@ const fallbackToday: PlanMeal = {
 };
 
 describe("mergeTodayPlan", () => {
+  it("副菜なしで位置や本文が変わっても、主菜の元の工程IDとチェックを維持する", () => {
+    const detail = officialRecipeDetails["tofu-mapo"];
+    const row: DailyPlanRow = {
+      plan_entry_id: "entry", meal_type: "dinner", recipe_name: "麻婆豆腐", prep_minutes: 0, cook_minutes: 35,
+      side_mode: "none", meta: { side: "小松菜のナムル" },
+      steps: [
+        ...detail.ingredients.map((text, i) => ({ id: `ingredient-${i}`, phase: "seasoning" as const, text, checked: true })),
+        ...detail.steps.map((text, i) => ({ id: `step-${i}`, phase: "evening" as const, text, checked: i === 7 })),
+      ],
+    };
+    const today = mergeTodayPlan(fallbackToday, [row]);
+    const bindings = buildTodayTaskBindings(today, [row]);
+    expect(bindings.evening.every((task) => task.stepId && task.planEntryId === "entry")).toBe(true);
+    expect(bindings.seasoning.every((task) => task.stepId && task.checked)).toBe(true);
+    expect(bindings.evening.at(-1)).toMatchObject({ stepId: "step-7", checked: true });
+    expect(bindings.evening.at(-1)?.text).toContain("長ねぎを加えて1分温め");
+    expect(bindings.evening.some((task) => task.stepId === "step-2")).toBe(false);
+  });
+
   it("当日の保存済み献立を今日画面へ反映する", () => {
     const rows: DailyPlanRow[] = [{
       plan_entry_id: "dinner-entry",

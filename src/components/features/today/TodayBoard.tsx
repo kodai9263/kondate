@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { setTodayTaskChecked } from "@/app/app/actions";
 import { CookingBasics } from "@/components/features/recipes/CookingBasics";
+import { RecipeIngredientLine, StepSeasoningGuide } from "@/components/features/recipes/SeasoningGuide";
+import { getSeasoningGroups, type SeasoningGroup } from "@/lib/recipes/seasoningGroups";
 import { CheckRow } from "@/components/ui/CheckRow";
 import { formatServingLabel, getRecipeServings, scaleRecipeIngredient, scaleQuantityText, type FamilySize } from "@/lib/family/servings";
 import { MealFeedbackForm } from "@/components/features/feedback/MealFeedbackForm";
@@ -39,6 +41,7 @@ export function TodayBoard({
     () => taskBindings.seasoning.map((task) => ({ ...task, text: today.dinner.ingredientsScalable ? scaleRecipeIngredient(task.text, getRecipeServings(familySize), today.dinner.servingsBase ?? 4) : today.dinner.servingsBase ? task.text : scaleQuantityText(task.text, familySize) })),
     [familySize, taskBindings.seasoning, today.dinner.ingredientsScalable, today.dinner.servingsBase],
   );
+  const seasoningGroups = getSeasoningGroups(seasoningTasks.map((task) => task.text));
 
   useEffect(() => {
     const supabase = getSupabaseBrowser();
@@ -133,6 +136,7 @@ export function TodayBoard({
       {taskBindings.morning.length > 0 ? <MealBlock
         rule="border-kondate-morningInk"
         title="朝の仕込み"
+        seasoningGroups={seasoningGroups}
         minutes={today.dinner.prepMin}
         tasks={taskBindings.morning}
         pendingStepIds={pendingStepIds}
@@ -145,6 +149,7 @@ export function TodayBoard({
       {seasoningTasks.length > 0 ? <MealBlock
         rule="border-kondate-eveningInk"
         title="材料・調味料"
+        ingredients
         note={today.dinner.ingredientsScalable ? `${getRecipeServings(familySize)}人分に換算` : today.dinner.servingsBase ? `${today.dinner.servingsBase}人分（保存した分量）` : formatServingLabel(familySize)}
         tasks={seasoningTasks}
         pendingStepIds={pendingStepIds}
@@ -154,6 +159,7 @@ export function TodayBoard({
       {dinnerAvailable ? <MealBlock
         rule="border-kondate-eveningInk"
         title="夜の手順"
+        seasoningGroups={seasoningGroups}
         note={today.dinner.totalMin ? "下ごしらえから順番に進めてください" : undefined}
         numbered
         tasks={taskBindings.evening}
@@ -164,7 +170,7 @@ export function TodayBoard({
       {dinnerAvailable && today.dinner.sideSteps?.length ? <section className="border-l-2 border-kondate-eveningInk pl-4">
         <h2 className="text-sm font-semibold">副菜の手順</h2>
         <p className="mt-0.5 text-sm text-kondate-muted">{today.dinner.side}</p>
-        <ol className="mt-3 space-y-3 text-sm leading-7">{today.dinner.sideSteps.map((step, index) => <li key={`${index}-${step}`} className="flex gap-3"><span className="font-semibold text-kondate-accent">{index + 1}.</span><span>{step}</span></li>)}</ol>
+        <ol className="mt-3 space-y-3 text-sm leading-7">{today.dinner.sideSteps.map((step, index) => <li key={`${index}-${step}`} className="flex gap-3"><span className="font-semibold text-kondate-accent">{index + 1}.</span><span className="min-w-0">{step}<StepSeasoningGuide step={step} groups={seasoningGroups} /></span></li>)}</ol>
       </section> : null}
 
       {dinnerAvailable ? <MealFeedbackForm servedOn={today.date} recipeName={today.dinner.dinner} status={feedbackStatus} /> : null}
@@ -179,6 +185,8 @@ function MealBlock({
   note,
   subtitle,
   numbered = false,
+  ingredients = false,
+  seasoningGroups = [],
   tasks,
   pendingStepIds,
   onCheckedChange,
@@ -189,6 +197,8 @@ function MealBlock({
   note?: string;
   subtitle?: string;
   numbered?: boolean;
+  ingredients?: boolean;
+  seasoningGroups?: SeasoningGroup[];
   tasks: TodayTaskBinding[];
   pendingStepIds: Set<string>;
   onCheckedChange: (task: TodayTaskBinding, checked: boolean) => void;
@@ -209,7 +219,9 @@ function MealBlock({
             disabled={task.stepId ? pendingStepIds.has(task.stepId) : false}
             onCheckedChange={(checked) => onCheckedChange(task, checked)}
           >
-            {numbered ? <span className="mr-2 font-semibold text-kondate-accent">{index + 1}.</span> : null}{task.text}
+            {numbered ? <span className="mr-2 font-semibold text-kondate-accent">{index + 1}.</span> : null}
+            {ingredients ? <RecipeIngredientLine text={task.text} /> : task.text}
+            <StepSeasoningGuide step={task.text} groups={seasoningGroups} />
           </CheckRow>
         ))}
       </div>
