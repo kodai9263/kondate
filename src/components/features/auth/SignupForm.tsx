@@ -32,7 +32,7 @@ export function SignupForm({ inviteToken, signupSource, campaignFields = {}, pla
       <AuthField id="displayName" label="お名前" autoComplete="name" helper="ニックネームでも登録できます。" maxLength={40} />
       <AuthField id="email" label="メールアドレス" type="email" autoComplete="email" />
       <AuthField id="password" label="パスワード" type="password" autoComplete="new-password" helper="8文字以上で設定してください。" maxLength={128} />
-      <AuthSubmit>{signupSource === "monitor" ? "無料モニターを始める（0円）" : "無料アカウントを作る"}</AuthSubmit>
+      <AuthSubmit>{signupSource === "monitor" ? "14日間無料で始める（0円）" : "無料アカウントを作る"}</AuthSubmit>
     </form>
   );
 }

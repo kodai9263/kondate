@@ -48,16 +48,13 @@ describe("monitor trial migration", () => {
     expect(signupActionSource).toContain("releaseMonitorTrialSlot");
   });
 
-  it("募集ページとアカウント画面に期間と自動課金なしを表示する", () => {
-    expect(monitorPageSource).toContain("残り${monitorStatus.remaining}家庭");
-    expect(monitorPageSource).toContain("14日間無料");
+  it("既存利用者のアカウント画面には特典終了後の条件を残す", () => {
     expect(accountPageSource).toContain("終了後は自動課金されず、無料プランへ戻ります");
   });
 
-  it("募集ページは主CTAを一本化し、スマホで常に登録へ進める", () => {
-    expect(monitorPageSource).toContain("無料で14日間試す");
-    expect(monitorPageSource).toContain('placement: "mobile_sticky"');
-    expect(monitorPageSource).toContain("safe-area-inset-bottom");
-    expect(monitorPageSource).not.toContain("monitor_demo_click");
+  it("旧募集ページは募集枠を参照せず通常の紹介へ案内する", () => {
+    expect(monitorPageSource).toContain("redirect(query");
+    expect(monitorPageSource).toContain("getCampaignFields");
+    expect(monitorPageSource).not.toContain("getMonitorCampaignStatus");
   });
 });
