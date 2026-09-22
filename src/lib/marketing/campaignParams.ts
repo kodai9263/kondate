@@ -11,15 +11,19 @@ function firstValue(value: string | string[] | undefined) {
   return normalized ? normalized.slice(0, 100) : null;
 }
 
-export function buildMonitorSignupHref(searchParams: SearchParams) {
-  const query: Record<string, string> = { source: "monitor" };
+export function getCampaignFields(searchParams: SearchParams) {
+  const query: Record<string, string> = {};
 
   for (const name of campaignParamNames) {
     const value = firstValue(searchParams[name]);
     if (value) query[name] = value;
   }
 
-  return { pathname: "/signup", query };
+  return query;
+}
+
+export function buildMonitorSignupHref(searchParams: SearchParams) {
+  return { pathname: "/signup", query: { source: "monitor", ...getCampaignFields(searchParams) } };
 }
 
 export function buildSignupReturnHref(formData: FormData, result: { error: string } | { success: string }) {

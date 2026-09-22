@@ -5,6 +5,7 @@ import { buttonClass } from "@/components/ui/Button";
 import { hasAuthenticatedSession } from "@/lib/auth/session";
 import { menuData } from "@/lib/menuData";
 import { findTodayPlan } from "@/lib/services/planService";
+import { getCampaignFields } from "@/lib/marketing/campaignParams";
 
 const features = [
   { title: "4週間分の献立", body: "用意された献立をもとに、家族の好みに合わせて変更できます。毎日、一から考える手間を減らせます。" },
@@ -12,7 +13,8 @@ const features = [
   { title: "買うものをリストに", body: "食材を売り場ごとに確認できます。足りないものは追加して、買ったものにはその場でチェック。" },
 ];
 
-export default async function LandingPage() {
+export default async function LandingPage({ searchParams }: { searchParams?: Promise<Record<string, string | string[] | undefined>> }) {
+  const campaignQuery = new URLSearchParams(getCampaignFields(await searchParams ?? {})).toString();
   const isAuthenticated = await hasAuthenticatedSession();
   const today = findTodayPlan(menuData);
   const week = menuData.weeks[0];
@@ -20,7 +22,7 @@ export default async function LandingPage() {
     { label: "肉・魚", items: [...week.shopping.肉.slice(0, 2), ...week.shopping.魚.slice(0, 1)] },
     { label: "野菜・果物", items: week.shopping["野菜・果物"].slice(0, 2) },
   ];
-  const primaryHref = isAuthenticated ? "/app" : "/signup";
+  const primaryHref = isAuthenticated ? "/app" : campaignQuery ? `/signup?${campaignQuery}` as const : "/signup";
   const primaryLabel = isAuthenticated ? "献立を開く" : "無料で始める";
 
   return (
