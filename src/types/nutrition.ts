@@ -34,6 +34,8 @@ export type SideDish = {
   name: string;
   ingredientsText: string;
   steps: string[];
+  standardKey?: string;
+  servingsBase?: number;
 };
 
 export type SideMode = "default" | "none" | "custom";

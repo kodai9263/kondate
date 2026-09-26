@@ -1,3 +1,4 @@
+import { restoreStandardSideMetadata } from "@/lib/nutrition/standardSideDishStorage";
 import type { PlanMeal } from "@/types/domain";
 import type { TodayTaskBinding, TodayTaskBindings } from "@/lib/realtime/taskState";
 import { getSupabaseServer } from "@/lib/supabase/server";
@@ -11,6 +12,7 @@ type DailyPlanStep = {
 };
 
 export type DailyPlanRow = {
+  household_id?: string;
   plan_entry_id: string;
   meal_type: "breakfast" | "dinner";
   recipe_name: string;
@@ -62,7 +64,7 @@ export async function getTodayPlanState(
 
     const { data, error } = await supabase
       .from("v_daily_plan")
-      .select("plan_entry_id,meal_type,recipe_name,prep_minutes,cook_minutes,meta,steps,side_mode,side_dish")
+      .select("plan_entry_id,household_id,meal_type,recipe_name,prep_minutes,cook_minutes,meta,steps,side_mode,side_dish")
       .eq("date", fallbackToday.date);
     if (error) return fallback;
 
@@ -95,6 +97,11 @@ export function mergeTodayPlan(fallbackToday: PlanMeal, rows: DailyPlanRow[]): P
     ? meta.ingredients_text.split("\n").map((item) => item.trim()).filter(Boolean)
     : [];
   const sideMode = dinner.side_mode ?? "default";
+  const selectedSide = dinner.side_dish ? restoreStandardSideMetadata({
+    id: dinner.side_dish.id, name: dinner.side_dish.name,
+    ingredientsText: dinner.side_dish.ingredients_text,
+    steps: dinner.side_dish.steps_text.split(/\r?\n/).map((step) => step.trim()).filter(Boolean),
+  }, dinner.household_id) : null;
   const evening = sideMode === "default" ? defaultEvening : removeDefaultSideSteps(
     defaultEvening,
     defaultIngredients.join("\n"),
@@ -104,12 +111,7 @@ export function mergeTodayPlan(fallbackToday: PlanMeal, rows: DailyPlanRow[]): P
     defaultIngredients.join("\n"),
     typeof meta.side === "string" ? meta.side : "",
     sideMode,
-    dinner.side_dish ? {
-      id: dinner.side_dish.id,
-      name: dinner.side_dish.name,
-      ingredientsText: dinner.side_dish.ingredients_text,
-      steps: dinner.side_dish.steps_text.split(/\r?\n/).map((step) => step.trim()).filter(Boolean),
-    } : null,
+    selectedSide,
   )?.split("\n") ?? [];
 
   return {
@@ -128,8 +130,8 @@ export function mergeTodayPlan(fallbackToday: PlanMeal, rows: DailyPlanRow[]): P
       morning,
       evening,
       seasonings: ingredients,
-      ...(dinner.side_mode === "custom" && dinner.side_dish
-        ? { sideSteps: resolveCustomSideSteps({ ingredientsText: dinner.side_dish.ingredients_text, steps: dinner.side_dish.steps_text.split(/\r?\n/).map((step) => step.trim()).filter(Boolean) }) } : {}),
+      sideSteps: sideMode === "custom" ? resolveCustomSideSteps(selectedSide) : undefined,
+      sideServingsBase: sideMode === "custom" ? selectedSide?.servingsBase : undefined,
     },
   };
 }

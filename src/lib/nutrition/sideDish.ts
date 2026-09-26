@@ -25,10 +25,16 @@ export function replaceSideIngredients(
     .split(/\r?\n/)
     .filter((line) => !isDefaultSideIngredientLine(line, defaultSideName));
   const customIngredients = mode === "custom" && sideDish?.ingredientsText.trim()
-    ? scopeSideSeasonings(sideDish.ingredientsText.trim().split(/\r?\n/), sideDish.steps).ingredients
+    ? scopeSideSeasonings(sideDish.ingredientsText.trim().split(/\r?\n/), sideDish.steps).ingredients.map((line) =>
+      sideDish.servingsBase && !isSeparateSideIngredient(line) ? `【副菜】${line}` : line)
     : [];
   const combined = [...mainIngredients, ...customIngredients].filter((line) => line.trim());
   return combined.length > 0 ? combined.join("\n") : undefined;
+}
+
+// 基準人数がある副菜だけを主菜と別に人数換算するための表示ラベル。
+export function isSeparateSideIngredient(line: string) {
+  return /^【副菜(?:】|[A-Z]\s*[:：])/.test(line);
 }
 
 export function resolveCustomSideSteps(sideDish: Pick<SideDish, "ingredientsText" | "steps"> | null | undefined) {

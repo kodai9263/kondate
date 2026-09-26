@@ -40,6 +40,7 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
     evening: plannedDinner ? resolveDinnerSteps(plannedDinner) ?? [] : [],
     seasonings: selectedIngredientsText?.split("\n").filter(Boolean) ?? [],
     sideSteps: resolveCustomSideSteps(plannedDinner?.sideDish),
+    sideServingsBase: plannedDinner?.sideDish?.servingsBase,
   } };
   const preferences = plannerContext.preferences;
   const planState = await getTodayPlanState(selectedToday, plannedDinner ? {

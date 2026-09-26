@@ -1,6 +1,6 @@
 import { breakfastForDate, type BreakfastVersion } from "@/lib/breakfast/settings";
 import type { PlannedDinner } from "@/types/nutrition";
-import { resolveDinnerIngredients } from "@/lib/nutrition/sideDish";
+import { isSeparateSideIngredient, resolveDinnerIngredients } from "@/lib/nutrition/sideDish";
 import { formatIngredientAmount, ingredientCategory, normalizedQuantity, parseIngredientLine } from "./ingredients";
 import { shoppingDates } from "./period";
 
@@ -50,7 +50,8 @@ export function buildPlannedShopping({ start, end, dinners, breakfastVersions, s
       const scalable = typeof base === "number" && Number.isFinite(base) && base > 0;
       if (!scalable) warnings.push(`${date}：${dinner.name}は基準人数が不明です。材料の数量を確認してください。`);
       for (const line of dinnerIngredientsText.split(/\r?\n/).filter((line) => line.trim())) {
-        add(line, date, dinner.name, scalable ? servings / base : 1, !scalable);
+        const sideBase = plannedDinner?.sideMode === "custom" && isSeparateSideIngredient(line) ? plannedDinner.sideDish?.servingsBase : undefined;
+        add(line, date, dinner.name, sideBase ? servings / sideBase : scalable ? servings / base : 1, !sideBase && !scalable);
       }
       // おかずの公式レシピに省略されている主食を、推測の数量で埋めない。
       const hasStaple = dinnerIngredientsText.split(/\r?\n/).flatMap(parseIngredientLine)

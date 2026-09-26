@@ -6,6 +6,10 @@ import { getMonthDateRange, isCompleteMonthPlan } from "@/lib/nutrition/month";
 import { officialNutritionRecipes } from "@/lib/nutrition/catalog";
 import { databaseRecipeTime, isDinnerCandidate } from "@/lib/nutrition/cookingTime";
 import { getSupabaseServer } from "@/lib/supabase/server";
+import { availableStandardSideDishes, standardSideDishes } from "@/lib/nutrition/standardSideDishes";
+import { restoreStandardSideMetadata, standardSideDishId } from "@/lib/nutrition/standardSideDishStorage";
+import { normalizeAllergies } from "@/lib/family/allergies";
+import type { SideDish } from "@/types/nutrition";
 
 const monthlyPlanSchema = z.object({
   year: z.number().int().min(2020).max(2100),
@@ -118,4 +122,36 @@ export async function createSideDish(input: unknown): Promise<{ ok: boolean; mes
       steps: data.steps_text.split(/\r?\n/).map((step: string) => step.trim()).filter(Boolean),
     },
   };
+}
+
+export async function createStandardSideDish(key: unknown): Promise<{ ok: boolean; message?: string; sideDish?: SideDish }> {
+  const standard = standardSideDishes.find((dish) => dish.key === key);
+  if (!standard) return { ok: false, message: "副菜を選び直してください。" };
+
+  const supabase = await getSupabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "ログイン状態を確認してください。" };
+  const { data: profile, error: profileError } = await supabase.from("profiles").select("household_id").eq("id", user.id).maybeSingle();
+  if (profileError || !profile?.household_id) return { ok: false, message: "家族情報を確認してください。" };
+  const { data: settings, error: settingsError } = await supabase.from("household_settings").select("allergies").eq("household_id", profile.household_id).maybeSingle();
+  if (settingsError) return { ok: false, message: "アレルギー設定を確認できませんでした。もう一度お試しください。" };
+  if (!availableStandardSideDishes(normalizeAllergies(settings?.allergies)).some((dish) => dish.key === key)) {
+    return { ok: false, message: "登録したアレルギーに該当する副菜です。別の副菜を選んでください。" };
+  }
+
+  const id = standardSideDishId(profile.household_id, standard.key);
+  const { error } = await supabase.from("side_dishes").upsert({
+    id, household_id: profile.household_id, name: standard.name,
+    ingredients_text: standard.ingredientsText, steps_text: standard.steps.join("\n"),
+  }, { onConflict: "id", ignoreDuplicates: true });
+  if (error) return { ok: false, message: "副菜を保存できませんでした。" };
+  // 保存済みの材料・手順を使い、レシピ更新や再選択で過去の献立を書き換えない。
+  const { data, error: readError } = await supabase.from("side_dishes")
+    .select("id,name,ingredients_text,steps_text").eq("id", id).eq("household_id", profile.household_id).is("archived_at", null).maybeSingle();
+  if (readError || !data) return { ok: false, message: "副菜を読み込めませんでした。別の副菜を選んでください。" };
+  revalidatePath("/app/planner");
+  return { ok: true, sideDish: restoreStandardSideMetadata({
+    id: data.id, name: data.name, ingredientsText: data.ingredients_text,
+    steps: data.steps_text.split(/\r?\n/).map((step: string) => step.trim()).filter(Boolean),
+  }, profile.household_id) };
 }

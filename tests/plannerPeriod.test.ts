@@ -71,7 +71,7 @@ describe("表示間で共有する献立と月単位保存", () => {
 
 describe("週間・月間と既存の副菜設定", () => {
   const sideDish = { id: "test-side", name: "テスト副菜", ingredientsText: "小松菜", steps: [] };
-  it("両月の副菜なし・自作副菜を表示し、固定で消さない", () => {
+  it("両月の副菜なし・自作副菜を表示し、固定や主菜変更で消さない", () => {
     const withSides = { ...context, sideDishes: [sideDish], initialSideSelections: {
       "2026-09-30": { mode: "none" as const, sideDishId: null },
       "2026-10-01": { mode: "custom" as const, sideDishId: sideDish.id },
@@ -82,6 +82,8 @@ describe("週間・月間と既存の副菜設定", () => {
     expect(locked.entries[0].sideDish).toEqual(sideDish);
     expect(toSavedDinnerEntries(locked.entries)[0]).toMatchObject({ sideMode: "custom", sideDishId: sideDish.id });
     const changed = updatePlannerDay(plan, "2026-10-01", { recipe: recipes[0] });
-    expect(changed.entries[0]).toMatchObject({ sideMode: "default", sideDish: null });
+    expect(changed.entries[0]).toMatchObject({ sideMode: "custom", sideDish });
+    const withoutSide = updatePlannerDay(plan, "2026-09-30", { recipe: recipes[0] });
+    expect(withoutSide.entries.at(-1)).toMatchObject({ sideMode: "none", sideDish: null });
   });
 });
