@@ -2,9 +2,11 @@ import { cache } from "react";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { breakfastSettingsSchema, type BreakfastVersion } from "./settings";
 
-export const getBreakfastVersions = cache(async (): Promise<{ versions: BreakfastVersion[]; error: boolean }> => {
+type BreakfastClient = Awaited<ReturnType<typeof getSupabaseServer>>;
+
+export const getBreakfastVersions = cache(async (client?: BreakfastClient): Promise<{ versions: BreakfastVersion[]; error: boolean }> => {
   try {
-    const supabase = await getSupabaseServer();
+    const supabase = client ?? await getSupabaseServer();
     const { data, error } = await supabase.from("household_breakfast_versions")
       .select("revision,effective_date,rotation_start,legacy_rotation,enabled,items").order("effective_date", { ascending: true });
     if (error || !data?.length) return { versions: [], error: true };

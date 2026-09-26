@@ -3,9 +3,11 @@ import { defaultBreakfastChoices, normalizeBreakfastChoices } from "@/lib/breakf
 import { defaultFamilySize, defaultShoppingDay, normalizeFamilySize, normalizeShoppingDay } from "@/lib/family/servings";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
-export async function getCurrentHouseholdPreferences(strict = false) {
-  const supabase = await getSupabaseServer();
-  const { data: { user } } = await supabase.auth.getUser();
+type HouseholdClient = Awaited<ReturnType<typeof getSupabaseServer>>;
+
+export async function getCurrentHouseholdPreferences(strict = false, client?: HouseholdClient, accessToken?: string) {
+  const supabase = client ?? await getSupabaseServer();
+  const { data: { user } } = await supabase.auth.getUser(accessToken);
   if (strict && !user) throw new Error("household_preferences_unavailable");
   if (!user) return { ...defaultFamilySize, shoppingDay: defaultShoppingDay, allergies: [], breakfastChoices: defaultBreakfastChoices };
 

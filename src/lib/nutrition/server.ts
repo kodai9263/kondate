@@ -7,10 +7,12 @@ import { getSupabaseServer } from "@/lib/supabase/server";
 import { restoreStandardSideMetadata } from "@/lib/nutrition/standardSideDishStorage";
 import type { NutritionRecipe, ProteinSource, SideDish, SideSelection } from "@/types/nutrition";
 
-export async function getHouseholdPlannerContext(year: number, month: number, strict = false) {
+type PlannerClient = Awaited<ReturnType<typeof getSupabaseServer>>;
+
+export async function getHouseholdPlannerContext(year: number, month: number, strict = false, client?: PlannerClient, accessToken?: string) {
   const { firstDate, lastDate } = getMonthDateRange(year, month);
-  const preferences = await getCurrentHouseholdPreferences(strict);
-  const supabase = await getSupabaseServer();
+  const preferences = await getCurrentHouseholdPreferences(strict, client, accessToken);
+  const supabase = client ?? await getSupabaseServer();
   const results = await Promise.all([
     supabase.from("recipes").select("id,name,cook_minutes,servings_base,image_url,protein_source,meta,recipe_nutrition(energy_kcal,protein_g,fat_g,carbs_g,fiber_g,salt_g,vegetables_g)").not("household_id", "is", null).neq("category", "breakfast").is("archived_at", null),
     supabase.from("recipes").select("id,name,cook_minutes,servings_base,image_url,protein_source,meta,recipe_nutrition(energy_kcal,protein_g,fat_g,carbs_g,fiber_g,salt_g,vegetables_g)").is("household_id", null).is("archived_at", null),

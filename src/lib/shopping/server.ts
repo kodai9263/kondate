@@ -10,11 +10,13 @@ import { buildShoppingItemKey } from "@/lib/services/shoppingService";
 import { buildPlannedShopping } from "./build";
 import { getShoppingPeriod, shoppingDates } from "./period";
 
-export const getShoppingContext = cache(async () => {
+type ShoppingClient = Awaited<ReturnType<typeof getSupabaseServer>>;
+
+export const getShoppingContext = cache(async (client?: ShoppingClient, accessToken?: string) => {
   const now = new Date();
-  const supabase = await getSupabaseServer();
-  const preferences = await getCurrentHouseholdPreferences(true);
-  const { data: { user } } = await supabase.auth.getUser();
+  const supabase = client ?? await getSupabaseServer();
+  const preferences = await getCurrentHouseholdPreferences(true, supabase, accessToken);
+  const { data: { user } } = await supabase.auth.getUser(accessToken);
   if (!user) throw new Error("shopping_auth_required");
   const { data: profile, error: profileError } = await supabase.from("profiles").select("household_id").eq("id", user.id).single();
   if (profileError || !profile?.household_id) throw new Error("shopping_household_unavailable");
@@ -30,17 +32,19 @@ export const getShoppingContext = cache(async () => {
   return { supabase, preferences, householdId: profile.household_id as string, period, listId: list?.id as string | undefined };
 });
 
-export const getPlannedShopping = cache(async () => {
-  const context = await getShoppingContext();
+export const getPlannedShopping = cache(async (client?: ShoppingClient, accessToken?: string) => {
+  const context = await getShoppingContext(client, accessToken);
   const { period, preferences } = context;
   const months = [...new Set(shoppingDates(period.start, period.end).map((date) => date.slice(0, 7)))];
   const [monthly, breakfast, completions] = await Promise.all([
     Promise.all(months.map(async (key) => {
       const [year, month] = key.split("-").map(Number);
-      const planner = await getHouseholdPlannerContext(year, month, true);
+      const planner = client
+        ? await getHouseholdPlannerContext(year, month, true, context.supabase, accessToken)
+        : await getHouseholdPlannerContext(year, month, true);
       return resolveMonthlyDinnerPlan(year, month, planner);
     })),
-    getBreakfastVersions(),
+    client ? getBreakfastVersions(context.supabase) : getBreakfastVersions(),
     getShoppingCompletions(context),
   ]);
   if (breakfast.error) throw new Error("shopping_breakfast_unavailable");
