@@ -14,7 +14,7 @@ import { isCompleteMonthPlan, toSavedDinnerEntries } from "@/lib/nutrition/month
 import { monthCalendarDates, movePlannerDate, plannerDates, plannerHref, plannerLabel, type PlannerView } from "@/lib/nutrition/period";
 import { resolvePlannerPeriod, updatePlannerDay } from "@/lib/nutrition/periodPlan";
 import type { NutritionRecipe, PlannedDinner, SideDish, SideSelection } from "@/types/nutrition";
-import { defaultFamilySize, type FamilySize } from "@/lib/family/servings";
+import { defaultFamilySize, defaultShoppingDay, normalizeShoppingDay, shoppingWeekdays, type FamilySize } from "@/lib/family/servings";
 
 type MonthlyPlannerProps = {
   recipes: NutritionRecipe[];
@@ -22,6 +22,7 @@ type MonthlyPlannerProps = {
   initialDate: string;
   today: string;
   familySize?: FamilySize;
+  shoppingDay?: number;
   allergies?: string[];
   excludedRecipeCount?: number;
   preferredRecipeIds?: string[];
@@ -33,8 +34,9 @@ type MonthlyPlannerProps = {
   demo?: boolean;
 };
 
-export function MonthlyPlanner({ recipes, initialView, initialDate, today, familySize = defaultFamilySize, allergies = [], excludedRecipeCount = 0, preferredRecipeIds = [], preferenceExcludedCount = 0, initialRecipeIds = {}, initialLockedRecipeIds = {}, sideDishes = [], initialSideSelections = {}, demo = false }: MonthlyPlannerProps) {
+export function MonthlyPlanner({ recipes, initialView, initialDate, today, shoppingDay = defaultShoppingDay, familySize = defaultFamilySize, allergies = [], excludedRecipeCount = 0, preferredRecipeIds = [], preferenceExcludedCount = 0, initialRecipeIds = {}, initialLockedRecipeIds = {}, sideDishes = [], initialSideSelections = {}, demo = false }: MonthlyPlannerProps) {
   const router = useRouter();
+  const weekStartDay = normalizeShoppingDay(shoppingDay);
   const [isNavigating, startNavigation] = useTransition();
   const [view, setView] = useState(initialView);
   const [date, setDate] = useState(initialDate);
@@ -51,8 +53,8 @@ export function MonthlyPlanner({ recipes, initialView, initialDate, today, famil
   const savingRef = useRef(false);
   const [saveStatus, setSaveStatus] = useState<"saved" | "error" | null>(null);
   const busy = isSaving || isNavigating;
-  const plan = useMemo(() => resolvePlannerPeriod(view, date, { recipes, preferredRecipeIds, initialRecipeIds: changedRecipeIds, initialLockedRecipeIds: lockedRecipeIds, sideDishes: sideDishList, initialSideSelections: sideSelections }), [view, date, recipes, preferredRecipeIds, changedRecipeIds, lockedRecipeIds, sideDishList, sideSelections]);
-  const days = plannerDates(view, date);
+  const plan = useMemo(() => resolvePlannerPeriod(view, date, { recipes, preferredRecipeIds, initialRecipeIds: changedRecipeIds, initialLockedRecipeIds: lockedRecipeIds, sideDishes: sideDishList, initialSideSelections: sideSelections }, weekStartDay), [view, date, recipes, preferredRecipeIds, changedRecipeIds, lockedRecipeIds, sideDishList, sideSelections, weekStartDay]);
+  const days = plannerDates(view, date, weekStartDay);
   const byDate = new Map(plan.map((day) => [day.date, day]));
   const visiblePlan = days.flatMap((day) => byDate.get(day) ? [byDate.get(day)!] : []);
   const seasonalDays = visiblePlan.filter((day) => isRecipeInSeason(day.recipe, Number(day.date.slice(5, 7)))).length;
@@ -165,10 +167,14 @@ export function MonthlyPlanner({ recipes, initialView, initialDate, today, famil
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-1 sm:gap-3">
             <Button variant="secondary" size="icon" aria-label={view === "week" ? "前の週" : "前の月"} disabled={busy || previousDate < "2020-01-01"} onClick={() => navigate(view, previousDate)}><ChevronLeft size={20} /></Button>
-            <h2 className="text-center text-sm font-semibold tabular-nums sm:text-lg" aria-live="polite">{plannerLabel(view, date)}</h2>
+            <h2 className="text-center text-sm font-semibold tabular-nums sm:text-lg" aria-live="polite">{plannerLabel(view, date, weekStartDay)}</h2>
             <Button variant="secondary" size="icon" aria-label={view === "week" ? "次の週" : "次の月"} disabled={busy || nextDate > "2100-12-31"} onClick={() => navigate(view, nextDate)}><ChevronRight size={20} /></Button>
           </div>
           <Button variant="secondary" size="sm" className="min-h-11" disabled={busy} onClick={() => navigate(view, today)}>{view === "week" ? "今週に戻る" : "今月に戻る"}</Button>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-kondate-muted">
+          <p>週間献立は{shoppingWeekdays[weekStartDay]}曜始まり（まとめ買いの曜日）</p>
+          {!demo ? <Link href="/account#shopping-day" className="inline-flex min-h-11 items-center font-semibold text-kondate-accent underline underline-offset-4">設定を変更</Link> : null}
         </div>
       </header>
       <div className="mt-3 min-h-6">{status}</div>

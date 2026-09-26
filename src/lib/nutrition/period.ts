@@ -1,5 +1,6 @@
-import { addDays, addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, parseISO, startOfMonth, startOfWeek } from "date-fns";
+import { addDays, addMonths, eachDayOfInterval, endOfMonth, format, parseISO, startOfMonth } from "date-fns";
 import { toDateKey, toTokyoCalendarDate } from "@/lib/dates";
+import { defaultShoppingDay, normalizeShoppingDay } from "@/lib/family/servings";
 import { parsePlannerMonth } from "@/lib/nutrition/month";
 
 export type PlannerView = "week" | "month";
@@ -15,15 +16,15 @@ export function parsePlannerPeriod(params: PlannerSearchParams, now = new Date()
   return { view, date, today };
 }
 
-export function plannerDates(view: PlannerView, date: string) {
+export function plannerDates(view: PlannerView, date: string, shoppingDay = defaultShoppingDay) {
   const anchor = parseISO(date);
-  const start = view === "week" ? startOfWeek(anchor, { weekStartsOn: 1 }) : startOfMonth(anchor);
-  const end = view === "week" ? endOfWeek(anchor, { weekStartsOn: 1 }) : endOfMonth(anchor);
+  const start = view === "week" ? addDays(anchor, -((anchor.getDay() - normalizeShoppingDay(shoppingDay) + 7) % 7)) : startOfMonth(anchor);
+  const end = view === "week" ? addDays(start, 6) : endOfMonth(anchor);
   return eachDayOfInterval({ start, end }).map(toDateKey);
 }
 
-export function plannerMonths(view: PlannerView, date: string) {
-  return [...new Set(plannerDates(view, date).map((day) => day.slice(0, 7)))].map((key) => {
+export function plannerMonths(view: PlannerView, date: string, shoppingDay = defaultShoppingDay) {
+  return [...new Set(plannerDates(view, date, shoppingDay).map((day) => day.slice(0, 7)))].map((key) => {
     const [year, month] = key.split("-").map(Number);
     return { year, month, key };
   });
@@ -37,9 +38,9 @@ export function plannerHref(view: PlannerView, date: string, demo = false) {
   return `${demo ? "/demo" : "/app"}/planner?view=${view}&date=${date}` as const;
 }
 
-export function plannerLabel(view: PlannerView, date: string) {
+export function plannerLabel(view: PlannerView, date: string, shoppingDay = defaultShoppingDay) {
   if (view === "month") return format(parseISO(date), "yyyy年 M月");
-  const days = plannerDates(view, date);
+  const days = plannerDates(view, date, shoppingDay);
   const start = parseISO(days[0]);
   const end = parseISO(days[6]);
   return `${format(start, "yyyy年 M/d")}〜${format(end, start.getFullYear() === end.getFullYear() ? "M/d" : "yyyy年 M/d")}`;

@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { normalizeAllergies, parseCustomAllergies } from "@/lib/family/allergies";
@@ -50,6 +51,10 @@ export async function updateAccount(formData: FormData) {
     console.error("Account update failed", { code: error.code, message: error.message });
     redirect("/account?error=update");
   }
+  revalidatePath("/account");
+  revalidatePath("/app");
+  revalidatePath("/app/planner");
+  revalidatePath("/app/shopping");
   redirect(`/account?success=updated&save=${Date.now()}#account-top`);
 }
 
