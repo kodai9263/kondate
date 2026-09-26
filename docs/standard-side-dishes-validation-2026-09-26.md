@@ -1,6 +1,6 @@
 # 定番副菜の選択：実装・検証記録
 
-2026-09-26。作業ブランチ：`codex/standard-side-dishes`。基点：`9793086`（確認時のorigin/main）。
+2026-09-26。作業ブランチ：`codex/standard-side-dishes`。基点：`ae389f6`（週間・月間切り替えのPR #58を統合したorigin/main）。
 作業場所：`/private/tmp/kondate-standard-side-dishes`。元の作業場所の未コミット変更は触っていない。
 
 ## 実装した操作
@@ -22,7 +22,7 @@
 
 ## 検証済み
 
-- `npm test`：46ファイル、791件成功。今回追加24件。
+- `npm test`：48ファイル、801件成功。今回追加24件。
 - `npm run typecheck`、`npm run lint`、`npm run build`、`git diff --check`成功。
 - 一時Postgresへ既存の全マイグレーションとseedを適用。
 - `tests/sql/standardSideDishes.sql`：重複防止、保存内容の保持、今日のビューからの再読込、他家庭の参照・更新制限の6項目成功。
@@ -52,3 +52,7 @@ bash scripts/start-standard-side-dishes-preview.sh
 
 `http://127.0.0.1:4326`を開く。`/?failSave=1`は月間献立の保存失敗の検証用。
 本番接続情報は不要で、起動ごとに新しい一時DBを使う。終了すると一時DBサーバーを停止し、検証ログを残す。
+
+## 公開前の統合確認
+
+PR #58の週間・月間表示と統合し、定番選択は新しいSideDishPickerへ移植。主菜変更時にも明示した副菜を保持する仕様をperiodPlanのテストに反映。統合後の週間画面で保存・再読込と保存失敗時の維持を一時DBで再確認。公開操作はユーザー承認済み。
