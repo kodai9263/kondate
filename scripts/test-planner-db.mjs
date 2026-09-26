@@ -1,0 +1,44 @@
+import { build } from 'esbuild';
+import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import assert from 'node:assert/strict';
+
+const root = process.cwd();
+const out = process.env.SHOPPING_TEST_SOCKET;
+if (!out?.includes('kondate-planner.')) throw new Error('専用の一時DBだけを使ってください');
+await build({ stdin: { contents: `export * from './src/lib/nutrition/server'; export * from './src/lib/nutrition/periodPlan'; export * from './src/lib/nutrition/month'; export * from './src/app/app/planner/actions';`, resolveDir: root }, outfile: join(out, 'server.cjs'), bundle: true, platform: 'node', format: 'cjs', alias: { '@': join(root, 'src'), '@/lib/supabase/server': resolve('tests/ui/planner-db-adapter.ts') }, plugins: [{ name: 'fixture', setup(b) {
+  b.onResolve({ filter: /^next\/cache$/ }, () => ({ path: 'cache', namespace: 'fixture' }));
+  b.onLoad({ filter: /.*/, namespace: 'fixture' }, () => ({ contents: 'export function revalidatePath() {}', loader: 'js' }));
+} }] });
+const service = (await import(pathToFileURL(join(out, 'server.cjs')))).default;
+const september = await service.getHouseholdPlannerContext(2026, 9, true);
+const october = await service.getHouseholdPlannerContext(2026, 10, true);
+assert.ok(october.recipes.length > 0, 'レシピをDBから取得');
+const context = { ...october, initialRecipeIds: { ...september.initialRecipeIds, ...october.initialRecipeIds }, initialLockedRecipeIds: { ...september.initialLockedRecipeIds, ...october.initialLockedRecipeIds } };
+const plan = service.resolvePlannerPeriod('week', '2026-10-01', context);
+const selected = october.recipes.find((recipe) => recipe.name === '牛丼');
+assert.ok(selected, '変更先の料理がある');
+const changed = service.updatePlannerDay(plan, '2026-10-01', { recipe: selected, locked: true });
+assert.deepEqual(await service.saveMonthlyDinnerPlan({ year: changed.year, month: changed.month, servings: 2, entries: service.toSavedDinnerEntries(changed.entries) }), { ok: true });
+const reloaded = await service.getHouseholdPlannerContext(2026, 10, true);
+assert.equal(reloaded.initialRecipeIds['2026-10-01'], selected.id);
+assert.equal(reloaded.initialLockedRecipeIds['2026-10-01'], selected.id);
+assert.equal(Object.keys(reloaded.initialRecipeIds).length, 31);
+assert.deepEqual(service.resolvePlannerPeriod('month', '2026-10-01', reloaded), changed.entries);
+const septemberAfter = await service.getHouseholdPlannerContext(2026, 9, true);
+assert.deepEqual(septemberAfter.initialRecipeIds, september.initialRecipeIds, '他の月には書き込まない');
+const unlocked = service.updatePlannerDay(changed.entries, '2026-10-01', { locked: false });
+assert.deepEqual(await service.saveMonthlyDinnerPlan({ year: 2026, month: 10, servings: 2, entries: service.toSavedDinnerEntries(unlocked.entries) }), { ok: true });
+const final = await service.getHouseholdPlannerContext(2026, 10, true);
+assert.equal(final.initialLockedRecipeIds['2026-10-01'], undefined);
+assert.deepEqual(final.initialRecipeIds, reloaded.initialRecipeIds, '固定解除で料理は変わらない');
+console.log('PASS: 月またぎの変更 → 月全体のDB保存 → 再読込 → 固定解除。他の月と他の日の料理は維持。');
+
+const noSide = service.updatePlannerDay(service.resolvePlannerPeriod('month', '2026-10-01', final), '2026-10-02', { sideMode: 'none' });
+assert.deepEqual(await service.saveMonthlyDinnerPlan({year:2026, month:10, servings:2, entries:service.toSavedDinnerEntries(noSide.entries)}), {ok:true});
+const sideReload = await service.getHouseholdPlannerContext(2026,10,true);
+assert.deepEqual(sideReload.initialSideSelections['2026-10-02'], {mode:'none',sideDishId:null});
+const relocked = service.updatePlannerDay(service.resolvePlannerPeriod('week','2026-10-01',sideReload),'2026-10-01',{locked:true});
+assert.deepEqual(await service.saveMonthlyDinnerPlan({year:2026, month:10, servings:2, entries:service.toSavedDinnerEntries(relocked.entries)}), {ok:true});
+assert.deepEqual((await service.getHouseholdPlannerContext(2026,10,true)).initialSideSelections['2026-10-02'], {mode:'none',sideDishId:null});
+console.log('PASS: 副菜なしの保存・再読込と、他の日の固定時の副菜設定保持。');

@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 
 const items = [
   { href: "/app", label: "今日", icon: Home },
-  { href: "/app/planner", label: "月間献立", icon: CalendarRange },
+  { href: "/app/planner", label: "献立", icon: CalendarRange },
   { href: "/app/shopping", label: "買い物", icon: ShoppingCart },
   { href: "/app/recipes", label: "メニュー", icon: Library },
   { href: "/account", label: "設定", icon: UserRound },
