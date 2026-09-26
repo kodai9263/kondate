@@ -1,9 +1,10 @@
+import { defaultShoppingDay } from "@/lib/family/servings";
 import { resolveMonthlyDinnerPlan } from "@/lib/nutrition/planner";
 import { plannerMonths, type PlannerView } from "@/lib/nutrition/period";
 import type { NutritionRecipe, PlannedDinner, SideDish, SideMode } from "@/types/nutrition";
 
-export function resolvePlannerPeriod(view: PlannerView, date: string, context: Parameters<typeof resolveMonthlyDinnerPlan>[2]) {
-  return plannerMonths(view, date).flatMap(({ year, month, key }) => resolveMonthlyDinnerPlan(year, month, {
+export function resolvePlannerPeriod(view: PlannerView, date: string, context: Parameters<typeof resolveMonthlyDinnerPlan>[2], shoppingDay = defaultShoppingDay) {
+  return plannerMonths(view, date, shoppingDay).flatMap(({ year, month, key }) => resolveMonthlyDinnerPlan(year, month, {
     ...context,
     // materializeDinnerPlan は保存済み日付を補完するため、他の月を混ぜない。
     initialRecipeIds: Object.fromEntries(Object.entries(context.initialRecipeIds).filter(([day]) => day.startsWith(key))),

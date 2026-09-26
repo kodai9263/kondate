@@ -18,9 +18,9 @@ describe("週間・月間の日付", () => {
     }
   });
   it("月曜から日曜まで、月・年をまたいでも7日になる", () => {
-    expect(plannerDates("week", "2026-10-01")).toEqual(["2026-09-28", "2026-09-29", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-03", "2026-10-04"]);
+    expect(plannerDates("week", "2026-10-01", 1)).toEqual(["2026-09-28", "2026-09-29", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-03", "2026-10-04"]);
     expect(plannerMonths("week", "2027-01-01")).toEqual([{ year: 2026, month: 12, key: "2026-12" }, { year: 2027, month: 1, key: "2027-01" }]);
-    expect(plannerDates("week", "2026-09-27")[0]).toBe("2026-09-21");
+    expect(plannerDates("week", "2026-09-27", 1)[0]).toBe("2026-09-21");
     expect(movePlannerDate("week", "2026-12-28", 1)).toBe("2027-01-04");
     expect(movePlannerDate("month", "2026-01-31", 1)).toBe("2026-02-01");
   });
