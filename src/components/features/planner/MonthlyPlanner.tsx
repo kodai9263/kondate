@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, ChevronLeft, ChevronRight, Clock3, LockKeyhole, Search, X } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, LockKeyhole, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState, useTransition } from "react";
@@ -181,8 +181,8 @@ export function MonthlyPlanner({ recipes, initialView, initialDate, today, shopp
       {allergies.length > 0 ? <section role="status" className="mt-3 rounded border border-kondate-alert/30 bg-kondate-alertSoft p-4"><p className="flex items-center gap-2 text-sm font-semibold text-kondate-alert"><AlertTriangle size={18} aria-hidden="true" />{excludedRecipeCount > 0 ? `${excludedRecipeCount}品をアレルギー候補として除外中` : "登録したアレルギーを照合中"}</p><p className="mt-2 text-xs leading-6 text-kondate-muted">料理名・副菜・登録材料による補助判定です。調味料や加工品の原材料表示は必ず確認してください。</p></section> : null}
       {preferredRecipeIds.length > 0 || preferenceExcludedCount > 0 ? <p className="mt-4 border-l-2 border-kondate-accent bg-white px-4 py-3 text-sm text-kondate-muted">献立評価を反映中：好評 {preferredRecipeIds.length}品・除外 {preferenceExcludedCount}品</p> : null}
       <section className="mt-4" aria-label={view === "week" ? "週間献立" : "月間献立"}>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-xs text-kondate-muted"><p>完成まで40分以内の料理から提案</p><p>旬 {seasonalDays}日・固定 {visiblePlan.filter((day) => day.locked).length}日</p></div>
-        {candidateCount === 0 ? <p role="status" className="mb-4 rounded border border-kondate-line p-4 text-sm text-kondate-muted">条件に合う40分以内の料理がありません。保存済みの献立だけを表示しています。</p> : null}
+        <div className="mb-4 text-right text-xs text-kondate-muted">旬 {seasonalDays}日・固定 {visiblePlan.filter((day) => day.locked).length}日</div>
+        {candidateCount === 0 ? <p role="status" className="mb-4 rounded border border-kondate-line p-4 text-sm text-kondate-muted">新しい献立の候補がありません。保存済みの献立だけを表示しています。</p> : null}
         {view === "week" ? <div className="grid gap-3">{days.map((day) => {
           const dinner = byDate.get(day);
           return dinner ? <DinnerCard key={day} day={dinner} today={today} disabled={busy || !canEdit(dinner)} canChange={candidateCount > 0} onChange={() => openRecipePicker(day)} onSideChange={() => openSidePicker(day)} onLock={() => void updateDay(dinner, { locked: !dinner.locked })} /> : <article key={day} className="rounded-lg border border-kondate-line p-4 text-sm">{formatDay(day)}（{formatWeekday(day)}）<p className="mt-1 text-kondate-muted">条件に合う献立がありません。</p></article>;
@@ -218,7 +218,7 @@ export function MonthlyPlanner({ recipes, initialView, initialDate, today, shopp
 function DinnerCard({ day, today, disabled, canChange, onChange, onSideChange, onLock }: { day: PlannedDinner; today: string; disabled: boolean; canChange: boolean; onChange: () => void; onSideChange: () => void; onLock: () => void }) {
   return <article aria-label={`${formatDay(day.date)}の夕食`} className={`grid grid-cols-[3rem_minmax(0,1fr)] gap-3 rounded-lg border bg-white p-4 sm:grid-cols-[4rem_minmax(0,1fr)] sm:gap-5 sm:p-5 ${day.date === today ? "border-kondate-accent" : "border-kondate-line"}`}>
     <div className="border-r border-kondate-line pr-3 text-center"><p className="text-sm font-semibold tabular-nums">{formatDay(day.date)}</p><p className="mt-1 text-xs text-kondate-muted">{formatWeekday(day.date)}</p>{day.date === today ? <span className="mt-2 block text-[10px] font-semibold text-kondate-accent">今日</span> : null}</div>
-    <div className="flex min-w-0 flex-wrap items-center justify-between gap-3"><div className="min-w-0 flex-1 basis-48"><h3 className="font-mincho text-lg font-bold leading-snug">{day.recipe.name}</h3><p className="mt-1 text-sm text-kondate-muted">{plannedSideName(day)}</p><p className="mt-2 flex items-center gap-1.5 text-xs text-kondate-muted"><Clock3 size={14} aria-hidden="true" />{day.recipe.timeUnconfirmed ? "調理時間は未確認" : `完成まで${day.recipe.totalMinutes ?? day.recipe.cookMinutes}分`}{day.locked ? <span className="ml-2 text-kondate-accent">固定中</span> : null}</p>{!isDinnerCandidate(day.recipe) ? <p className="mt-1 text-xs text-kondate-muted">保存済み・新しい献立の候補対象外</p> : null}</div>
+    <div className="flex min-w-0 flex-wrap items-center justify-between gap-3"><div className="min-w-0 flex-1 basis-48"><h3 className="font-mincho text-lg font-bold leading-snug">{day.recipe.name}</h3><p className="mt-1 text-sm text-kondate-muted">{plannedSideName(day)}</p>{!isDinnerCandidate(day.recipe) ? <p className="mt-1 text-xs text-kondate-muted">保存済み・新しい献立の候補対象外</p> : null}</div>
       <div className="flex max-w-full flex-wrap gap-2"><Button variant="secondary" size="sm" disabled={disabled || !canChange} onClick={onChange} className="min-h-11">主菜を変更</Button><Button variant={day.locked ? "primary" : "secondary"} size="sm" disabled={disabled} aria-pressed={day.locked} onClick={onLock} className="min-h-11">{day.locked ? "固定中" : "固定"}</Button><Button variant="secondary" size="sm" disabled={disabled} onClick={onSideChange} className="min-h-11">副菜を変更</Button></div>
     </div>
   </article>;
