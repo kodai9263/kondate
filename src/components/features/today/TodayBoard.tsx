@@ -12,6 +12,7 @@ import { MealFeedbackForm } from "@/components/features/feedback/MealFeedbackFor
 import { countCheckedTasks, countTasks, type TodayTaskBinding, type TodayTaskBindings, updateTaskBindings } from "@/lib/realtime/taskState";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
 import type { PlanMeal } from "@/types/domain";
+import { isSeparateSideIngredient } from "@/lib/nutrition/sideDish";
 
 export function TodayBoard({
   familySize,
@@ -38,8 +39,10 @@ export function TodayBoard({
   )), [initialTaskBindings]);
   const planEntryFilter = planEntryIds.join(",");
   const seasoningTasks = useMemo(
-    () => taskBindings.seasoning.map((task) => ({ ...task, text: today.dinner.ingredientsScalable ? scaleRecipeIngredient(task.text, getRecipeServings(familySize), today.dinner.servingsBase ?? 4) : today.dinner.servingsBase ? task.text : scaleQuantityText(task.text, familySize) })),
-    [familySize, taskBindings.seasoning, today.dinner.ingredientsScalable, today.dinner.servingsBase],
+    () => taskBindings.seasoning.map((task) => ({ ...task, text: today.dinner.sideServingsBase && isSeparateSideIngredient(task.text)
+      ? scaleRecipeIngredient(task.text, getRecipeServings(familySize), today.dinner.sideServingsBase)
+      : today.dinner.ingredientsScalable ? scaleRecipeIngredient(task.text, getRecipeServings(familySize), today.dinner.servingsBase ?? 4) : today.dinner.servingsBase ? task.text : scaleQuantityText(task.text, familySize) })),
+    [familySize, taskBindings.seasoning, today.dinner.ingredientsScalable, today.dinner.servingsBase, today.dinner.sideServingsBase],
   );
   const seasoningGroups = getSeasoningGroups(seasoningTasks.map((task) => task.text));
 

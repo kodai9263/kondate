@@ -15,8 +15,8 @@ export function updatePlannerDay(plan: PlannedDinner[], date: string, change: { 
   const [year, month] = date.split("-").map(Number);
   const entries = plan.filter((day) => day.date.startsWith(date.slice(0, 7))).map((day) => day.date === date ? {
     ...day, recipe: change.recipe ?? day.recipe, locked: change.locked ?? day.locked,
-    sideMode: change.recipe ? "default" : change.sideMode ?? day.sideMode,
-    sideDish: change.recipe ? null : change.sideMode ? change.sideDish ?? null : day.sideDish,
+    sideMode: change.sideMode ?? day.sideMode,
+    sideDish: change.sideMode ? change.sideDish ?? null : day.sideDish,
   } : day);
   return { year, month, entries };
 }

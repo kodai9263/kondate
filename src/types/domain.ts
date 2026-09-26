@@ -22,6 +22,7 @@ export type Dinner = {
   evening: string[];
   seasonings: string[];
   sideSteps?: string[];
+  sideServingsBase?: number;
 };
 
 export type ShoppingByCategory = Record<string, string[]>;

@@ -4,6 +4,7 @@ import { officialNutritionRecipes } from "@/lib/nutrition/catalog";
 import { databaseRecipeTime } from "@/lib/nutrition/cookingTime";
 import { getMonthDateRange } from "@/lib/nutrition/month";
 import { getSupabaseServer } from "@/lib/supabase/server";
+import { restoreStandardSideMetadata } from "@/lib/nutrition/standardSideDishStorage";
 import type { NutritionRecipe, ProteinSource, SideDish, SideSelection } from "@/types/nutrition";
 
 export async function getHouseholdPlannerContext(year: number, month: number, strict = false) {
@@ -16,7 +17,7 @@ export async function getHouseholdPlannerContext(year: number, month: number, st
     supabase.from("meal_preferences").select("recipe_name,rating,updated_at").order("updated_at", { ascending: false }).limit(500),
     supabase.from("plan_entries").select("date,recipe_id,locked,side_mode,side_dish_id").eq("meal_type", "dinner").gte("date", firstDate).lte("date", lastDate),
     supabase.from("household_recipe_exclusions").select("recipe_key"),
-    supabase.from("side_dishes").select("id,name,ingredients_text,steps_text").is("archived_at", null).order("created_at", { ascending: false }),
+    supabase.from("side_dishes").select("id,household_id,name,ingredients_text,steps_text").is("archived_at", null).order("created_at", { ascending: false }),
   ]);
   if (strict && results.some((result) => result.error)) throw new Error("shopping_plan_unavailable");
   const [{ data: rows }, { data: officialRows }, { data: feedbackRows }, { data: savedRows }, { data: exclusions }, { data: sideDishRows }] = results;
@@ -89,12 +90,12 @@ export async function getHouseholdPlannerContext(year: number, month: number, st
     if (row.side_mode === "custom" && row.side_dish_id) initialSideSelections[row.date] = { mode: "custom", sideDishId: row.side_dish_id };
   }
 
-  const sideDishes: SideDish[] = (sideDishRows ?? []).map((row) => ({
+  const sideDishes: SideDish[] = (sideDishRows ?? []).map((row) => restoreStandardSideMetadata({
     id: row.id,
     name: row.name,
     ingredientsText: row.ingredients_text,
     steps: row.steps_text.split(/\r?\n/).map((step: string) => step.trim()).filter(Boolean),
-  }));
+  }, row.household_id));
 
   return {
     preferences,
