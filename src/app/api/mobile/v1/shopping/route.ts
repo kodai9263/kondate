@@ -1,13 +1,11 @@
-import { createMobileRequestClient } from "@/lib/supabase/mobile";
 import { z } from "zod";
-import { canAccessHousehold } from "@/lib/billing/entitlements";
 import { buildMobileShoppingSnapshot } from "@/lib/shopping/mobileSnapshot";
 import { getPlannedShopping, getSavedShoppingState } from "@/lib/shopping/server";
 import { isShoppingRange } from "@/lib/shopping/period";
 import { buildShoppingItemKey, seasoningShoppingCategory } from "@/lib/services/shoppingService";
+import { authorizeMobileRequest, mobileJsonError, mobileNoStore, mobileOrigin, mobileResponseHeaders } from "@/lib/mobile/request";
 import type { Json } from "@/types/database";
 
-const noStore = { "Cache-Control": "private, no-store", Vary: "Origin" };
 const checkSchema = z.object({
   weekStart: z.string().date(), rangeStart: z.string().date(), rangeEnd: z.string().date(),
   periodMode: z.enum(["today", "week", "custom"]),
@@ -30,107 +28,62 @@ const actionSchema = z.discriminatedUnion("action", [
   periodFields.extend({ action: z.literal("undo"), completionId: z.string().uuid() }),
 ]);
 
-function allowedOrigin(request: Request) {
-  const origin = request.headers.get("origin");
-  if (!origin) return null;
-  if (origin === "capacitor://localhost" || origin === "http://localhost") return origin;
-  if (process.env.NODE_ENV !== "production" && origin === process.env.MOBILE_DEV_ORIGIN) return origin;
-  return false;
-}
-
-function responseHeaders(origin: string | null) {
-  return {
-    ...noStore,
-    ...(origin ? { "Access-Control-Allow-Origin": origin, "Access-Control-Allow-Headers": "Authorization, Content-Type" } : {}),
-  };
-}
-
-function json(error: string, status: number, origin: string | null) {
-  return Response.json({ error }, { status, headers: responseHeaders(origin) });
-}
-
 function successfulResult(data: Json): data is { [key: string]: Json | undefined; ok: true } {
   return Boolean(data && typeof data === "object" && !Array.isArray(data) && data.ok === true);
 }
 
 export function OPTIONS(request: Request) {
-  const origin = allowedOrigin(request);
-  if (origin === false || origin === null) return new Response(null, { status: 403, headers: noStore });
+  const origin = mobileOrigin(request);
+  if (origin === false || origin === null) return new Response(null, { status: 403, headers: mobileNoStore });
   return new Response(null, { status: 204, headers: {
-    ...responseHeaders(origin),
+    ...mobileResponseHeaders(origin),
     "Access-Control-Allow-Methods": "GET, PATCH, POST, OPTIONS",
     "Access-Control-Max-Age": "600",
   } });
 }
 
-async function authorize(request: Request, origin: string | null) {
-  const bearer = request.headers.get("authorization")?.match(/^Bearer ([A-Za-z0-9._~-]{16,4096})$/);
-  if (!bearer) return json("unauthenticated", 401, origin);
-
-  const supabase = createMobileRequestClient(bearer[1]);
-  const { data: { user }, error: userError } = await supabase.auth.getUser(bearer[1]);
-  if (userError || !user) return json("unauthenticated", 401, origin);
-
-  const { data: profile, error: profileError } = await supabase.from("profiles")
-    .select("household_id").eq("id", user.id).single();
-  if (profileError || !profile?.household_id) return json("household_unavailable", 403, origin);
-
-  const [{ data: subscription, error: subscriptionError }, { data: firstMember, error: firstMemberError }] = await Promise.all([
-    supabase.from("household_subscriptions").select("status,current_period_end")
-      .eq("household_id", profile.household_id).maybeSingle(),
-    supabase.from("profiles").select("id").eq("household_id", profile.household_id)
-      .order("created_at", { ascending: true }).limit(1).maybeSingle(),
-  ]);
-  if (subscriptionError || firstMemberError || !firstMember) return json("household_unavailable", 503, origin);
-  if (!canAccessHousehold({ userId: user.id, firstMemberId: firstMember.id,
-    status: subscription?.status, currentPeriodEnd: subscription?.current_period_end })) {
-    return json("family_access_required", 403, origin);
-  }
-  return { supabase, accessToken: bearer[1] };
-}
-
 export async function GET(request: Request) {
-  const origin = allowedOrigin(request);
-  if (origin === false) return json("origin_not_allowed", 403, null);
+  const origin = mobileOrigin(request);
+  if (origin === false) return mobileJsonError("origin_not_allowed", 403, null);
 
   try {
-    const authorized = await authorize(request, origin);
+    const authorized = await authorizeMobileRequest(request, origin);
     if (authorized instanceof Response) return authorized;
     const shopping = await getPlannedShopping(authorized.supabase, authorized.accessToken);
     const saved = await getSavedShoppingState(shopping);
-    return Response.json(buildMobileShoppingSnapshot(shopping, saved), { headers: responseHeaders(origin) });
+    return Response.json(buildMobileShoppingSnapshot(shopping, saved), { headers: mobileResponseHeaders(origin) });
   } catch (error) {
     console.error("Mobile shopping snapshot failed", error);
-    return json("shopping_unavailable", 503, origin);
+    return mobileJsonError("shopping_unavailable", 503, origin);
   }
 }
 
 export async function PATCH(request: Request) {
-  const origin = allowedOrigin(request);
-  if (origin === false) return json("origin_not_allowed", 403, null);
+  const origin = mobileOrigin(request);
+  if (origin === false) return mobileJsonError("origin_not_allowed", 403, null);
 
   try {
-    const authorized = await authorize(request, origin);
+    const authorized = await authorizeMobileRequest(request, origin);
     if (authorized instanceof Response) return authorized;
     const body: unknown = await request.json().catch(() => undefined);
     const parsed = checkSchema.safeParse(body);
-    if (!parsed.success) return json("invalid_request", 400, origin);
+    if (!parsed.success) return mobileJsonError("invalid_request", 400, origin);
 
     const shopping = await getPlannedShopping(authorized.supabase, authorized.accessToken);
     const { weekStart, rangeStart, rangeEnd, periodMode, item } = parsed.data;
     if (weekStart !== shopping.period.storageWeekStart || rangeStart !== shopping.period.start
       || rangeEnd !== shopping.period.end || periodMode !== shopping.period.mode) {
-      return json("shopping_changed", 409, origin);
+      return mobileJsonError("shopping_changed", 409, origin);
     }
 
     if (item.source === "auto") {
       const expected = shopping.groups.find((group) => group.category === item.category)?.items[item.position];
-      if (!expected || expected.name !== item.name) return json("shopping_changed", 409, origin);
+      if (!expected || expected.name !== item.name) return mobileJsonError("shopping_changed", 409, origin);
     } else {
       const saved = await getSavedShoppingState(shopping);
       const expected = saved.manualItems.find((stored) => stored.id === item.id);
       if (!expected || expected.category !== item.category || expected.name !== item.name
-        || expected.position !== item.position) return json("shopping_changed", 409, origin);
+        || expected.position !== item.position) return mobileJsonError("shopping_changed", 409, origin);
     }
 
     const { data, error } = await authorized.supabase.rpc("update_planned_shopping", {
@@ -139,35 +92,35 @@ export async function PATCH(request: Request) {
     });
     if (error) throw error;
     if (!data || typeof data !== "object" || Array.isArray(data) || data.ok !== true) {
-      return json("shopping_changed", 409, origin);
+      return mobileJsonError("shopping_changed", 409, origin);
     }
     const saved = await getSavedShoppingState(shopping);
-    return Response.json(buildMobileShoppingSnapshot(shopping, saved), { headers: responseHeaders(origin) });
+    return Response.json(buildMobileShoppingSnapshot(shopping, saved), { headers: mobileResponseHeaders(origin) });
   } catch (error) {
     console.error("Mobile shopping check failed", error);
-    return json("shopping_unavailable", 503, origin);
+    return mobileJsonError("shopping_unavailable", 503, origin);
   }
 }
 
 export async function POST(request: Request) {
-  const origin = allowedOrigin(request);
-  if (origin === false) return json("origin_not_allowed", 403, null);
+  const origin = mobileOrigin(request);
+  if (origin === false) return mobileJsonError("origin_not_allowed", 403, null);
 
   try {
-    const authorized = await authorize(request, origin);
+    const authorized = await authorizeMobileRequest(request, origin);
     if (authorized instanceof Response) return authorized;
     const body: unknown = await request.json().catch(() => undefined);
     const parsed = actionSchema.safeParse(body);
-    if (!parsed.success) return json("invalid_request", 400, origin);
+    if (!parsed.success) return mobileJsonError("invalid_request", 400, origin);
     const input = parsed.data;
     if (input.action === "period" && input.mode === "custom" && !isShoppingRange(input.start ?? "", input.end ?? "")) {
-      return json("invalid_request", 400, origin);
+      return mobileJsonError("invalid_request", 400, origin);
     }
 
     const shopping = await getPlannedShopping(authorized.supabase, authorized.accessToken);
     if (input.weekStart !== shopping.period.storageWeekStart || input.rangeStart !== shopping.period.start
       || input.rangeEnd !== shopping.period.end || input.periodMode !== shopping.period.mode) {
-      return json("shopping_changed", 409, origin);
+      return mobileJsonError("shopping_changed", 409, origin);
     }
 
     if (input.action === "complete") {
@@ -178,38 +131,38 @@ export async function POST(request: Request) {
         .map(({ category, name, label, position, contributions }) =>
           ({ source: "auto", category, name, label, position, contributions }));
       const manualItems = saved.manualItems.filter((item) => item.checked);
-      if (autoItems.length + manualItems.length === 0) return json("nothing_checked", 409, origin);
+      if (autoItems.length + manualItems.length === 0) return mobileJsonError("nothing_checked", 409, origin);
       const { data, error } = await authorized.supabase.rpc("complete_planned_shopping", {
         target_week_start: input.weekStart, expected_range_start: input.rangeStart,
         expected_range_end: input.rangeEnd, expected_period_mode: input.periodMode,
         auto_items: autoItems, manual_ids: manualItems.map((item) => item.id),
       });
-      if (error || !successfulResult(data)) return json("shopping_changed", 409, origin);
-      return Response.json({ ok: true, completedCount: data.completed_count }, { headers: responseHeaders(origin) });
+      if (error || !successfulResult(data)) return mobileJsonError("shopping_changed", 409, origin);
+      return Response.json({ ok: true, completedCount: data.completed_count }, { headers: mobileResponseHeaders(origin) });
     }
 
     if (input.action === "undo") {
-      if (input.completionId !== shopping.latestCompletion?.id) return json("shopping_changed", 409, origin);
+      if (input.completionId !== shopping.latestCompletion?.id) return mobileJsonError("shopping_changed", 409, origin);
       const { data, error } = await authorized.supabase.rpc("undo_planned_shopping_completion", {
         target_completion_id: input.completionId, target_week_start: input.weekStart,
         expected_range_start: input.rangeStart, expected_range_end: input.rangeEnd,
         expected_period_mode: input.periodMode,
       });
-      if (error || !successfulResult(data)) return json("shopping_changed", 409, origin);
-      return Response.json({ ok: true }, { headers: responseHeaders(origin) });
+      if (error || !successfulResult(data)) return mobileJsonError("shopping_changed", 409, origin);
+      return Response.json({ ok: true }, { headers: mobileResponseHeaders(origin) });
     }
 
     let item: { [key: string]: Json | undefined } = {};
     if (input.action === "add") item = { name: input.name };
     if (input.action === "delete") {
       const saved = await getSavedShoppingState(shopping);
-      if (!saved.manualItems.some((stored) => stored.id === input.id)) return json("shopping_changed", 409, origin);
+      if (!saved.manualItems.some((stored) => stored.id === input.id)) return mobileJsonError("shopping_changed", 409, origin);
       item = { id: input.id };
     }
     if (input.action === "period") item = { mode: input.mode, start: input.start, end: input.end };
     if (input.action === "dismiss") {
       const expected = shopping.groups.find((group) => group.category === input.category)?.items[input.position];
-      if (!expected || expected.name !== input.name) return json("shopping_changed", 409, origin);
+      if (!expected || expected.name !== input.name) return mobileJsonError("shopping_changed", 409, origin);
       item = { category: input.category, name: input.name, position: input.position };
     }
     const { data, error } = await authorized.supabase.rpc("update_planned_shopping", {
@@ -217,10 +170,10 @@ export async function POST(request: Request) {
       expected_range_end: input.rangeEnd, expected_period_mode: input.periodMode,
       operation: input.action, item,
     });
-    if (error || !successfulResult(data)) return json("shopping_changed", 409, origin);
-    return Response.json({ ok: true }, { headers: responseHeaders(origin) });
+    if (error || !successfulResult(data)) return mobileJsonError("shopping_changed", 409, origin);
+    return Response.json({ ok: true }, { headers: mobileResponseHeaders(origin) });
   } catch (error) {
     console.error("Mobile shopping action failed", error);
-    return json("shopping_unavailable", 503, origin);
+    return mobileJsonError("shopping_unavailable", 503, origin);
   }
 }

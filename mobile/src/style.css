@@ -12,6 +12,17 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .signout { margin-left: auto; white-space: nowrap; }
 .text-button { border: 0; background: transparent; color: #b84431; text-decoration: underline; text-underline-offset: 3px; font-size: 12px; }
 main { padding: 0 20px; }
+.mobile-tabs { display: flex; gap: 8px; margin: 20px 0 2px; }
+.mobile-tabs button { flex: 1; min-height: 45px; border: 1px solid #e3cdbb; border-radius: 11px; background: white; color: #6b5b50; font-size: 14px; font-weight: 700; }
+.mobile-tabs button[aria-current="page"] { border-color: #c94028; background: #c94028; color: white; }
+.today-page { padding-bottom: 20px; }
+.today-card { margin-bottom: 16px; border: 1px solid #eddfd2; border-radius: 18px; padding: 21px 18px; background: white; }
+.today-card h2 { margin: 10px 0; font-family: "Noto Serif JP", serif; font-size: 23px; line-height: 1.5; }
+.today-card p { margin: 8px 0; }
+.today-side, .today-time { color: #75665e; font-size: 13px; }
+.today-steps { margin-top: 18px; border-top: 1px solid #f0e4d9; padding-top: 15px; }
+.today-steps h3 { margin: 0 0 10px; font-size: 13px; }
+.today-steps ol, .today-card > ul { margin: 0; padding-left: 21px; color: #514840; font-size: 13px; line-height: 1.8; }
 .page-heading { padding-top: 28px; padding-bottom: 20px; }
 .section-tag { display: inline-block; color: #c94028; font-size: 10px; font-weight: 700; letter-spacing: .16em; }
 h1 { margin: 7px 0 4px; font-family: "Noto Serif JP", serif; font-size: 29px; line-height: 1.45; }

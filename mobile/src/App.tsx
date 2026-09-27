@@ -1,12 +1,16 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { isConfigured, supabase } from "./supabase";
 import { loadShopping, performShoppingAction, saveShoppingChecked, type ShoppingAction, type ShoppingItem, type ShoppingSnapshot } from "./shopping";
+import { loadToday, type TodaySnapshot } from "./today";
 
 export function App() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [snapshot, setSnapshot] = useState<ShoppingSnapshot | null>(null);
+  const [todaySnapshot, setTodaySnapshot] = useState<TodaySnapshot | null>(null);
+  const [todayError, setTodayError] = useState("");
+  const [activeTab, setActiveTab] = useState<"today" | "shopping">("today");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -33,7 +37,7 @@ export function App() {
     if (!supabase) return;
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setAccessToken(session?.access_token ?? null);
-      if (!session) setSnapshot(null);
+      if (!session) { setSnapshot(null); setTodaySnapshot(null); }
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -49,6 +53,17 @@ export function App() {
     }).catch((cause: unknown) => {
       if (!cancelled) setError(cause instanceof Error ? cause.message : "買い物リストを読み込めませんでした。");
     }).finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [accessToken]);
+
+  useEffect(() => {
+    if (!accessToken) return;
+    let cancelled = false;
+    void loadToday(accessToken).then((value) => {
+      if (!cancelled) { setTodaySnapshot(value); setTodayError(""); }
+    }).catch((cause: unknown) => {
+      if (!cancelled) setTodayError(cause instanceof Error ? cause.message : "今日の献立を読み込めませんでした。");
+    });
     return () => { cancelled = true; };
   }, [accessToken]);
 
@@ -118,6 +133,7 @@ export function App() {
     await supabase?.auth.signOut();
     setAccessToken(null);
     setSnapshot(null);
+    setTodaySnapshot(null);
     setError("");
     setNotice("");
   }
@@ -158,6 +174,30 @@ export function App() {
         {error && <p className="error-message" role="alert">{error}</p>}
         <p className="hint">この検証版ではログイン状態を端末に保存しません。アプリを再起動した場合は再ログインが必要です。</p>
       </section> : <>
+        <nav className="mobile-tabs" aria-label="主な画面">
+          <button type="button" aria-current={activeTab === "today" ? "page" : undefined} onClick={() => setActiveTab("today")}>今日</button>
+          <button type="button" aria-current={activeTab === "shopping" ? "page" : undefined} onClick={() => setActiveTab("shopping")}>買い物</button>
+        </nav>
+        {activeTab === "today" ? <section className="today-page">
+          <div className="page-heading"><span className="section-tag">TODAY</span><h1>今日の献立</h1>
+            <p>{todaySnapshot ? `${formatDate(todaySnapshot.today.date)}（${todaySnapshot.today.dow}）` : "今日の内容を確認中…"}</p></div>
+          {todayError && <p className="error-message" role="alert">{todayError}</p>}
+          {todaySnapshot && <>
+            <section className="today-card"><p className="section-tag">朝ごはん</p>
+              <h2>{todaySnapshot.today.breakfast?.name ?? "朝ごはんの予定はありません"}</h2>
+              {todaySnapshot.today.breakfast?.tasks?.length ? <ul>{todaySnapshot.today.breakfast.tasks.map((task, index) => <li key={`${index}:${task}`}>{task}</li>)}</ul> : null}
+            </section>
+            <section className="today-card"><p className="section-tag">夜ごはん</p>
+              <h2>{todaySnapshot.today.dinner.dinner}</h2>
+              {todaySnapshot.today.dinner.side && <p className="today-side">副菜：{todaySnapshot.today.dinner.side}</p>}
+              {todaySnapshot.today.dinner.totalMin !== undefined && <p className="today-time">目安 {todaySnapshot.today.dinner.totalMin}分</p>}
+              <TodaySteps title="材料・調味料" steps={todaySnapshot.today.dinner.seasonings} />
+              <TodaySteps title="作ること" steps={todaySnapshot.today.dinner.evening} />
+              <TodaySteps title="副菜の手順" steps={todaySnapshot.today.dinner.sideSteps ?? []} />
+            </section>
+          </>}
+          {!todaySnapshot && !todayError && <p className="loading" role="status">今日の献立を読み込み中…</p>}
+        </section> : <>
         <section className="page-heading">
           <span className="section-tag">SHOPPING LIST</span>
           <h1>買い物リスト</h1>
@@ -234,9 +274,15 @@ export function App() {
           </section>}
           <p className="read-only-note">品物をタップするとチェックを保存します。圏外では変更できません。</p>
         </>}
+        </>}
       </>}
     </main>
   </div>;
+}
+
+function TodaySteps({ title, steps }: { title: string; steps: string[] }) {
+  if (steps.length === 0) return null;
+  return <div className="today-steps"><h3>{title}</h3><ol>{steps.map((step, index) => <li key={`${index}:${step}`}>{step}</li>)}</ol></div>;
 }
 
 function ShoppingGroup({ title, items, disabled, onToggle, onDelete, onDismiss }: {
