@@ -16,8 +16,8 @@ function quantities(text: string) {
     }, 0));
 }
 
-describe("95品の整合性の再検証", () => {
-  it.each(Array.from({ length: 16 }, (_, index) => index + 1))("全95品を%d人分にしても分量の比率と材料名が変わらない", (servings) => {
+describe("110品の整合性の再検証", () => {
+  it.each(Array.from({ length: 16 }, (_, index) => index + 1))("全110品を%d人分にしても分量の比率と材料名が変わらない", (servings) => {
     for (const [id, recipe] of recipes) {
       for (const ingredient of recipe.ingredients) {
         const scaled = scaleRecipeIngredient(ingredient, servings);

@@ -3,9 +3,9 @@ import { officialNutritionRecipes } from "@/lib/nutrition/catalog";
 import { generateMonthlyDinnerPlan, isRecipeInSeason, rankAlternativeRecipes, summarizeNutrition } from "@/lib/nutrition/planner";
 
 describe("generateMonthlyDinnerPlan", () => {
-  it("公式メニューを94品持ち、旬月が正しい範囲にある", () => {
-    expect(officialNutritionRecipes).toHaveLength(94);
-    expect(new Set(officialNutritionRecipes.map((recipe) => recipe.id)).size).toBe(94);
+  it("公式メニューを109品持ち、旬月が正しい範囲にある", () => {
+    expect(officialNutritionRecipes).toHaveLength(109);
+    expect(new Set(officialNutritionRecipes.map((recipe) => recipe.id)).size).toBe(109);
     for (const recipe of officialNutritionRecipes) {
       expect(recipe.seasonMonths?.every((month) => month >= 1 && month <= 12)).toBe(true);
     }
