@@ -3,6 +3,9 @@ import { z } from "zod";
 import { canAccessHousehold } from "@/lib/billing/entitlements";
 import { buildMobileShoppingSnapshot } from "@/lib/shopping/mobileSnapshot";
 import { getPlannedShopping, getSavedShoppingState } from "@/lib/shopping/server";
+import { isShoppingRange } from "@/lib/shopping/period";
+import { buildShoppingItemKey, seasoningShoppingCategory } from "@/lib/services/shoppingService";
+import type { Json } from "@/types/database";
 
 const noStore = { "Cache-Control": "private, no-store", Vary: "Origin" };
 const checkSchema = z.object({
@@ -14,6 +17,18 @@ const checkSchema = z.object({
     position: z.number().int().min(0).max(500), checked: z.boolean(),
   }),
 });
+const periodFields = checkSchema.pick({ weekStart: true, rangeStart: true, rangeEnd: true, periodMode: true });
+const actionSchema = z.discriminatedUnion("action", [
+  periodFields.extend({ action: z.literal("add"), name: z.string().trim().min(1).max(200) }),
+  periodFields.extend({ action: z.literal("delete"), id: z.string().uuid() }),
+  periodFields.extend({ action: z.literal("period"), mode: z.enum(["today", "week", "custom"]),
+    start: z.string().date().optional(), end: z.string().date().optional() }),
+  periodFields.extend({ action: z.literal("dismiss"), category: z.literal(seasoningShoppingCategory),
+    name: z.string().trim().min(1).max(200), position: z.number().int().min(0).max(500) }),
+  periodFields.extend({ action: z.literal("restore") }),
+  periodFields.extend({ action: z.literal("complete") }),
+  periodFields.extend({ action: z.literal("undo"), completionId: z.string().uuid() }),
+]);
 
 function allowedOrigin(request: Request) {
   const origin = request.headers.get("origin");
@@ -34,12 +49,16 @@ function json(error: string, status: number, origin: string | null) {
   return Response.json({ error }, { status, headers: responseHeaders(origin) });
 }
 
+function successfulResult(data: Json): data is { [key: string]: Json | undefined; ok: true } {
+  return Boolean(data && typeof data === "object" && !Array.isArray(data) && data.ok === true);
+}
+
 export function OPTIONS(request: Request) {
   const origin = allowedOrigin(request);
   if (origin === false || origin === null) return new Response(null, { status: 403, headers: noStore });
   return new Response(null, { status: 204, headers: {
     ...responseHeaders(origin),
-    "Access-Control-Allow-Methods": "GET, PATCH, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, PATCH, POST, OPTIONS",
     "Access-Control-Max-Age": "600",
   } });
 }
@@ -126,6 +145,82 @@ export async function PATCH(request: Request) {
     return Response.json(buildMobileShoppingSnapshot(shopping, saved), { headers: responseHeaders(origin) });
   } catch (error) {
     console.error("Mobile shopping check failed", error);
+    return json("shopping_unavailable", 503, origin);
+  }
+}
+
+export async function POST(request: Request) {
+  const origin = allowedOrigin(request);
+  if (origin === false) return json("origin_not_allowed", 403, null);
+
+  try {
+    const authorized = await authorize(request, origin);
+    if (authorized instanceof Response) return authorized;
+    const body: unknown = await request.json().catch(() => undefined);
+    const parsed = actionSchema.safeParse(body);
+    if (!parsed.success) return json("invalid_request", 400, origin);
+    const input = parsed.data;
+    if (input.action === "period" && input.mode === "custom" && !isShoppingRange(input.start ?? "", input.end ?? "")) {
+      return json("invalid_request", 400, origin);
+    }
+
+    const shopping = await getPlannedShopping(authorized.supabase, authorized.accessToken);
+    if (input.weekStart !== shopping.period.storageWeekStart || input.rangeStart !== shopping.period.start
+      || input.rangeEnd !== shopping.period.end || input.periodMode !== shopping.period.mode) {
+      return json("shopping_changed", 409, origin);
+    }
+
+    if (input.action === "complete") {
+      const saved = await getSavedShoppingState(shopping);
+      const checkedKeys = new Set(saved.checkedKeys);
+      const autoItems = shopping.groups.flatMap((group) => group.items)
+        .filter((item) => checkedKeys.has(buildShoppingItemKey(item.category, item.name)))
+        .map(({ category, name, label, position, contributions }) =>
+          ({ source: "auto", category, name, label, position, contributions }));
+      const manualItems = saved.manualItems.filter((item) => item.checked);
+      if (autoItems.length + manualItems.length === 0) return json("nothing_checked", 409, origin);
+      const { data, error } = await authorized.supabase.rpc("complete_planned_shopping", {
+        target_week_start: input.weekStart, expected_range_start: input.rangeStart,
+        expected_range_end: input.rangeEnd, expected_period_mode: input.periodMode,
+        auto_items: autoItems, manual_ids: manualItems.map((item) => item.id),
+      });
+      if (error || !successfulResult(data)) return json("shopping_changed", 409, origin);
+      return Response.json({ ok: true, completedCount: data.completed_count }, { headers: responseHeaders(origin) });
+    }
+
+    if (input.action === "undo") {
+      if (input.completionId !== shopping.latestCompletion?.id) return json("shopping_changed", 409, origin);
+      const { data, error } = await authorized.supabase.rpc("undo_planned_shopping_completion", {
+        target_completion_id: input.completionId, target_week_start: input.weekStart,
+        expected_range_start: input.rangeStart, expected_range_end: input.rangeEnd,
+        expected_period_mode: input.periodMode,
+      });
+      if (error || !successfulResult(data)) return json("shopping_changed", 409, origin);
+      return Response.json({ ok: true }, { headers: responseHeaders(origin) });
+    }
+
+    let item: { [key: string]: Json | undefined } = {};
+    if (input.action === "add") item = { name: input.name };
+    if (input.action === "delete") {
+      const saved = await getSavedShoppingState(shopping);
+      if (!saved.manualItems.some((stored) => stored.id === input.id)) return json("shopping_changed", 409, origin);
+      item = { id: input.id };
+    }
+    if (input.action === "period") item = { mode: input.mode, start: input.start, end: input.end };
+    if (input.action === "dismiss") {
+      const expected = shopping.groups.find((group) => group.category === input.category)?.items[input.position];
+      if (!expected || expected.name !== input.name) return json("shopping_changed", 409, origin);
+      item = { category: input.category, name: input.name, position: input.position };
+    }
+    const { data, error } = await authorized.supabase.rpc("update_planned_shopping", {
+      target_week_start: input.weekStart, expected_range_start: input.rangeStart,
+      expected_range_end: input.rangeEnd, expected_period_mode: input.periodMode,
+      operation: input.action, item,
+    });
+    if (error || !successfulResult(data)) return json("shopping_changed", 409, origin);
+    return Response.json({ ok: true }, { headers: responseHeaders(origin) });
+  } catch (error) {
+    console.error("Mobile shopping action failed", error);
     return json("shopping_unavailable", 503, origin);
   }
 }

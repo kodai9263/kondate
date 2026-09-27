@@ -24,6 +24,7 @@ describe("スマホ用の買い物保存内容", () => {
       checked: true, needsReview: false,
     }]);
     expect(snapshot.manualItems).toEqual(saved.manualItems);
+    expect(snapshot.hasDismissedSeasonings).toBe(true);
     expect(JSON.stringify(snapshot)).not.toContain("internal");
     expect(JSON.stringify(snapshot)).not.toContain("private");
     expect(snapshot.fetchedAt).toBe("2026-09-27T00:00:00.000Z");

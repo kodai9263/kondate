@@ -27,6 +27,7 @@ export function buildMobileShoppingSnapshot(shopping: Shopping, saved: Saved, fe
         })),
     })).filter((group) => group.items.length > 0),
     manualItems: saved.manualItems,
+    hasDismissedSeasonings: saved.dismissedKeys.length > 0,
     warnings: shopping.warnings,
     latestCompletion: shopping.latestCompletion,
   };

@@ -17,7 +17,7 @@ vi.mock("@/lib/shopping/server", () => ({
 }));
 vi.mock("@/lib/shopping/mobileSnapshot", () => ({ buildMobileShoppingSnapshot: mocks.buildSnapshot }));
 
-import { GET, OPTIONS, PATCH } from "@/app/api/mobile/v1/shopping/route";
+import { GET, OPTIONS, PATCH, POST } from "@/app/api/mobile/v1/shopping/route";
 
 const token = "test-token-for-mobile-request";
 const check = {
@@ -34,6 +34,12 @@ function request(origin = "capacitor://localhost", authorization?: string) {
 function patchRequest(body: unknown = check, authorization = `Bearer ${token}`, origin = "capacitor://localhost") {
   return new Request("https://example.test/api/mobile/v1/shopping", {
     method: "PATCH", headers: { origin, authorization, "content-type": "application/json" }, body: JSON.stringify(body),
+  });
+}
+
+function postRequest(body: unknown, authorization = `Bearer ${token}`, origin = "capacitor://localhost") {
+  return new Request("https://example.test/api/mobile/v1/shopping", {
+    method: "POST", headers: { origin, authorization, "content-type": "application/json" }, body: JSON.stringify(body),
   });
 }
 
@@ -145,5 +151,57 @@ describe("スマホ向け買い物API", () => {
     const response = await PATCH(patchRequest());
     expect(response.status).toBe(409);
     expect(mocks.buildSnapshot).not.toHaveBeenCalled();
+  });
+
+  it("手動品の追加でも本人と現在の期間を確認する", async () => {
+    const input = { ...check, item: undefined, action: "add", name: "牛乳" };
+    expect((await POST(postRequest(input, "invalid"))).status).toBe(401);
+    expect((await POST(postRequest({ ...input, rangeEnd: "2026-09-27" }))).status).toBe(409);
+    expect(mocks.rpc).not.toHaveBeenCalled();
+    expect((await POST(postRequest(input))).status).toBe(200);
+    expect(mocks.rpc).toHaveBeenCalledWith("update_planned_shopping", expect.objectContaining({
+      operation: "add", item: { name: "牛乳" },
+    }));
+  });
+
+  it("存在しない手動品や最新以外の完了は取り消さない", async () => {
+    const base = { ...check, item: undefined };
+    expect((await POST(postRequest({ ...base, action: "delete", id: "11111111-1111-4111-8111-111111111111" }))).status).toBe(409);
+    expect((await POST(postRequest({ ...base, action: "undo", completionId: "11111111-1111-4111-8111-111111111111" }))).status).toBe(409);
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+
+  it("不正な期間指定と未チェックの完了を拒否する", async () => {
+    const base = { ...check, item: undefined };
+    expect((await POST(postRequest({ ...base, action: "period", mode: "custom", start: "2026-09-26", end: "2026-09-20" }))).status).toBe(400);
+    expect((await POST(postRequest({ ...base, action: "complete" }))).status).toBe(409);
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+
+  it("チェック済みの品だけを既存の完了処理へ渡す", async () => {
+    mocks.getPlannedShopping.mockResolvedValue({ householdId: "household-1",
+      period: { storageWeekStart: check.weekStart, start: check.rangeStart, end: check.rangeEnd, mode: check.periodMode },
+      groups: [{ category: "肉", items: [
+        { category: "肉", name: "planned-v1:current", label: "豚肉", position: 0,
+          contributions: [{ key: "one", date: check.rangeStart, meal: "夕食", original: "豚肉", scale: 1 }] },
+        { category: "肉", name: "planned-v1:next", label: "鶏肉", position: 1, contributions: [] },
+      ] }], latestCompletion: null,
+    });
+    mocks.getSavedShoppingState.mockResolvedValue({
+      checkedKeys: ["肉\u001fplanned-v1:current"],
+      manualItems: [{ id: "11111111-1111-4111-8111-111111111111", checked: true }],
+    });
+    const response = await POST(postRequest({ ...check, item: undefined, action: "complete" }));
+    expect(response.status).toBe(200);
+    expect(mocks.rpc).toHaveBeenCalledWith("complete_planned_shopping", expect.objectContaining({
+      auto_items: [expect.objectContaining({ name: "planned-v1:current" })],
+      manual_ids: ["11111111-1111-4111-8111-111111111111"],
+    }));
+  });
+
+  it("許可外の出所からの買い物操作を拒否する", async () => {
+    const response = await POST(postRequest({ ...check, item: undefined, action: "add", name: "牛乳" }, `Bearer ${token}`, "https://other.example"));
+    expect(response.status).toBe(403);
+    expect(mocks.createClient).not.toHaveBeenCalled();
   });
 });

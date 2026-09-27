@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { isConfigured, supabase } from "./supabase";
-import { loadShopping, saveShoppingChecked, type ShoppingItem, type ShoppingSnapshot } from "./shopping";
+import { loadShopping, performShoppingAction, saveShoppingChecked, type ShoppingAction, type ShoppingItem, type ShoppingSnapshot } from "./shopping";
 
 export function App() {
   const [email, setEmail] = useState("");
@@ -10,6 +10,11 @@ export function App() {
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [actionBusy, setActionBusy] = useState(false);
+  const [newItemName, setNewItemName] = useState("");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
+  const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [online, setOnline] = useState(navigator.onLine);
 
@@ -68,7 +73,7 @@ export function App() {
   }
 
   async function refresh() {
-    if (!accessToken || loading || saving) return;
+    if (!accessToken || loading || saving || actionBusy) return;
     setLoading(true);
     setError("");
     try {
@@ -81,7 +86,7 @@ export function App() {
   }
 
   async function toggleItem(item: ShoppingItem) {
-    if (!accessToken || !snapshot || !online || saving) return;
+    if (!accessToken || !snapshot || !online || saving || actionBusy) return;
     setSaving(true);
     setError("");
     try {
@@ -93,11 +98,28 @@ export function App() {
     }
   }
 
+  async function runAction(action: ShoppingAction, successMessage: string) {
+    if (!accessToken || !snapshot || !online || actionBusy || saving || loading) return;
+    setActionBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      setSnapshot(await performShoppingAction(accessToken, snapshot, action));
+      setNotice(successMessage);
+      if (action.action === "add") setNewItemName("");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "保存できませんでした。接続を確認してください。");
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
   async function signOut() {
     await supabase?.auth.signOut();
     setAccessToken(null);
     setSnapshot(null);
     setError("");
+    setNotice("");
   }
 
   const items = snapshot ? [
@@ -159,29 +181,67 @@ export function App() {
         </p>}
 
         {error && <p className="error-message" role="alert">{error}</p>}
+        {notice && <p className="notice-message" role="status">{notice}</p>}
         {!snapshot && !error && <p className="loading" role="status">買い物リストを読み込み中…</p>}
         {snapshot && <>
-          <button className="refresh-button" type="button" onClick={() => void refresh()} disabled={loading || saving || !online}>
+          <section className="period-controls" aria-label="買い物の期間">
+            <div className="period-buttons">
+              <button type="button" aria-pressed={snapshot.period.mode === "today"} disabled={!online || actionBusy || saving}
+                onClick={() => void runAction({ action: "period", mode: "today" }, "今日のリストに切り替えました。")}>今日</button>
+              <button type="button" aria-pressed={snapshot.period.mode === "week"} disabled={!online || actionBusy || saving}
+                onClick={() => void runAction({ action: "period", mode: "week" }, "7日間のリストに切り替えました。")}>7日間</button>
+              <button type="button" aria-pressed={snapshot.period.mode === "custom"} disabled={!online || actionBusy || saving}
+                onClick={() => { setCustomStart(snapshot.period.start); setCustomEnd(snapshot.period.end); }}>期間指定</button>
+            </div>
+            {customStart && <form className="custom-period" onSubmit={(event) => {
+              event.preventDefault();
+              void runAction({ action: "period", mode: "custom", start: customStart, end: customEnd }, "期間を変更しました。");
+            }}>
+              <label>開始日<input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} required /></label>
+              <label>終了日<input type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} required /></label>
+              <button type="submit" disabled={!online || actionBusy || saving}>この期間を表示</button>
+            </form>}
+          </section>
+          <button className="refresh-button" type="button" onClick={() => void refresh()} disabled={loading || saving || actionBusy || !online}>
             {loading ? "更新中…" : "最新のリストを確認"}
           </button>
+          <form className="add-item" onSubmit={(event) => {
+            event.preventDefault();
+            const name = newItemName.trim();
+            if (name) void runAction({ action: "add", name }, "買うものを追加しました。");
+          }}>
+            <label htmlFor="new-item">買うものを追加</label>
+            <div><input id="new-item" value={newItemName} maxLength={200} placeholder="例：牛乳"
+              onChange={(event) => setNewItemName(event.target.value)} />
+              <button type="submit" disabled={!online || actionBusy || saving || !newItemName.trim()}>追加</button></div>
+          </form>
+          {items.some((item) => item.checked) && <button className="complete-button" type="button"
+            disabled={!online || actionBusy || saving} onClick={() => void runAction({ action: "complete" }, "買い物の完了を保存しました。")}>チェックした品を買い物完了にする</button>}
+          {snapshot.latestCompletion && <button className="undo-button" type="button" disabled={!online || actionBusy || saving}
+            onClick={() => void runAction({ action: "undo", completionId: snapshot.latestCompletion!.id }, "直前の買い物完了を取り消しました。")}>直前の完了を取り消す</button>}
           {snapshot.groups.map((group) => <ShoppingGroup key={group.category} title={group.category} items={group.items}
-            disabled={!online || saving} onToggle={toggleItem} />)}
+            disabled={!online || saving || actionBusy} onToggle={toggleItem}
+            onDismiss={group.category === "調味料(在庫確認)" ? (item) => runAction({ action: "dismiss", category: item.category, name: item.name, position: item.position }, "調味料をリストから外しました。") : undefined} />)}
           {snapshot.manualItems.length > 0 && <ShoppingGroup title="手動で追加したもの" items={snapshot.manualItems}
-            disabled={!online || saving} onToggle={toggleItem} />}
+            disabled={!online || saving || actionBusy} onToggle={toggleItem}
+            onDelete={(item) => item.id ? runAction({ action: "delete", id: item.id }, "買うものを削除しました。") : Promise.resolve()} />}
           {items.length === 0 && <p className="empty">この期間に買うものはありません。</p>}
+          {snapshot.hasDismissedSeasonings && <button className="restore-button" type="button" disabled={!online || actionBusy || saving}
+            onClick={() => void runAction({ action: "restore" }, "非表示にした調味料を戻しました。")}>非表示の調味料を戻す</button>}
           {snapshot.warnings.length > 0 && <section className="warning-card">
             <h2>確認したいこと</h2>
             <ul>{snapshot.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
           </section>}
-          <p className="read-only-note">品物をタップするとチェックを保存します。圏外では変更できません。品物の追加や買い物完了はWeb版で行えます。</p>
+          <p className="read-only-note">品物をタップするとチェックを保存します。圏外では変更できません。</p>
         </>}
       </>}
     </main>
   </div>;
 }
 
-function ShoppingGroup({ title, items, disabled, onToggle }: {
+function ShoppingGroup({ title, items, disabled, onToggle, onDelete, onDismiss }: {
   title: string; items: ShoppingItem[]; disabled: boolean; onToggle: (item: ShoppingItem) => Promise<void>;
+  onDelete?: (item: ShoppingItem) => Promise<void>; onDismiss?: (item: ShoppingItem) => Promise<void>;
 }) {
   if (!items.length) return null;
   return <section className="shopping-group">
@@ -193,6 +253,8 @@ function ShoppingGroup({ title, items, disabled, onToggle }: {
         <span className="check-symbol" aria-hidden="true">{item.checked ? "✓" : ""}</span>
         <span>{item.label ?? item.name}{item.needsReview && <small>数量確認</small>}</span>
       </button>
+      {(onDelete || onDismiss) && <button className="item-delete" type="button" disabled={disabled}
+        aria-label={`${item.label ?? item.name}をリストから外す`} onClick={() => void (onDelete ?? onDismiss)?.(item)}>削除</button>}
     </li>)}</ul>
   </section>;
 }
