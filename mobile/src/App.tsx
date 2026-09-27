@@ -159,8 +159,8 @@ export function App() {
         <h1>接続設定を確認してください</h1>
         <p>アプリの認証先がまだ設定されていません。開発用の設定を確認してください。</p>
       </section> : !accessToken ? <section className="login-card">
-        <span className="section-tag">買い物リストの技術検証</span>
-        <h1>いつもの家族の<br />買い物リストを、スマホで。</h1>
+        <span className="section-tag">きょうのごはん</span>
+        <h1>今日の献立も、<br />買い物も、手のひらに。</h1>
         <p>Web版で使っているアカウントでログインしてください。</p>
         <form onSubmit={(event) => void signIn(event)}>
           <label htmlFor="email">メールアドレス</label>
