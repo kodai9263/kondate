@@ -23,9 +23,10 @@ const recipe = officialNutritionRecipes.find((dish) => dish.id === "salmon")!;
 const date = "2026-09-26";
 
 describe("定番の副菜", () => {
-  it("10品に材料・工程があり、工程の調味料記号を材料に結び付けられる", () => {
-    expect(standardSideDishes).toHaveLength(10);
-    expect(new Set(standardSideDishes.map((dish) => dish.key)).size).toBe(10);
+  it("20品に材料・工程があり、工程の調味料記号を材料に結び付けられる", () => {
+    expect(standardSideDishes).toHaveLength(20);
+    expect(new Set(standardSideDishes.map((dish) => dish.key)).size).toBe(20);
+    expect(new Set(standardSideDishes.map((dish) => dish.name)).size).toBe(20);
     for (const dish of standardSideDishes) {
       expect(dish.ingredientsText.trim().length).toBeGreaterThan(0);
       expect(dish.steps.length).toBeGreaterThan(1);
@@ -53,7 +54,9 @@ describe("定番の副菜", () => {
     expect(availableStandardSideDishes(["卵"]).map((dish) => dish.key)).not.toContain("cabbage-tuna");
     expect(availableStandardSideDishes(["ごま"]).map((dish) => dish.key)).not.toContain("bean-sprout-namul");
     expect(availableStandardSideDishes(["トマト"]).map((dish) => dish.key)).not.toContain("tomato-salad");
-    expect(availableStandardSideDishes([])).toHaveLength(10);
+    expect(availableStandardSideDishes(["乳"]).map((dish) => dish.key)).not.toContain("mushroom-butter-soy");
+    expect(availableStandardSideDishes(["大豆"]).map((dish) => dish.key)).not.toContain("hijiki-soybeans");
+    expect(availableStandardSideDishes([])).toHaveLength(20);
   });
   it.each(standardSideDishes)("$name を保存して読み直しても材料と副菜の指定が一致する", (dish) => {
     const side = savedSide(dish.key);
@@ -76,6 +79,14 @@ describe("定番の副菜", () => {
     const labels = shopping.groups.flatMap((group) => group.items.map((item) => item.label));
     expect(labels).toContain("絹ごし豆腐 150g");
     expect(labels.filter((label) => label.startsWith("絹ごし豆腐"))).toHaveLength(1);
+    expect(labels.some((label) => label.includes("わかめ"))).toBe(false);
+  });
+  it("追加した煮物も2人分で買い物リストに入り、元の副菜の材料を残さない", () => {
+    const selected = { date, recipe, locked: false, sideMode: "custom" as const, sideDish: savedSide("hijiki-soybeans") };
+    const shopping = buildPlannedShopping({ start: date, end: date, dinners: [selected], breakfastVersions: [], servings: 2 });
+    const labels = shopping.groups.flatMap((group) => group.items.map((item) => item.label));
+    expect(labels).toContain("ひじき（水煮） 50g");
+    expect(labels).toContain("大豆（水煮） 50g");
     expect(labels.some((label) => label.includes("わかめ"))).toBe(false);
   });
   it("今日のDB読み込みでも定番の手順・基準人数を復元し、副菜なしへ戻すと消す", () => {
