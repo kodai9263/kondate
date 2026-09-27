@@ -313,6 +313,17 @@ export type Database = {
         };
         Returns: Json;
       };
+      update_planned_shopping: {
+        Args: {
+          target_week_start: string;
+          expected_range_start: string;
+          expected_range_end: string;
+          expected_period_mode: string;
+          operation: string;
+          item: Json;
+        };
+        Returns: Json;
+      };
       update_current_household_account: {
         Args: {
           display_name_input: string;

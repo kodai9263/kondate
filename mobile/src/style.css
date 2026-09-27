@@ -32,9 +32,11 @@ h1 { margin: 7px 0 4px; font-family: "Noto Serif JP", serif; font-size: 29px; li
 .shopping-group h2 { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 9px; font-size: 15px; }
 .shopping-group h2 span { color: #8a7b70; font-size: 11px; font-weight: 400; }
 .shopping-group ul { margin: 0; padding: 0; list-style: none; border: 1px solid #ecdfd3; border-radius: 14px; background: white; overflow: hidden; }
-.shopping-group li { display: flex; align-items: start; gap: 12px; padding: 13px 14px; font-size: 14px; line-height: 1.6; }
+.shopping-group li { font-size: 14px; line-height: 1.6; }
 .shopping-group li + li { border-top: 1px solid #f2e8df; }
 .shopping-group li.checked { color: #978c84; text-decoration: line-through; }
+.shopping-item-button { display: flex; align-items: start; gap: 12px; width: 100%; min-height: 52px; border: 0; padding: 13px 14px; color: inherit; background: transparent; text-align: left; }
+.shopping-item-button:focus-visible { outline: 2px solid #c94028; outline-offset: -2px; }
 .check-symbol { display: grid; place-items: center; flex: none; width: 21px; height: 21px; margin-top: 1px; border: 1.5px solid #d7bcae; border-radius: 6px; color: white; font-size: 13px; }
 .checked .check-symbol { border-color: #be6854; background: #be6854; }
 .shopping-group li small { display: inline-block; margin-left: 7px; border-radius: 4px; padding: 1px 5px; color: #996a30; background: #fff4df; font-size: 10px; text-decoration: none; }

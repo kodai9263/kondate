@@ -13,7 +13,7 @@ export type ShoppingSnapshot = {
   version: 1;
   fetchedAt: string;
   householdId: string;
-  period: { start: string; end: string; mode: "today" | "week" | "custom" };
+  period: { storageWeekStart: string; start: string; end: string; mode: "today" | "week" | "custom" };
   groups: Array<{ category: string; items: ShoppingItem[] }>;
   manualItems: ShoppingItem[];
   warnings: string[];
@@ -25,6 +25,29 @@ export async function loadShopping(accessToken: string): Promise<ShoppingSnapsho
     headers: { Authorization: `Bearer ${accessToken}` },
     cache: "no-store",
   });
+  return parseShoppingResponse(response);
+}
+
+export async function saveShoppingChecked(accessToken: string, snapshot: ShoppingSnapshot, item: ShoppingItem) {
+  const apiBase = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ?? "";
+  const response = await fetch(`${apiBase}/api/mobile/v1/shopping`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      weekStart: snapshot.period.storageWeekStart,
+      rangeStart: snapshot.period.start,
+      rangeEnd: snapshot.period.end,
+      periodMode: snapshot.period.mode,
+      item: { source: item.source, id: item.id, category: item.category, name: item.name,
+        position: item.position, checked: !item.checked },
+    }),
+    cache: "no-store",
+  });
+  if (response.status === 409) throw new Error("献立や買い物期間が変更されました。リストを更新してください。");
+  return parseShoppingResponse(response);
+}
+
+async function parseShoppingResponse(response: Response): Promise<ShoppingSnapshot> {
   if (response.status === 401) throw new Error("ログインの有効期限が切れました。もう一度ログインしてください。");
   if (response.status === 403) throw new Error("この家族の買い物リストにはアクセスできません。");
   if (!response.ok) throw new Error("買い物リストを読み込めませんでした。接続を確認してください。");
@@ -39,5 +62,6 @@ function isShoppingSnapshot(value: unknown): value is ShoppingSnapshot {
   return snapshot.version === 1 && typeof snapshot.fetchedAt === "string"
     && typeof snapshot.householdId === "string" && Array.isArray(snapshot.groups)
     && Array.isArray(snapshot.manualItems) && Array.isArray(snapshot.warnings)
-    && typeof snapshot.period?.start === "string" && typeof snapshot.period.end === "string";
+    && typeof snapshot.period?.storageWeekStart === "string"
+    && typeof snapshot.period.start === "string" && typeof snapshot.period.end === "string";
 }

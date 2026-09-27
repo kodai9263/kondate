@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { isConfigured, supabase } from "./supabase";
-import { loadShopping, type ShoppingSnapshot } from "./shopping";
+import { loadShopping, saveShoppingChecked, type ShoppingItem, type ShoppingSnapshot } from "./shopping";
 
 export function App() {
   const [email, setEmail] = useState("");
@@ -9,6 +9,7 @@ export function App() {
   const [snapshot, setSnapshot] = useState<ShoppingSnapshot | null>(null);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [online, setOnline] = useState(navigator.onLine);
 
@@ -67,7 +68,7 @@ export function App() {
   }
 
   async function refresh() {
-    if (!accessToken || loading) return;
+    if (!accessToken || loading || saving) return;
     setLoading(true);
     setError("");
     try {
@@ -76,6 +77,19 @@ export function App() {
       setError(cause instanceof Error ? cause.message : "買い物リストを読み込めませんでした。");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function toggleItem(item: ShoppingItem) {
+    if (!accessToken || !snapshot || !online || saving) return;
+    setSaving(true);
+    setError("");
+    try {
+      setSnapshot(await saveShoppingChecked(accessToken, snapshot, item));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "保存できませんでした。接続を確認してください。");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -147,30 +161,38 @@ export function App() {
         {error && <p className="error-message" role="alert">{error}</p>}
         {!snapshot && !error && <p className="loading" role="status">買い物リストを読み込み中…</p>}
         {snapshot && <>
-          <button className="refresh-button" type="button" onClick={() => void refresh()} disabled={loading || !online}>
+          <button className="refresh-button" type="button" onClick={() => void refresh()} disabled={loading || saving || !online}>
             {loading ? "更新中…" : "最新のリストを確認"}
           </button>
-          {snapshot.groups.map((group) => <ShoppingGroup key={group.category} title={group.category} items={group.items} />)}
-          {snapshot.manualItems.length > 0 && <ShoppingGroup title="手動で追加したもの" items={snapshot.manualItems} />}
+          {snapshot.groups.map((group) => <ShoppingGroup key={group.category} title={group.category} items={group.items}
+            disabled={!online || saving} onToggle={toggleItem} />)}
+          {snapshot.manualItems.length > 0 && <ShoppingGroup title="手動で追加したもの" items={snapshot.manualItems}
+            disabled={!online || saving} onToggle={toggleItem} />}
           {items.length === 0 && <p className="empty">この期間に買うものはありません。</p>}
           {snapshot.warnings.length > 0 && <section className="warning-card">
             <h2>確認したいこと</h2>
             <ul>{snapshot.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
           </section>}
-          <p className="read-only-note">この検証版は閲覧のみです。チェックや追加は現在のWeb版で行えます。</p>
+          <p className="read-only-note">品物をタップするとチェックを保存します。圏外では変更できません。品物の追加や買い物完了はWeb版で行えます。</p>
         </>}
       </>}
     </main>
   </div>;
 }
 
-function ShoppingGroup({ title, items }: { title: string; items: ShoppingSnapshot["groups"][number]["items"] }) {
+function ShoppingGroup({ title, items, disabled, onToggle }: {
+  title: string; items: ShoppingItem[]; disabled: boolean; onToggle: (item: ShoppingItem) => Promise<void>;
+}) {
   if (!items.length) return null;
   return <section className="shopping-group">
     <h2>{title}<span>{items.filter((item) => !item.checked).length}件</span></h2>
     <ul>{items.map((item) => <li key={`${item.source}:${item.category}:${item.name}:${item.position}`} className={item.checked ? "checked" : ""}>
-      <span className="check-symbol" aria-label={item.checked ? "購入済み" : "未購入"}>{item.checked ? "✓" : ""}</span>
-      <span>{item.label ?? item.name}{item.needsReview && <small>数量確認</small>}</span>
+      <button className="shopping-item-button" type="button" disabled={disabled} aria-pressed={item.checked}
+        aria-label={`${item.label ?? item.name}を${item.checked ? "未購入に戻す" : "購入済みにする"}`}
+        onClick={() => void onToggle(item)}>
+        <span className="check-symbol" aria-hidden="true">{item.checked ? "✓" : ""}</span>
+        <span>{item.label ?? item.name}{item.needsReview && <small>数量確認</small>}</span>
+      </button>
     </li>)}</ul>
   </section>;
 }
