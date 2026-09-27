@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { isConfigured, supabase } from "./supabase";
 import { loadShopping, performShoppingAction, saveShoppingChecked, type ShoppingAction, type ShoppingItem, type ShoppingSnapshot } from "./shopping";
 import { loadToday, type TodaySnapshot } from "./today";
@@ -6,6 +6,10 @@ import { loadToday, type TodaySnapshot } from "./today";
 export function App() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [authMode, setAuthMode] = useState<"login" | "signup" | "reset">("login");
+  const [authNotice, setAuthNotice] = useState("");
+  const authReady = useRef(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [snapshot, setSnapshot] = useState<ShoppingSnapshot | null>(null);
   const [todaySnapshot, setTodaySnapshot] = useState<TodaySnapshot | null>(null);
@@ -36,8 +40,14 @@ export function App() {
   useEffect(() => {
     if (!supabase) return;
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setAccessToken(session?.access_token ?? null);
-      if (!session) { setSnapshot(null); setTodaySnapshot(null); }
+      if (!session) {
+        authReady.current = false;
+        setAccessToken(null);
+        setSnapshot(null);
+        setTodaySnapshot(null);
+      } else if (authReady.current) {
+        setAccessToken(session.access_token);
+      }
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -67,20 +77,54 @@ export function App() {
     return () => { cancelled = true; };
   }, [accessToken]);
 
-  async function signIn(event: FormEvent<HTMLFormElement>) {
+  async function submitAuth(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!supabase) return;
     setBusy(true);
     setError("");
+    setAuthNotice("");
     try {
+      if (authMode === "reset") {
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${import.meta.env.VITE_API_BASE_URL}/auth/callback?next=/reset-password`,
+        });
+        if (resetError) { setError("メールを送信できませんでした。接続を確認してください。"); return; }
+        setAuthNotice("再設定用のメールを送信しました。メールのリンクからWeb版で変更後、アプリでログインしてください。");
+        return;
+      }
+      if (authMode === "signup") {
+        if (!displayName.trim() || password.length < 8) {
+          setError("表示名と8文字以上のパスワードを入力してください。");
+          return;
+        }
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email, password,
+          options: { data: { display_name: displayName.trim() },
+            emailRedirectTo: `${import.meta.env.VITE_API_BASE_URL}/auth/callback?next=/app` },
+        });
+        if (signUpError) { setError("登録できませんでした。入力内容を確認してください。"); return; }
+        if (!data.session) {
+          setAuthNotice("確認メールを送信しました。メールのリンクを開いた後、アプリからログインしてください。");
+          setAuthMode("login");
+          return;
+        }
+        const { error: householdError } = await supabase.rpc("ensure_current_user_household");
+        if (householdError) { await supabase.auth.signOut(); setError("家族の初期設定が完了しませんでした。もう一度ログインしてください。"); return; }
+        authReady.current = true;
+        setAccessToken(data.session.access_token);
+        return;
+      }
       const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       if (signInError || !data.session) {
         setError("ログインできませんでした。メールアドレスとパスワードを確認してください。");
         return;
       }
+      const { error: householdError } = await supabase.rpc("ensure_current_user_household");
+      if (householdError) { await supabase.auth.signOut(); setError("家族の情報を確認できませんでした。もう一度お試しください。"); return; }
+      authReady.current = true;
       setAccessToken(data.session.access_token);
     } catch {
-      setError("ログインできませんでした。接続を確認してください。");
+      setError("操作を完了できませんでした。接続を確認してください。");
     } finally {
       setBusy(false);
       setPassword("");
@@ -130,6 +174,7 @@ export function App() {
   }
 
   async function signOut() {
+    authReady.current = false;
     await supabase?.auth.signOut();
     setAccessToken(null);
     setSnapshot(null);
@@ -160,18 +205,30 @@ export function App() {
         <p>アプリの認証先がまだ設定されていません。開発用の設定を確認してください。</p>
       </section> : !accessToken ? <section className="login-card">
         <span className="section-tag">きょうのごはん</span>
-        <h1>今日の献立も、<br />買い物も、手のひらに。</h1>
-        <p>Web版で使っているアカウントでログインしてください。</p>
-        <form onSubmit={(event) => void signIn(event)}>
+        <h1>{authMode === "signup" ? "無料で始める" : authMode === "reset" ? "パスワードを再設定" : <>今日の献立も、<br />買い物も、手のひらに。</>}</h1>
+        <p>{authMode === "login" ? "Web版で使っているアカウントでもログインできます。" :
+          authMode === "signup" ? "メールで確認後、家族の献立を使い始められます。" : "登録したメールアドレスを入力してください。"}</p>
+        <form onSubmit={(event) => void submitAuth(event)}>
+          {authMode === "signup" && <><label htmlFor="display-name">表示名</label>
+            <input id="display-name" type="text" autoComplete="name" maxLength={40} value={displayName}
+              onChange={(event) => setDisplayName(event.target.value)} required /></>}
           <label htmlFor="email">メールアドレス</label>
           <input id="email" type="email" autoComplete="email" value={email}
             onChange={(event) => setEmail(event.target.value)} required />
-          <label htmlFor="password">パスワード</label>
-          <input id="password" type="password" autoComplete="current-password" value={password}
-            onChange={(event) => setPassword(event.target.value)} required />
-          <button className="primary-button" type="submit" disabled={busy}>{busy ? "確認中…" : "ログイン"}</button>
+          {authMode !== "reset" && <><label htmlFor="password">パスワード</label>
+            <input id="password" type="password" autoComplete={authMode === "signup" ? "new-password" : "current-password"}
+              minLength={authMode === "signup" ? 8 : undefined} maxLength={128} value={password}
+              onChange={(event) => setPassword(event.target.value)} required /></>}
+          <button className="primary-button" type="submit" disabled={busy}>{busy ? "確認中…" :
+            authMode === "signup" ? "登録する" : authMode === "reset" ? "再設定メールを送る" : "ログイン"}</button>
         </form>
         {error && <p className="error-message" role="alert">{error}</p>}
+        {authNotice && <p className="notice-message" role="status">{authNotice}</p>}
+        <div className="auth-links">
+          {authMode !== "login" && <button type="button" onClick={() => { setAuthMode("login"); setError(""); setAuthNotice(""); }}>ログインへ戻る</button>}
+          {authMode === "login" && <><button type="button" onClick={() => { setAuthMode("signup"); setError(""); setAuthNotice(""); }}>無料で始める</button>
+            <button type="button" onClick={() => { setAuthMode("reset"); setError(""); setAuthNotice(""); }}>パスワードを忘れた</button></>}
+        </div>
         <p className="hint">この検証版ではログイン状態を端末に保存しません。アプリを再起動した場合は再ログインが必要です。</p>
       </section> : <>
         <nav className="mobile-tabs" aria-label="主な画面">
