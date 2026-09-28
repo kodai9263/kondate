@@ -61,7 +61,7 @@ export function App() {
         setError("");
       }
     }).catch((cause: unknown) => {
-      if (!cancelled) setError(cause instanceof Error ? cause.message : "買い物リストを読み込めませんでした。");
+      if (!cancelled) setError(displayError(cause, "買い物リストを読み込めませんでした。"));
     }).finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [accessToken]);
@@ -72,7 +72,7 @@ export function App() {
     void loadToday(accessToken).then((value) => {
       if (!cancelled) { setTodaySnapshot(value); setTodayError(""); }
     }).catch((cause: unknown) => {
-      if (!cancelled) setTodayError(cause instanceof Error ? cause.message : "今日の献立を読み込めませんでした。");
+      if (!cancelled) setTodayError(displayError(cause, "今日の献立を読み込めませんでした。"));
     });
     return () => { cancelled = true; };
   }, [accessToken]);
@@ -138,7 +138,7 @@ export function App() {
     try {
       setSnapshot(await loadShopping(accessToken));
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "買い物リストを読み込めませんでした。");
+      setError(displayError(cause, "買い物リストを読み込めませんでした。"));
     } finally {
       setLoading(false);
     }
@@ -151,7 +151,7 @@ export function App() {
     try {
       setSnapshot(await saveShoppingChecked(accessToken, snapshot, item));
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "保存できませんでした。接続を確認してください。");
+      setError(displayError(cause, "保存できませんでした。接続を確認してください。"));
     } finally {
       setSaving(false);
     }
@@ -167,7 +167,7 @@ export function App() {
       setNotice(successMessage);
       if (action.action === "add") setNewItemName("");
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "保存できませんでした。接続を確認してください。");
+      setError(displayError(cause, "保存できませんでした。接続を確認してください。"));
     } finally {
       setActionBusy(false);
     }
@@ -237,7 +237,8 @@ export function App() {
         </nav>
         {activeTab === "today" ? <section className="today-page">
           <div className="page-heading"><span className="section-tag">TODAY</span><h1>今日の献立</h1>
-            <p>{todaySnapshot ? `${formatDate(todaySnapshot.today.date)}（${todaySnapshot.today.dow}）` : "今日の内容を確認中…"}</p></div>
+            <p>{todaySnapshot ? `${formatDate(todaySnapshot.today.date)}（${todaySnapshot.today.dow}）` :
+              todayError ? "今日の内容を表示できません" : "今日の内容を確認中…"}</p></div>
           {todayError && <p className="error-message" role="alert">{todayError}</p>}
           {todaySnapshot && <>
             <section className="today-card"><p className="section-tag">朝ごはん</p>
@@ -365,6 +366,13 @@ function ShoppingGroup({ title, items, disabled, onToggle, onDelete, onDismiss }
 function formatDate(date: string) {
   const [, month, day] = date.split("-");
   return `${Number(month)}/${Number(day)}`;
+}
+
+function displayError(cause: unknown, fallback: string) {
+  if (cause instanceof TypeError || (cause instanceof Error && /load failed|failed to fetch|networkerror/i.test(cause.message))) {
+    return "データに接続できません。通信状況を確認し、時間をおいて再度お試しください。";
+  }
+  return cause instanceof Error ? cause.message : fallback;
 }
 
 function formatTimestamp(timestamp: string) {

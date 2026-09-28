@@ -1,19 +1,21 @@
-:root { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif; color: #2b2724; background: #fffaf0; font-synthesis: none; }
+:root { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif; color: #2b2724; background: #fffaf0; font-synthesis: none; -webkit-text-size-adjust: 100%; }
 * { box-sizing: border-box; }
-body { margin: 0; min-width: 320px; }
+html, body, #root { width: 100%; min-width: 0; }
+body { margin: 0; }
 button, input { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .55; }
-.app-shell { max-width: 640px; min-height: 100dvh; margin: 0 auto; background: #fffaf0; padding-bottom: max(28px, env(safe-area-inset-bottom)); }
-.top-bar { min-height: 78px; display: flex; align-items: center; gap: 11px; border-bottom: 1px solid #eaded1; padding: max(16px, env(safe-area-inset-top)) 20px 14px; }
+.app-shell { width: 100%; max-width: 640px; min-height: 100dvh; margin: 0 auto; background: #fffaf0; padding-bottom: max(28px, env(safe-area-inset-bottom)); }
+.top-bar { min-height: 78px; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 11px; border-bottom: 1px solid #eaded1; padding: max(16px, env(safe-area-inset-top)) 20px 14px; }
+.top-bar > :nth-child(2) { min-width: 0; }
 .brand-mark { display: grid; place-items: center; width: 40px; height: 40px; flex: none; border-radius: 13px; background: #c94028; color: white; font-family: "Noto Serif JP", serif; font-size: 19px; font-weight: 700; }
 .eyebrow { margin: 0 0 2px; color: #9d796b; font-size: 10px; letter-spacing: .09em; }
 .brand-name { margin: 0; color: #493d34; font-family: "Noto Serif JP", serif; font-size: 15px; font-weight: 700; }
-.signout { margin-left: auto; white-space: nowrap; }
+.signout { white-space: nowrap; }
 .text-button { border: 0; background: transparent; color: #b84431; text-decoration: underline; text-underline-offset: 3px; font-size: 12px; }
-main { padding: 0 20px; }
-.mobile-tabs { display: flex; gap: 8px; margin: 20px 0 2px; }
-.mobile-tabs button { flex: 1; min-height: 45px; border: 1px solid #e3cdbb; border-radius: 11px; background: white; color: #6b5b50; font-size: 14px; font-weight: 700; }
+main { width: 100%; min-width: 0; padding: 0 20px; }
+.mobile-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 20px 0 2px; }
+.mobile-tabs button { min-width: 0; min-height: 45px; border: 1px solid #e3cdbb; border-radius: 11px; background: white; color: #6b5b50; font-size: 14px; font-weight: 700; }
 .mobile-tabs button[aria-current="page"] { border-color: #c94028; background: #c94028; color: white; }
 .today-page { padding-bottom: 20px; }
 .today-card { margin-bottom: 16px; border: 1px solid #eddfd2; border-radius: 18px; padding: 21px 18px; background: white; }
