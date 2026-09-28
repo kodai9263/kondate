@@ -47,7 +47,7 @@ h1 { margin: 7px 0 4px; font-family: "Noto Serif JP", serif; font-size: 29px; li
 .period-buttons button[aria-pressed="true"] { background: #c94028; border-color: #c94028; color: #fff; }
 .custom-period { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
 .custom-period label, .add-item label { color: #594c43; font-size: 12px; font-weight: 700; }
-.custom-period input, .add-item input { display: block; width: 100%; min-width: 0; min-height: 42px; margin-top: 5px; border: 1px solid #d9c9ba; border-radius: 10px; padding: 7px 9px; background: white; color: #2b2724; font-size: 14px; }
+.custom-period input, .add-item input { display: block; width: 100%; min-width: 0; min-height: 42px; margin-top: 5px; border: 1px solid #d9c9ba; border-radius: 10px; padding: 7px 9px; background: white; color: #2b2724; font-size: 16px; }
 .custom-period button { grid-column: 1 / -1; min-height: 42px; border: 1px solid #c94028; border-radius: 10px; background: #fff; color: #ad3825; font-size: 12px; font-weight: 700; }
 .add-item { margin-bottom: 22px; }
 .add-item > div { display: flex; gap: 8px; margin-top: 5px; }
@@ -79,7 +79,7 @@ h1 { margin: 7px 0 4px; font-family: "Noto Serif JP", serif; font-size: 29px; li
 .login-card h1 { font-size: 23px; margin: 14px 0 8px; }
 .login-card form { margin-top: 27px; }
 .login-card label { display: block; margin: 16px 0 6px; color: #594c43; font-size: 12px; font-weight: 700; }
-.login-card input { display: block; width: 100%; min-height: 46px; border: 1px solid #d9c9ba; border-radius: 10px; padding: 10px 12px; background: #fffefa; color: #2b2724; font-size: 14px; }
+.login-card input { display: block; width: 100%; min-height: 46px; border: 1px solid #d9c9ba; border-radius: 10px; padding: 10px 12px; background: #fffefa; color: #2b2724; font-size: 16px; }
 .login-card input:focus { outline: 2px solid #e49e8f; outline-offset: 1px; }
 .auth-links { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 18px; }
 .auth-links button { border: 0; padding: 4px 0; color: #ac3825; background: transparent; font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
