@@ -1,5 +1,6 @@
 import type { NutritionRecipe } from "@/types/nutrition";
 import { officialRecipeDetails } from "@/lib/nutrition/recipeDetails";
+import { quickWeeknightRecipes } from "@/lib/nutrition/quickWeeknightRecipes";
 
 const imageByProteinSource: Record<NutritionRecipe["proteinSource"], string> = {
   fish: "/images/family-dinner.png",
@@ -109,6 +110,12 @@ export const officialNutritionRecipes: NutritionRecipe[] = [
   recipe("fried-chicken-black-vinegar", "鶏唐揚げ黒酢あんかけ", "ごはんと中華スープ", 30, "meat", 738, 33, 28, 95, 6.9, 2.7, 225),
   recipe("chinjao-rosu", "チンジャオロース", "ごはんと中華スープ", 20, "meat", 672, 29, 21, 92, 7.2, 2.5, 245),
   recipe("beef-pepper-rice", "ビーフペッパーライス", "コーンと卵のスープ", 20, "meat", 748, 29, 28, 97, 4.9, 2.6, 125),
+  ...quickWeeknightRecipes.map((item) => recipe(
+    item.id, item.name, item.side, item.cookMinutes, item.proteinSource,
+    item.nutrition.energyKcal, item.nutrition.proteinG, item.nutrition.fatG,
+    item.nutrition.carbsG, item.nutrition.fiberG, item.nutrition.saltG,
+    item.nutrition.vegetablesG,
+  )),
 ];
 
 function recipe(

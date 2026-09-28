@@ -23,9 +23,9 @@ describe("アプリ共通の40分条件", () => {
     expect(isDinnerCandidate(databaseRecipeTime({ cook_minutes: 20, meta: {} }))).toBe(true);
   });
 
-  it("公式データは残し、新しい候補だけを56品に絞る", () => {
-    expect(officialNutritionRecipes).toHaveLength(94);
-    expect(officialNutritionRecipes.filter((recipe) => isDinnerCandidate(recipe))).toHaveLength(56);
+  it("公式データは残し、新しい候補を71品に絞る", () => {
+    expect(officialNutritionRecipes).toHaveLength(109);
+    expect(officialNutritionRecipes.filter((recipe) => isDinnerCandidate(recipe))).toHaveLength(71);
     expect(isDinnerCandidate(officialNutritionRecipes.find((recipe) => recipe.id === "salmon")!)).toBe(true);
     expect(isDinnerCandidate(officialNutritionRecipes.find((recipe) => recipe.id === "mackerel-miso")!)).toBe(true);
     for (let month = 1; month <= 12; month += 1) {
@@ -33,6 +33,13 @@ describe("アプリ共通の40分条件", () => {
       expect(plan).toHaveLength(new Date(2026, month, 0).getDate());
       expect(plan.every((day) => isDinnerCandidate(day.recipe))).toBe(true);
     }
+  });
+
+  it("追加した定番15品は完成まで40分以内で献立候補になる", () => {
+    const quick = officialNutritionRecipes.filter((recipe) => recipe.id.startsWith("quick-"));
+    expect(quick).toHaveLength(15);
+    expect(quick.some((recipe) => recipe.name === "とんかつ")).toBe(true);
+    expect(quick.every((recipe) => isDinnerCandidate(recipe, 40))).toBe(true);
   });
 
   it("候補ゼロでも時間超過や時間未確認の料理で埋めない", () => {

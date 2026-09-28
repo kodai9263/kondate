@@ -67,7 +67,7 @@ describe("副菜の選択", () => {
     expect(custom).toContain("塩こんぶ 10g");
   });
 
-  it("全94品で副菜なしを選ぶと標準副菜の材料が外れる", () => {
+  it("全109品で副菜なしを選ぶと標準副菜の材料が外れる", () => {
     for (const recipe of officialNutritionRecipes) {
       const ingredients = resolveDinnerIngredients({
         date: "2026-09-20",
@@ -80,7 +80,7 @@ describe("副菜の選択", () => {
     }
   });
 
-  it("全94品で副菜なしを選ぶと標準副菜の工程が外れ、主菜工程は残る", () => {
+  it("全109品で副菜なしを選ぶと標準副菜の工程が外れ、主菜工程は残る", () => {
     for (const recipe of officialNutritionRecipes) {
       const steps = resolveDinnerSteps({
         date: "2026-09-20",

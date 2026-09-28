@@ -1,3 +1,5 @@
+import { quickWeeknightRecipeDetails } from "@/lib/nutrition/quickWeeknightRecipes";
+
 export type OfficialRecipeDetail = {
   ingredients: string[];
   steps: string[];
@@ -2045,5 +2047,6 @@ export const officialRecipeDetails: Record<string, OfficialRecipeDetail> = {
       "工程の「鶏がら」は、材料欄の顆粒鶏がらスープを指す。",
       "温かいごはんを用意した状態からの時間。これから米を炊く場合は、先に炊飯を始める。"
     ]
-  }
+  },
+  ...quickWeeknightRecipeDetails,
 };

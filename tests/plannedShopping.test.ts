@@ -198,7 +198,7 @@ describe("献立からの材料集計", () => {
     expect(labels(result)).toEqual(["合いびき肉 300g・人数分を確認"]);
     expect(result.warnings.some((warning) => warning.includes("基準人数が不明"))).toBe(true);
   });
-  it.each(officialNutritionRecipes)("公式94品の材料を捨てず数量表記を解釈する：$id", (recipe) => {
+  it.each(officialNutritionRecipes)("公式109品の材料を捨てず数量表記を解釈する：$id", (recipe) => {
     const result = build([{ date: "2026-09-19", recipe, locked: false }]);
     const contributions = result.groups.flatMap((group) => group.items.flatMap((item) => item.contributions));
     for (const line of recipe.ingredientsText!.split("\n")) {
