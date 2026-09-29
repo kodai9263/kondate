@@ -9,6 +9,7 @@ import { ShoppingAccessError, ShoppingSessionError } from "./shopping";
 import { clearShoppingCache, loadShoppingCache, saveShoppingCache } from "./shoppingCache";
 import { loadToday, type TodaySnapshot } from "./today";
 import { loadAccountPreview, type AccountPreview } from "./account";
+import { createFamilyInvite, loadFamilyInvites, type FamilyInvite } from "./invites";
 
 export function App() {
   const [email, setEmail] = useState("");
@@ -44,6 +45,9 @@ export function App() {
   const [reminderMessage, setReminderMessage] = useState("");
   const [accountPreview, setAccountPreview] = useState<AccountPreview | null>(null);
   const [accountError, setAccountError] = useState("");
+  const [familyInvites, setFamilyInvites] = useState<FamilyInvite[]>([]);
+  const [inviteError, setInviteError] = useState("");
+  const [inviteBusy, setInviteBusy] = useState(false);
 
   function acceptShopping(value: ShoppingSnapshot, ownerId: string) {
     setSnapshot(value);
@@ -160,12 +164,14 @@ export function App() {
         setTodaySnapshot(null);
         setAccountPreview(null);
         setAccountError("");
+        setFamilyInvites([]);
         if (event === "SIGNED_OUT") void discardShoppingCache().catch(() => {});
       } else if (authReady.current) {
         if (currentUserId.current && currentUserId.current !== session.user.id) {
           setSnapshot(null);
           setAccountPreview(null);
           setAccountError("");
+          setFamilyInvites([]);
         }
         currentUserId.current = session.user.id;
         setUserId(session.user.id);
@@ -230,11 +236,7 @@ export function App() {
 
   useEffect(() => {
     if (!accessToken || activeTab !== "settings") return;
-    if (!online) {
-      setAccountPreview(null);
-      setAccountError("契約と家族の情報は、接続しているときに確認できます。");
-      return;
-    }
+    if (!online) return;
     let cancelled = false;
     void loadAccountPreview(accessToken).then((value) => {
       if (!cancelled) { setAccountPreview(value); setAccountError(""); }
@@ -243,6 +245,17 @@ export function App() {
     });
     return () => { cancelled = true; };
   }, [accessToken, activeTab, online, refreshEpoch]);
+
+  useEffect(() => {
+    if (!accessToken || activeTab !== "settings" || !online || !accountPreview || accountPreview.account.isAnonymous) return;
+    let cancelled = false;
+    void loadFamilyInvites(accessToken).then((value) => {
+      if (!cancelled) { setFamilyInvites(value); setInviteError(""); }
+    }).catch((cause: unknown) => {
+      if (!cancelled) setInviteError(displayError(cause, "招待リンクを読み込めませんでした。"));
+    });
+    return () => { cancelled = true; };
+  }, [accessToken, activeTab, online, accountPreview, refreshEpoch]);
 
   async function submitAuth(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -365,6 +378,8 @@ export function App() {
     setTodaySnapshot(null);
     setAccountPreview(null);
     setAccountError("");
+    setFamilyInvites([]);
+    setInviteError("");
     setReminderSettings(defaultReminderSettings);
     setNotice("");
   }
@@ -379,6 +394,31 @@ export function App() {
       setReminderMessage(displayError(cause, "通知設定を保存できませんでした。"));
     } finally {
       setReminderBusy(false);
+    }
+  }
+
+  async function createInvite() {
+    if (!accessToken || !online || inviteBusy) return;
+    setInviteBusy(true);
+    setInviteError("");
+    try {
+      const invite = await createFamilyInvite(accessToken);
+      setFamilyInvites((current) => [invite, ...current]);
+    } catch (cause) {
+      setInviteError(displayError(cause, "招待リンクを作成できませんでした。"));
+    } finally {
+      setInviteBusy(false);
+    }
+  }
+
+  async function shareInvite(invite: FamilyInvite) {
+    try {
+      if (navigator.share) await navigator.share({ title: "きょうのごはん 家族への招待", url: invite.url });
+      else if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(invite.url);
+      else throw new Error("この端末では共有できません。リンクを長押ししてコピーしてください。");
+    } catch (cause) {
+      if (cause instanceof DOMException && cause.name === "AbortError") return;
+      setInviteError(displayError(cause, "共有できませんでした。リンクを長押ししてコピーしてください。"));
     }
   }
 
@@ -451,14 +491,28 @@ export function App() {
           </> : <p className="read-only-note">通知はスマホアプリで設定できます。</p>}
           <section className="account-card">
             <h2>家族と契約</h2>
-            {accountError && <p className="error-message" role="alert">{accountError}</p>}
-            {!accountPreview && !accountError && <p className="read-only-note" role="status">アカウント情報を確認中…</p>}
-            {accountPreview && <>
+            {!online && <p className="read-only-note">契約と家族の情報は、接続しているときに確認できます。</p>}
+            {online && accountError && <p className="error-message" role="alert">{accountError}</p>}
+            {online && !accountPreview && !accountError && <p className="read-only-note" role="status">アカウント情報を確認中…</p>}
+            {online && accountPreview && <>
               <p>{accountPreview.account.displayName}さんの家族：{accountPreview.household.memberCount}人</p>
               <p>{accountPreview.subscription.active ? "家族プランを利用中" : "無料プラン"}</p>
               {accountPreview.subscription.provider === "stripe" && <p className="read-only-note">契約はWeb版から管理できます。</p>}
             </>}
           </section>
+          {online && accountPreview && !accountPreview.account.isAnonymous && <section className="account-card">
+            <h2>家族を招待</h2>
+            <p>招待リンクを家族に送ると、同じ献立と買い物リストを使えます。</p>
+            {!accountPreview.subscription.active && <p className="read-only-note">招待リンクの作成には家族プランが必要です。</p>}
+            {accountPreview.subscription.active && <button className="primary-button" type="button"
+              disabled={!online || inviteBusy} onClick={() => void createInvite()}>{inviteBusy ? "作成中…" : "招待リンクを作る"}</button>}
+            {inviteError && <p className="error-message" role="alert">{inviteError}</p>}
+            {familyInvites.map((invite) => <div className="invite-entry" key={invite.id}>
+              <p>有効期限：{new Date(invite.expiresAt).toLocaleString("ja-JP")}</p>
+              <input type="text" readOnly aria-label="家族への招待リンク" value={invite.url} onFocus={(event) => event.target.select()} />
+              <button type="button" onClick={() => void shareInvite(invite)}>共有する</button>
+            </div>)}
+          </section>}
         </section> : activeTab === "today" ? <section className="today-page">
           <div className="page-heading"><span className="section-tag">TODAY</span><h1>今日の献立</h1>
             <p>{todaySnapshot ? `${formatDate(todaySnapshot.today.date)}（${todaySnapshot.today.dow}）` :
