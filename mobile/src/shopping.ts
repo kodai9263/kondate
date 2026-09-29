@@ -1,3 +1,6 @@
+export class ShoppingAccessError extends Error {}
+export class ShoppingSessionError extends Error {}
+
 export type ShoppingItem = {
   source: "auto" | "manual";
   id?: string;
@@ -73,22 +76,22 @@ export async function performShoppingAction(accessToken: string, snapshot: Shopp
     cache: "no-store",
   });
   if (response.status === 409) throw new Error("買い物リストが更新されました。最新の内容を確認してください。");
-  if (response.status === 401) throw new Error("ログインの有効期限が切れました。もう一度ログインしてください。");
-  if (response.status === 403) throw new Error("この家族の買い物リストにはアクセスできません。");
+  if (response.status === 401) throw new ShoppingSessionError("ログインの有効期限が切れました。もう一度ログインしてください。");
+  if (response.status === 403) throw new ShoppingAccessError("この家族の買い物リストにはアクセスできません。");
   if (!response.ok) throw new Error("保存できませんでした。接続を確認してください。");
   return loadShopping(accessToken);
 }
 
 async function parseShoppingResponse(response: Response): Promise<ShoppingSnapshot> {
-  if (response.status === 401) throw new Error("ログインの有効期限が切れました。もう一度ログインしてください。");
-  if (response.status === 403) throw new Error("この家族の買い物リストにはアクセスできません。");
+  if (response.status === 401) throw new ShoppingSessionError("ログインの有効期限が切れました。もう一度ログインしてください。");
+  if (response.status === 403) throw new ShoppingAccessError("この家族の買い物リストにはアクセスできません。");
   if (!response.ok) throw new Error("買い物リストを読み込めませんでした。接続を確認してください。");
   const value: unknown = await response.json();
   if (!isShoppingSnapshot(value)) throw new Error("買い物リストの形式を確認できませんでした。");
   return value;
 }
 
-function isShoppingSnapshot(value: unknown): value is ShoppingSnapshot {
+export function isShoppingSnapshot(value: unknown): value is ShoppingSnapshot {
   if (!value || typeof value !== "object") return false;
   const snapshot = value as Partial<ShoppingSnapshot>;
   return snapshot.version === 1 && typeof snapshot.fetchedAt === "string"
