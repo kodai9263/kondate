@@ -9,7 +9,7 @@ import { ShoppingAccessError, ShoppingSessionError } from "./shopping";
 import { clearShoppingCache, loadShoppingCache, saveShoppingCache } from "./shoppingCache";
 import { loadToday, type TodaySnapshot } from "./today";
 import { loadAccountPreview, type AccountPreview } from "./account";
-import { createFamilyInvite, loadFamilyInvites, type FamilyInvite } from "./invites";
+import { createFamilyInvite, loadFamilyInvites, revokeFamilyInvite, type FamilyInvite } from "./invites";
 
 export function App() {
   const [email, setEmail] = useState("");
@@ -422,6 +422,20 @@ export function App() {
     }
   }
 
+  async function revokeInvite(invite: FamilyInvite) {
+    if (!accessToken || !online || inviteBusy || !window.confirm("この招待リンクを使えなくしますか？")) return;
+    setInviteBusy(true);
+    setInviteError("");
+    try {
+      await revokeFamilyInvite(accessToken, invite.id);
+      setFamilyInvites((current) => current.filter((item) => item.id !== invite.id));
+    } catch (cause) {
+      setInviteError(displayError(cause, "招待リンクを解除できませんでした。"));
+    } finally {
+      setInviteBusy(false);
+    }
+  }
+
   const items = snapshot ? [
     ...snapshot.groups.flatMap((group) => group.items),
     ...snapshot.manualItems,
@@ -511,6 +525,7 @@ export function App() {
               <p>有効期限：{new Date(invite.expiresAt).toLocaleString("ja-JP")}</p>
               <input type="text" readOnly aria-label="家族への招待リンク" value={invite.url} onFocus={(event) => event.target.select()} />
               <button type="button" onClick={() => void shareInvite(invite)}>共有する</button>
+              <button type="button" disabled={inviteBusy} onClick={() => void revokeInvite(invite)}>リンクを解除</button>
             </div>)}
           </section>}
         </section> : activeTab === "today" ? <section className="today-page">

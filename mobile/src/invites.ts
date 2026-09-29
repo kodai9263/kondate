@@ -15,10 +15,11 @@ function parseInvite(value: unknown): FamilyInvite {
   return invite as FamilyInvite;
 }
 
-async function requestInvites(accessToken: string, method: "GET" | "POST") {
+async function requestInvites(accessToken: string, method: "GET" | "POST" | "DELETE", id?: string) {
   const response = await fetch(`${apiBase()}/api/mobile/v1/invites`, {
     method,
-    headers: { Authorization: `Bearer ${accessToken}` },
+    headers: { Authorization: `Bearer ${accessToken}`, ...(id ? { "Content-Type": "application/json" } : {}) },
+    ...(id ? { body: JSON.stringify({ id }) } : {}),
     cache: "no-store",
   });
   if (response.status === 401) throw new Error("ログインの有効期限が切れました。もう一度ログインしてください。");
@@ -37,4 +38,9 @@ export async function createFamilyInvite(accessToken: string): Promise<FamilyInv
   const value = await requestInvites(accessToken, "POST") as { version?: unknown; invite?: unknown };
   if (value.version !== 1) throw new Error("招待リンクの形式を確認できませんでした。");
   return parseInvite(value.invite);
+}
+
+export async function revokeFamilyInvite(accessToken: string, id: string): Promise<void> {
+  const value = await requestInvites(accessToken, "DELETE", id) as { version?: unknown; revoked?: unknown };
+  if (value.version !== 1 || value.revoked !== true) throw new Error("招待リンクの解除を確認できませんでした。");
 }

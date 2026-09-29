@@ -7,7 +7,7 @@ export function OPTIONS(request: Request) {
   const origin = mobileOrigin(request);
   if (origin === false || origin === null) return new Response(null, { status: 403, headers: mobileNoStore });
   return new Response(null, { status: 204, headers: {
-    ...mobileResponseHeaders(origin), "Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Access-Control-Max-Age": "600",
+    ...mobileResponseHeaders(origin), "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS", "Access-Control-Max-Age": "600",
   } });
 }
 
@@ -67,5 +67,25 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Mobile invite creation failed", error);
     return mobileJsonError("invite_creation_failed", 503, origin);
+  }
+}
+
+export async function DELETE(request: Request) {
+  const origin = mobileOrigin(request);
+  if (origin === false) return mobileJsonError("origin_not_allowed", 403, null);
+  try {
+    const identified = await identify(request, origin);
+    if (identified instanceof Response) return identified;
+    const body: unknown = await request.json();
+    const id = body && typeof body === "object" && "id" in body ? body.id : null;
+    if (typeof id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+      return mobileJsonError("invalid_invite", 400, origin);
+    }
+    const { error } = await identified.supabase.rpc("revoke_household_invite", { invite_id_input: id });
+    if (error) return mobileJsonError("invite_revocation_failed", 403, origin);
+    return Response.json({ version: 1, revoked: true }, { headers: mobileResponseHeaders(origin) });
+  } catch (error) {
+    console.error("Mobile invite revocation failed", error);
+    return mobileJsonError("invite_revocation_failed", 503, origin);
   }
 }

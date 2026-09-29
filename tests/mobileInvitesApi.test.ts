@@ -4,7 +4,7 @@ const mocks = vi.hoisted(() => ({ createClient: vi.fn() }));
 vi.mock("@/lib/supabase/mobile", () => ({ createMobileRequestClient: mocks.createClient }));
 vi.mock("@/lib/family/invites", () => ({ buildInviteUrl: (token: string) => `https://example.test/invite/${token}` }));
 
-import { GET, OPTIONS, POST } from "@/app/api/mobile/v1/invites/route";
+import { DELETE, GET, OPTIONS, POST } from "@/app/api/mobile/v1/invites/route";
 
 const token = "test-token-for-mobile-request";
 
@@ -15,6 +15,7 @@ function request(method: "GET" | "POST", origin = "capacitor://localhost", autho
 }
 
 function fakeClient(input: { anonymous?: boolean; status?: string } = {}) {
+  const rpc = vi.fn(async () => ({ error: null }));
   const insert = vi.fn(() => ({ select: () => ({ single: async () => ({ data: {
     id: "invite-1", invite_token: "token-1", expires_at: "2026-10-07T00:00:00Z",
   }, error: null }) }) }));
@@ -31,7 +32,7 @@ function fakeClient(input: { anonymous?: boolean; status?: string } = {}) {
   });
   return {
     auth: { getUser: vi.fn(async () => ({ data: { user: { id: "user-1", is_anonymous: input.anonymous ?? false } }, error: null })) },
-    from, insert,
+    from, insert, rpc,
   };
 }
 
@@ -74,5 +75,28 @@ describe("スマホ向け家族招待API", () => {
     expect(response.status).toBe(201);
     expect(await response.json()).toMatchObject({ invite: { url: "https://example.test/invite/token-1" } });
     expect(client.insert).toHaveBeenCalledWith({ household_id: "household-1", created_by: "user-1" });
+  });
+
+  it("本人確認後に招待リンクを解除する", async () => {
+    const client = fakeClient();
+    mocks.createClient.mockReturnValue(client);
+    const id = "4df384eb-6120-49c5-9927-7a9743626e6f";
+    const response = await DELETE(new Request("https://example.test/api/mobile/v1/invites", {
+      method: "DELETE", headers: { origin: "capacitor://localhost", authorization: `Bearer ${token}` },
+      body: JSON.stringify({ id }),
+    }));
+    expect(response.status).toBe(200);
+    expect(client.rpc).toHaveBeenCalledWith("revoke_household_invite", { invite_id_input: id });
+  });
+
+  it("不正な招待IDは解除処理へ渡さない", async () => {
+    const client = fakeClient();
+    mocks.createClient.mockReturnValue(client);
+    const response = await DELETE(new Request("https://example.test/api/mobile/v1/invites", {
+      method: "DELETE", headers: { origin: "capacitor://localhost", authorization: `Bearer ${token}` },
+      body: JSON.stringify({ id: "invalid" }),
+    }));
+    expect(response.status).toBe(400);
+    expect(client.rpc).not.toHaveBeenCalled();
   });
 });
