@@ -42,6 +42,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      household_settings: {
+        Row: {
+          household_id: string;
+          adult_count: number;
+          child_count: number;
+          default_servings: number;
+        };
+        Insert: {
+          household_id: string;
+          adult_count?: number;
+          child_count?: number;
+          default_servings?: number;
+        };
+        Update: {
+          household_id?: string;
+          adult_count?: number;
+          child_count?: number;
+          default_servings?: number;
+        };
+        Relationships: [];
+      };
       household_subscriptions: {
         Row: {
           household_id: string;

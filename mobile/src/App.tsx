@@ -10,6 +10,7 @@ import { clearShoppingCache, loadShoppingCache, saveShoppingCache } from "./shop
 import { loadToday, type TodaySnapshot } from "./today";
 import { loadAccountPreview, type AccountPreview } from "./account";
 import { createFamilyInvite, loadFamilyInvites, revokeFamilyInvite, type FamilyInvite } from "./invites";
+import { loadFamilySize, saveFamilySize, type FamilySizeSettings } from "./familySize";
 
 export function App() {
   const [email, setEmail] = useState("");
@@ -48,6 +49,12 @@ export function App() {
   const [familyInvites, setFamilyInvites] = useState<FamilyInvite[]>([]);
   const [inviteError, setInviteError] = useState("");
   const [inviteBusy, setInviteBusy] = useState(false);
+  const [familySize, setFamilySize] = useState<FamilySizeSettings | null>(null);
+  const [adultCountDraft, setAdultCountDraft] = useState("");
+  const [childCountDraft, setChildCountDraft] = useState("");
+  const [familySizeError, setFamilySizeError] = useState("");
+  const [familySizeMessage, setFamilySizeMessage] = useState("");
+  const [familySizeBusy, setFamilySizeBusy] = useState(false);
 
   function acceptShopping(value: ShoppingSnapshot, ownerId: string) {
     setSnapshot(value);
@@ -165,6 +172,7 @@ export function App() {
         setAccountPreview(null);
         setAccountError("");
         setFamilyInvites([]);
+        setFamilySize(null);
         if (event === "SIGNED_OUT") void discardShoppingCache().catch(() => {});
       } else if (authReady.current) {
         if (currentUserId.current && currentUserId.current !== session.user.id) {
@@ -172,6 +180,7 @@ export function App() {
           setAccountPreview(null);
           setAccountError("");
           setFamilyInvites([]);
+          setFamilySize(null);
         }
         currentUserId.current = session.user.id;
         setUserId(session.user.id);
@@ -242,6 +251,21 @@ export function App() {
       if (!cancelled) { setAccountPreview(value); setAccountError(""); }
     }).catch((cause: unknown) => {
       if (!cancelled) { setAccountPreview(null); setAccountError(displayError(cause, "アカウント情報を読み込めませんでした。")); }
+    });
+    return () => { cancelled = true; };
+  }, [accessToken, activeTab, online, refreshEpoch]);
+
+  useEffect(() => {
+    if (!accessToken || activeTab !== "settings" || !online) return;
+    let cancelled = false;
+    void loadFamilySize(accessToken).then((value) => {
+      if (cancelled) return;
+      setFamilySize(value);
+      setAdultCountDraft(String(value.adultCount));
+      setChildCountDraft(String(value.childCount));
+      setFamilySizeError("");
+    }).catch((cause: unknown) => {
+      if (!cancelled) { setFamilySize(null); setFamilySizeError(displayError(cause, "家族の人数を読み込めませんでした。")); }
     });
     return () => { cancelled = true; };
   }, [accessToken, activeTab, online, refreshEpoch]);
@@ -380,6 +404,9 @@ export function App() {
     setAccountError("");
     setFamilyInvites([]);
     setInviteError("");
+    setFamilySize(null);
+    setFamilySizeError("");
+    setFamilySizeMessage("");
     setReminderSettings(defaultReminderSettings);
     setNotice("");
   }
@@ -433,6 +460,35 @@ export function App() {
       setInviteError(displayError(cause, "招待リンクを解除できませんでした。"));
     } finally {
       setInviteBusy(false);
+    }
+  }
+
+  async function saveFamilySizeSettings() {
+    if (!accessToken || !online || familySizeBusy || !familySize) return;
+    if (!/^[1-9][0-9]*$/.test(adultCountDraft) || !/^(0|[1-9][0-9]*)$/.test(childCountDraft)) {
+      setFamilySizeError("大人は1〜10人、子どもは0〜10人で入力してください。");
+      return;
+    }
+    const adult = Number(adultCountDraft);
+    const child = Number(childCountDraft);
+    if (adult < 1 || adult > 10 || child < 0 || child > 10) {
+      setFamilySizeError("大人は1〜10人、子どもは0〜10人で入力してください。");
+      return;
+    }
+    setFamilySizeBusy(true);
+    setFamilySizeError("");
+    setFamilySizeMessage("");
+    try {
+      const saved = await saveFamilySize(accessToken, adult, child);
+      setFamilySize(saved);
+      setAdultCountDraft(String(saved.adultCount));
+      setChildCountDraft(String(saved.childCount));
+      setFamilySizeMessage("家族の人数を保存しました。献立と買い物を更新します。");
+      setRefreshEpoch((value) => value + 1);
+    } catch (cause) {
+      setFamilySizeError(displayError(cause, "家族の人数を保存できませんでした。"));
+    } finally {
+      setFamilySizeBusy(false);
     }
   }
 
@@ -513,6 +569,24 @@ export function App() {
               <p>{accountPreview.subscription.active ? "家族プランを利用中" : "無料プラン"}</p>
               {accountPreview.subscription.provider === "stripe" && <p className="read-only-note">契約はWeb版から管理できます。</p>}
             </>}
+          </section>
+          <section className="account-card">
+            <h2>家族の人数</h2>
+            <p>献立と買い物の分量計算に使います。</p>
+            {!online && <p className="read-only-note">人数の変更には通信が必要です。</p>}
+            {online && !familySize && !familySizeError && <p className="read-only-note" role="status">人数を確認中…</p>}
+            {online && familySize && <>
+              <div className="family-size-fields">
+                <label>大人<input type="number" inputMode="numeric" min="1" max="10" step="1" value={adultCountDraft}
+                  onChange={(event) => { setAdultCountDraft(event.target.value); setFamilySizeMessage(""); }} /></label>
+                <label>子ども<input type="number" inputMode="numeric" min="0" max="10" step="1" value={childCountDraft}
+                  onChange={(event) => { setChildCountDraft(event.target.value); setFamilySizeMessage(""); }} /></label>
+              </div>
+              <button className="primary-button" type="button" disabled={familySizeBusy} onClick={() => void saveFamilySizeSettings()}>
+                {familySizeBusy ? "保存中…" : "人数を保存"}</button>
+            </>}
+            {familySizeError && <p className="error-message" role="alert">{familySizeError}</p>}
+            {familySizeMessage && <p className="notice-message" role="status">{familySizeMessage}</p>}
           </section>
           {online && accountPreview && !accountPreview.account.isAnonymous && <section className="account-card">
             <h2>家族を招待</h2>
