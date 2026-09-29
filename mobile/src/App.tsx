@@ -8,6 +8,7 @@ import { loadShopping, performShoppingAction, saveShoppingChecked, type Shopping
 import { ShoppingAccessError, ShoppingSessionError } from "./shopping";
 import { clearShoppingCache, loadShoppingCache, saveShoppingCache } from "./shoppingCache";
 import { loadToday, type TodaySnapshot } from "./today";
+import { loadAccountPreview, type AccountPreview } from "./account";
 
 export function App() {
   const [email, setEmail] = useState("");
@@ -41,6 +42,8 @@ export function App() {
   const [reminderSettings, setReminderSettings] = useState<ReminderSettings>(defaultReminderSettings);
   const [reminderBusy, setReminderBusy] = useState(false);
   const [reminderMessage, setReminderMessage] = useState("");
+  const [accountPreview, setAccountPreview] = useState<AccountPreview | null>(null);
+  const [accountError, setAccountError] = useState("");
 
   function acceptShopping(value: ShoppingSnapshot, ownerId: string) {
     setSnapshot(value);
@@ -155,9 +158,15 @@ export function App() {
         setUserId(null);
         setSnapshot(null);
         setTodaySnapshot(null);
+        setAccountPreview(null);
+        setAccountError("");
         if (event === "SIGNED_OUT") void discardShoppingCache().catch(() => {});
       } else if (authReady.current) {
-        if (currentUserId.current && currentUserId.current !== session.user.id) setSnapshot(null);
+        if (currentUserId.current && currentUserId.current !== session.user.id) {
+          setSnapshot(null);
+          setAccountPreview(null);
+          setAccountError("");
+        }
         currentUserId.current = session.user.id;
         setUserId(session.user.id);
         setAccessToken(session.access_token);
@@ -218,6 +227,22 @@ export function App() {
     });
     return () => { cancelled = true; };
   }, [accessToken, refreshEpoch]);
+
+  useEffect(() => {
+    if (!accessToken || activeTab !== "settings") return;
+    if (!online) {
+      setAccountPreview(null);
+      setAccountError("契約と家族の情報は、接続しているときに確認できます。");
+      return;
+    }
+    let cancelled = false;
+    void loadAccountPreview(accessToken).then((value) => {
+      if (!cancelled) { setAccountPreview(value); setAccountError(""); }
+    }).catch((cause: unknown) => {
+      if (!cancelled) { setAccountPreview(null); setAccountError(displayError(cause, "アカウント情報を読み込めませんでした。")); }
+    });
+    return () => { cancelled = true; };
+  }, [accessToken, activeTab, online, refreshEpoch]);
 
   async function submitAuth(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -338,6 +363,8 @@ export function App() {
     setSnapshot(null);
     setCachedOnly(false);
     setTodaySnapshot(null);
+    setAccountPreview(null);
+    setAccountError("");
     setReminderSettings(defaultReminderSettings);
     setNotice("");
   }
@@ -422,6 +449,16 @@ export function App() {
             {reminderMessage && <p className="notice-message" role="status">{reminderMessage}</p>}
             <p className="read-only-note">通知は端末の状況により遅れる場合があります。ログアウトすると予約は解除されます。</p>
           </> : <p className="read-only-note">通知はスマホアプリで設定できます。</p>}
+          <section className="account-card">
+            <h2>家族と契約</h2>
+            {accountError && <p className="error-message" role="alert">{accountError}</p>}
+            {!accountPreview && !accountError && <p className="read-only-note" role="status">アカウント情報を確認中…</p>}
+            {accountPreview && <>
+              <p>{accountPreview.account.displayName}さんの家族：{accountPreview.household.memberCount}人</p>
+              <p>{accountPreview.subscription.active ? "家族プランを利用中" : "無料プラン"}</p>
+              {accountPreview.subscription.provider === "stripe" && <p className="read-only-note">契約はWeb版から管理できます。</p>}
+            </>}
+          </section>
         </section> : activeTab === "today" ? <section className="today-page">
           <div className="page-heading"><span className="section-tag">TODAY</span><h1>今日の献立</h1>
             <p>{todaySnapshot ? `${formatDate(todaySnapshot.today.date)}（${todaySnapshot.today.dow}）` :
