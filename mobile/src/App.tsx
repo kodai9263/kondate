@@ -25,6 +25,7 @@ export function App() {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [online, setOnline] = useState(navigator.onLine);
+  const [refreshEpoch, setRefreshEpoch] = useState(0);
 
   useEffect(() => {
     const onOnline = () => setOnline(true);
@@ -36,6 +37,21 @@ export function App() {
       window.removeEventListener("offline", onOffline);
     };
   }, []);
+
+  useEffect(() => {
+    if (!accessToken) return;
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible" && navigator.onLine) {
+        setRefreshEpoch((value) => value + 1);
+      }
+    };
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    window.addEventListener("online", refreshWhenVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+      window.removeEventListener("online", refreshWhenVisible);
+    };
+  }, [accessToken]);
 
   useEffect(() => {
     if (!supabase) return;
@@ -64,7 +80,7 @@ export function App() {
       if (!cancelled) setError(displayError(cause, "買い物リストを読み込めませんでした。"));
     }).finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [accessToken]);
+  }, [accessToken, refreshEpoch]);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -75,7 +91,7 @@ export function App() {
       if (!cancelled) setTodayError(displayError(cause, "今日の献立を読み込めませんでした。"));
     });
     return () => { cancelled = true; };
-  }, [accessToken]);
+  }, [accessToken, refreshEpoch]);
 
   async function submitAuth(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
