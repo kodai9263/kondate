@@ -225,6 +225,10 @@ export type Database = {
         };
         Returns: string;
       };
+      revoke_household_invite: {
+        Args: { invite_id_input: string };
+        Returns: void;
+      };
       complete_planned_shopping: {
         Args: {
           target_week_start: string;
