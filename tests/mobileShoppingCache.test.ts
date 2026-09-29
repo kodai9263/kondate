@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import { describe, expect, it } from "vitest";
-import { parseShoppingCache } from "../mobile/src/shoppingCache";
+import { parseShoppingCache } from "../mobile/src/shoppingCacheParser";
 import type { ShoppingSnapshot } from "../mobile/src/shopping";
 
 const fetchedAt = "2026-09-29T03:00:00.000Z";
