@@ -1,5 +1,6 @@
 export type AccountPreview = {
   version: 1;
+  deletionAvailable?: boolean;
   account: { displayName: string; isAnonymous: boolean };
   household: { memberCount: number; lastMember: boolean };
   subscription: { active: boolean; status: string; provider: "stripe" | "none" };
@@ -21,7 +22,8 @@ export async function loadAccountPreview(accessToken: string): Promise<AccountPr
 function isAccountPreview(value: unknown): value is AccountPreview {
   if (!value || typeof value !== "object") return false;
   const preview = value as Partial<AccountPreview>;
-  return preview.version === 1 && typeof preview.account?.displayName === "string"
+  return preview.version === 1 && (preview.deletionAvailable === undefined || typeof preview.deletionAvailable === "boolean")
+    && typeof preview.account?.displayName === "string"
     && typeof preview.account.isAnonymous === "boolean"
     && Number.isInteger(preview.household?.memberCount) && (preview.household?.memberCount ?? 0) > 0
     && typeof preview.household?.lastMember === "boolean"

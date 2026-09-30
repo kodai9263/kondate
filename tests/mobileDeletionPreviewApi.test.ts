@@ -34,6 +34,7 @@ function fakeClient(input: { members?: string[]; status?: string; stripe?: boole
 
 beforeEach(() => {
   vi.clearAllMocks();
+  delete process.env.ACCOUNT_DELETION_ENABLED;
   mocks.createClient.mockReturnValue(fakeClient());
 });
 
@@ -50,6 +51,7 @@ describe("スマホ向け退会前の確認API", () => {
     expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(await response.json()).toMatchObject({
       version: 1,
+      deletionAvailable: false,
       account: { displayName: "本人", isAnonymous: false },
       household: { memberCount: 2, lastMember: false },
       subscription: { active: false, provider: "none" },

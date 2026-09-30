@@ -11,6 +11,9 @@ import { loadToday, type TodaySnapshot } from "./today";
 import { loadAccountPreview, type AccountPreview } from "./account";
 import { createFamilyInvite, loadFamilyInvites, revokeFamilyInvite, type FamilyInvite } from "./invites";
 import { loadFamilySize, saveFamilySize, type FamilySizeSettings } from "./familySize";
+import { checkAccountDeletion, requestAccountDeletion, type DeletionStatus } from "./deletion";
+
+const deletionReceiptKey = "kondate-account-deletion-receipt-v1";
 
 export function App() {
   const [email, setEmail] = useState("");
@@ -55,6 +58,22 @@ export function App() {
   const [familySizeError, setFamilySizeError] = useState("");
   const [familySizeMessage, setFamilySizeMessage] = useState("");
   const [familySizeBusy, setFamilySizeBusy] = useState(false);
+  const [deletionReceipt, setDeletionReceipt] = useState(() => localStorage.getItem(deletionReceiptKey));
+  const [deletionStatus, setDeletionStatus] = useState<DeletionStatus["status"] | null>(null);
+  const [deletionConfirmation, setDeletionConfirmation] = useState("");
+  const [deletionBusy, setDeletionBusy] = useState(false);
+  const [deletionError, setDeletionError] = useState("");
+
+  useEffect(() => {
+    if (!deletionReceipt || !online) return;
+    let cancelled = false;
+    void checkAccountDeletion(deletionReceipt).then((result) => {
+      if (!cancelled) { setDeletionStatus(result.status); setDeletionError(""); }
+    }).catch((cause: unknown) => {
+      if (!cancelled) setDeletionError(displayError(cause, "退会の状況を確認できませんでした。"));
+    });
+    return () => { cancelled = true; };
+  }, [deletionReceipt, online]);
 
   function acceptShopping(value: ShoppingSnapshot, ownerId: string) {
     setSnapshot(value);
@@ -492,6 +511,34 @@ export function App() {
     }
   }
 
+  async function deleteAccount() {
+    if (!accessToken || !online || deletionBusy || deletionConfirmation !== "削除") return;
+    if (!window.confirm("このアカウントを削除します。元に戻せません。続けますか？")) return;
+    setDeletionBusy(true);
+    setDeletionError("");
+    try {
+      const result = await requestAccountDeletion(accessToken);
+      setDeletionReceipt(result.receipt);
+      setDeletionStatus(result.status);
+      try { localStorage.setItem(deletionReceiptKey, result.receipt); }
+      catch { setDeletionError("受付番号を端末に保存できませんでした。この画面の番号を控えてください。"); }
+      await signOut();
+    } catch (cause) {
+      setDeletionError(displayError(cause, "退会を受け付けられませんでした。"));
+    } finally {
+      setDeletionBusy(false);
+    }
+  }
+
+  async function refreshDeletionStatus() {
+    if (!deletionReceipt || !online || deletionBusy) return;
+    setDeletionBusy(true);
+    setDeletionError("");
+    try { setDeletionStatus((await checkAccountDeletion(deletionReceipt)).status); }
+    catch (cause) { setDeletionError(displayError(cause, "退会の状況を確認できませんでした。")); }
+    finally { setDeletionBusy(false); }
+  }
+
   const items = snapshot ? [
     ...snapshot.groups.flatMap((group) => group.items),
     ...snapshot.manualItems,
@@ -513,6 +560,16 @@ export function App() {
       {!isConfigured ? <section className="card setup-message" role="alert">
         <h1>接続設定を確認してください</h1>
         <p>アプリの認証先がまだ設定されていません。開発用の設定を確認してください。</p>
+      </section> : deletionReceipt ? <section className="login-card">
+        <span className="section-tag">ACCOUNT</span><h1>退会の状況</h1>
+        <p>{deletionStatus === "completed" ? "アカウントの削除が完了しました。" : "退会を受け付け、処理を続けています。"}</p>
+        <p className="hint">受付番号：{deletionReceipt}</p>
+        {deletionStatus !== "completed" && <button className="primary-button" type="button" disabled={!online || deletionBusy}
+          onClick={() => void refreshDeletionStatus()}>{deletionBusy ? "確認中…" : "状況を再確認"}</button>}
+        {deletionError && <p className="error-message" role="alert">{deletionError}</p>}
+        {deletionStatus === "completed" && <button type="button" className="text-button" onClick={() => {
+          localStorage.removeItem(deletionReceiptKey); setDeletionReceipt(null); setDeletionStatus(null);
+        }}>ログイン画面へ</button>}
       </section> : restoringSession ? <p className="loading" role="status">ログイン状態を確認中…</p> : !accessToken ? <section className="login-card">
         <span className="section-tag">きょうのごはん</span>
         <h1>{authMode === "signup" ? "無料で始める" : authMode === "reset" ? "パスワードを再設定" : <>今日の献立も、<br />買い物も、手のひらに。</>}</h1>
@@ -602,6 +659,19 @@ export function App() {
               <button type="button" disabled={inviteBusy} onClick={() => void revokeInvite(invite)}>リンクを解除</button>
             </div>)}
           </section>}
+          <section className="account-card">
+            <h2>退会</h2>
+            <p>アカウントとあなたのプロフィールを削除します。元に戻せません。</p>
+            {accountPreview && <p>{accountPreview.household.lastMember ? "家族の最後の一人のため、共有していた献立と買い物も削除します。" : "ほかの家族の献立と買い物は残し、あなたの操作履歴から名前を外します。"}</p>}
+            {accountPreview?.subscription.provider === "stripe" && <p>退会しても定期購入は自動解約されません。契約元で別途解約してください。</p>}
+            {!accountPreview?.deletionAvailable ? <p className="read-only-note">退会受付は準備中です。</p> : <>
+              <label className="deletion-confirmation">確認のため「削除」と入力してください<input type="text" autoComplete="off"
+                value={deletionConfirmation} onChange={(event) => setDeletionConfirmation(event.target.value)} /></label>
+              <button className="primary-button danger-button" type="button" disabled={!online || deletionBusy || deletionConfirmation !== "削除"}
+                onClick={() => void deleteAccount()}>{deletionBusy ? "処理中…" : "アカウントを削除する"}</button>
+            </>}
+            {deletionError && <p className="error-message" role="alert">{deletionError}</p>}
+          </section>
         </section> : activeTab === "today" ? <section className="today-page">
           <div className="page-heading"><span className="section-tag">TODAY</span><h1>今日の献立</h1>
             <p>{todaySnapshot ? `${formatDate(todaySnapshot.today.date)}（${todaySnapshot.today.dow}）` :

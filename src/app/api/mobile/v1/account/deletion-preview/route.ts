@@ -36,6 +36,7 @@ export async function GET(request: Request) {
     }
 
     return Response.json({ version: 1,
+      deletionAvailable: process.env.ACCOUNT_DELETION_ENABLED === "true",
       account: { displayName: profile.display_name, isAnonymous: user.is_anonymous ?? false },
       household: { memberCount: members.length, lastMember: members.length === 1 },
       subscription: { active: subscription ? isActiveSubscriptionStatus(subscription.status, subscription.current_period_end) : false,
