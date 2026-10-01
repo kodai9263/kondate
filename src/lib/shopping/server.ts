@@ -58,7 +58,7 @@ export const getPlannedShopping = cache(async (client?: ShoppingClient, accessTo
   const groups = result.groups.map((group) => ({ ...group, items: group.items.map((item) => ({
     ...item,
     // 表示名と保存キーを分離し、長文や分量変更でも古いチェックを誤適用しない。
-    name: `planned-v1:${createHash("sha256").update(item.label).digest("hex")}`,
+    name: `planned-v1:${createHash("sha256").update(item.name).digest("hex")}`,
   })) }));
   return {
     ...context,

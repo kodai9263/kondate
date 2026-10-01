@@ -88,10 +88,17 @@ export function buildPlannedShopping({ start, end, dinners, breakfastVersions, s
       continue;
     }
     const count = new Set(entry.contributions.map((item) => `${item.date}:${item.meal}`)).size;
-    const quantity = entry.amount === null ? `${count}回分・数量確認` : `${formatIngredientAmount(entry.amount, entry.unit)}${entry.unscaled ? "・人数分を確認" : ""}`;
+    const storedQuantity = entry.amount === null ? `${count}回分・数量確認` : `${formatIngredientAmount(entry.amount, entry.unit)}${entry.unscaled ? "・人数分を確認" : ""}`;
+    // 鶏もも・むねは合計後に購入枚数へ切り上げる。重量は必要量の目安として残す。
+    const chickenSheets = entry.amount !== null && entry.unit === "g" && /^(鶏もも肉|鶏むね肉)$/.test(entry.name);
+    const amountLabel = chickenSheets
+      ? `約${Math.ceil((entry.amount! - 1e-9) / 300)}枚（必要量${formatIngredientAmount(entry.amount!, entry.unit)}・1枚約300g）`
+      : entry.amount === null ? `${count}回分・数量確認` : formatIngredientAmount(entry.amount, entry.unit);
+    const quantity = `${amountLabel}${entry.amount !== null && entry.unscaled ? "・人数分を確認" : ""}`;
+
     const label = `${entry.name} ${quantity}${entry.note ? ` ${entry.note}` : ""}`;
     // nameはDBの識別にも使う。長文も省略せず、保存キーはサーバー側で付ける。
-    items.push({ category, name: label, label, position: items.length, needsReview: review, contributions: entry.contributions });
+    items.push({ category, name: `${entry.name} ${storedQuantity}${entry.note ? ` ${entry.note}` : ""}`, label, position: items.length, needsReview: review, contributions: entry.contributions });
     groups.set(category, items);
   }
   return { groups: categoryOrder.filter((category) => groups.has(category)).map((category) => ({ category, items: groups.get(category)! })), warnings, meals };
