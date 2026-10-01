@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const mock = vi.hoisted(() => ({ settings: {} as Record<string, unknown>, completions: [] as Array<Record<string, unknown>>, planner: vi.fn(), resolve: vi.fn() }));
 vi.mock("@/lib/family/server", () => ({ getCurrentHouseholdPreferences: async () => ({ shoppingDay: 6, adultCount: 4, childCount: 0 }) }));
@@ -28,6 +29,16 @@ beforeEach(() => {
 });
 
 describe("買い物の対象月と集計", () => {
+  it("鶏肉の枚数表示でも従来の重量から作った保存キーを保持する", async () => {
+    mock.settings.shopping_range_end = "2026-09-30";
+    mock.resolve.mockReturnValue([{ date: "2026-09-30", recipe: {
+      name: "夕食", ingredientsText: "鶏もも肉 400g", servingsBase: 4, isCustom: true,
+    } }]);
+    const shopping = await getPlannedShopping();
+    expect(shopping.groups[0].items[0].label).toBe("鶏もも肉 約2枚（必要量400g・1枚約300g）");
+    expect(shopping.groups[0].items[0].name).toBe(`planned-v1:${createHash("sha256").update("鶏もも肉 400g").digest("hex")}`);
+  });
+
   it("3か月にまたがる指定期間の献立を読み込み、前日と翌日を含めない", async () => {
     const shopping = await getPlannedShopping();
     expect(mock.planner.mock.calls).toEqual([[2026, 9, true], [2026, 10, true], [2026, 11, true]]);

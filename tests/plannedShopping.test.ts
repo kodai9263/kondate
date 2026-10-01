@@ -61,6 +61,26 @@ describe("買い物の7日間", () => {
 });
 
 describe("献立からの材料集計", () => {
+  it("鶏肉は人数換算と日別合算の後に購入枚数を切り上げ、必要重量を残す", () => {
+    const dinners = ["2026-09-19", "2026-09-20"].map((date) => ({ ...dinner("hamburg", date),
+      recipe: { ...recipe("hamburg"), isCustom: true, servingsBase: 4,
+        ingredientsText: "鶏もも肉 400g\n鶏むね肉 0.3kg\n鶏ひき肉 100g" },
+    }));
+    expect(labels(build(dinners, [], 2))).toEqual([
+      "鶏もも肉 約2枚（必要量400g・1枚約300g）",
+      "鶏むね肉 約1枚（必要量300g・1枚約300g）",
+      "鶏ひき肉 100g",
+    ]);
+  });
+  it("枚数に添えた重量とグラム表記を合算してから枚数へ換算する", () => {
+    const result = build([{ ...dinner("hamburg"), recipe: { ...recipe("hamburg"), isCustom: true,
+      servingsBase: 4, ingredientsText: "鶏もも肉 2枚（約600g）\n鶏もも 300g\n鶏むね肉 2枚" } }]);
+    expect(result.groups[0].items[0].name).toBe("鶏もも肉 900g");
+    expect(labels(result)).toEqual([
+      "鶏もも肉 約3枚（必要量900g・1枚約300g）", "鶏むね肉 2枚",
+    ]);
+  });
+
   it.each([
     ["2026-09-19", "2026-09-19", 1],
     ["2026-09-19", "2026-09-25", 7],
