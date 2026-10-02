@@ -42,7 +42,7 @@ describe("モニター登録の導線", () => {
   it("確認メール待ちでもモニター・広告・招待の文脈を保つ", async () => {
     const data = form();
     await expect(signup(data)).rejects.toThrow(`redirect:${buildSignupReturnHref(data, { success: "check-email" })}`);
-    expect(mocks.signUp).toHaveBeenCalledWith(expect.objectContaining({ options: expect.objectContaining({ data: expect.objectContaining({ signup_source: "monitor", monitor_claim_token: expect.any(String) }), emailRedirectTo: `https://example.test/auth/callback?next=/invite/${invite}` }) }));
+    expect(mocks.signUp).toHaveBeenCalledWith(expect.objectContaining({ options: expect.objectContaining({ data: expect.objectContaining({ signup_source: "monitor", monitor_claim_token: expect.any(String) }), emailRedirectTo: `https://example.test/auth/callback?next=${encodeURIComponent(`/invite/${invite}`)}` }) }));
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
   it("登録失敗なら確保した枠を返却する", async () => {

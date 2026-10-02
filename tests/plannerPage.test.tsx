@@ -1,6 +1,7 @@
+vi.mock("@/lib/billing/firstWeek.server", () => ({ getFirstWeekAccess: async () => ({ paid: mocks.paid, trial: mocks.trial, user: { is_anonymous: false } }) }));
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ context: vi.fn(), shoppingDay: 6 }));
+const mocks = vi.hoisted(() => ({ context: vi.fn(), shoppingDay: 6, paid: true, trial: { start_date: null, selected_start: "2026-09-26" } as { start_date: string | null; selected_start: string } | null }));
 vi.mock("@/lib/nutrition/server", () => ({ getHouseholdPlannerContext: mocks.context }));
 vi.mock("@/components/features/planner/MonthlyPlanner", () => ({ MonthlyPlanner: () => null }));
 import PlannerPage from "@/app/app/planner/page";
@@ -8,6 +9,8 @@ import PlannerPage from "@/app/app/planner/page";
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.shoppingDay = 6;
+  mocks.paid = true;
+  mocks.trial = { start_date: null, selected_start: "2026-09-26" };
   mocks.context.mockImplementation(async (_year: number, month: number) => ({
     recipes: [], sideDishes: [], initialSideSelections: month === 10 ? { "2026-10-01": { mode: "none", sideDishId: null } } : {}, preferences: { adultCount: 2, childCount: 0, allergies: [], shoppingDay: mocks.shoppingDay },
     excludedRecipeCount: 0, preferredRecipeIds: [], preferenceExcludedCount: 0,
@@ -20,14 +23,14 @@ describe("献立ページの保存済みデータ読み込み", () => {
   it("月またぎでは両月を取得し、翌月の変更と固定も渡す", async () => {
     const page = await PlannerPage({ searchParams: Promise.resolve({ view: "week", date: "2026-10-01" }) });
     expect(mocks.context.mock.calls).toEqual([[2026, 10, true], [2026, 9, true]]);
-    expect(page.props.initialRecipeIds).toEqual({ "2026-09-30": "recipe-9", "2026-10-01": "recipe-10" });
-    expect(page.props.initialLockedRecipeIds).toEqual({ "2026-10-01": "recipe-10" });
-    expect(page.props.initialSideSelections).toEqual({ "2026-10-01": { mode: "none", sideDishId: null } });
+    expect(page.props.children[1].props.initialRecipeIds).toEqual({ "2026-09-30": "recipe-9", "2026-10-01": "recipe-10" });
+    expect(page.props.children[1].props.initialLockedRecipeIds).toEqual({ "2026-10-01": "recipe-10" });
+    expect(page.props.children[1].props.initialSideSelections).toEqual({ "2026-10-01": { mode: "none", sideDishId: null } });
   });
   it("月間は対象月だけを読み、従来のURLも開ける", async () => {
     const page = await PlannerPage({ searchParams: Promise.resolve({ month: "2026-10" }) });
     expect(mocks.context.mock.calls).toEqual([[2026, 10, true]]);
-    expect(page.props.initialView).toBe("month");
+    expect(page.props.children[1].props.initialView).toBe("month");
   });
   it("どちらかの月の取得に失敗したら編集画面を出さない", async () => {
     mocks.context.mockRejectedValueOnce(new Error("offline"));
@@ -40,11 +43,31 @@ it("同じ日付でもまとめ買い曜日に合わせて取得月を変える"
   mocks.shoppingDay = 6;
   const saturday = await PlannerPage({ searchParams: Promise.resolve({ view: "week", date: "2026-09-26" }) });
   expect(mocks.context.mock.calls).toEqual([[2026, 9, true], [2026, 10, true]]);
-  expect(saturday.props.shoppingDay).toBe(6);
+  expect(saturday.props.children[1].props.shoppingDay).toBe(6);
   mocks.context.mockClear();
   mocks.shoppingDay = 0;
   const sunday = await PlannerPage({ searchParams: Promise.resolve({ view: "week", date: "2026-09-26" }) });
   expect(mocks.context.mock.calls).toEqual([[2026, 9, true]]);
-  expect(sunday.props.shoppingDay).toBe(0);
-  expect(saturday.key).not.toBe(sunday.key);
+  expect(sunday.props.children[1].props.shoppingDay).toBe(0);
+  expect(saturday.props.children[1].key).not.toBe(sunday.props.children[1].key);
+});
+
+it("無料は指定URLに関係なく最初の7日分を表示する", async () => {
+  mocks.paid = false;
+  mocks.trial = { selected_start: "2026-12-29", start_date: "2026-12-29" };
+  const page = await PlannerPage({ searchParams: Promise.resolve({ month: "2027-02" }) });
+  expect(mocks.context.mock.calls).toEqual([[2026,12,true],[2027,1,true]]);
+  expect(page.props.children[1].props.firstWeekStart).toBe("2026-12-29");
+});
+it("無料の保存済み閲覧は編集不可にする", async () => {
+  mocks.paid = false;
+  const page = await PlannerPage({ searchParams: Promise.resolve({ month: "2026-10", history: "1" }) });
+  expect(page.props.children[1].props.readOnly).toBe(true);
+  expect(page.props.children[1].props.firstWeekStart).toBeUndefined();
+});
+
+it("既存の有料会員は無料設定がなくても献立を開ける", async () => {
+  mocks.trial = null;
+  const page = await PlannerPage({ searchParams: Promise.resolve({ month: "2026-10" }) });
+  expect(page.props.children[1].props.initialView).toBe("month");
 });

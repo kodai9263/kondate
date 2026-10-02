@@ -8,7 +8,7 @@ import { findTodayPlan } from "@/lib/services/planService";
 import { getCampaignFields } from "@/lib/marketing/campaignParams";
 
 const features = [
-  { title: "4週間分の献立", body: "用意された献立をもとに、家族の好みに合わせて変更できます。毎日、一から考える手間を減らせます。" },
+  { title: "最初の7日分の献立", body: "用意された献立をもとに、家族の好みに合わせて変更できます。毎日、一から考える手間を減らせます。" },
   { title: "今日の手順を確認", body: "朝に準備することと、夜に作る手順をまとめています。終わったところにチェックを入れながら進められます。" },
   { title: "買うものをリストに", body: "食材を売り場ごとに確認できます。足りないものは追加して、買ったものにはその場でチェック。" },
 ];
@@ -22,8 +22,8 @@ export default async function LandingPage({ searchParams }: { searchParams?: Pro
     { label: "肉・魚", items: [...week.shopping.肉.slice(0, 2), ...week.shopping.魚.slice(0, 1)] },
     { label: "野菜・果物", items: week.shopping["野菜・果物"].slice(0, 2) },
   ];
-  const primaryHref = isAuthenticated ? "/app" : campaignQuery ? `/signup?${campaignQuery}` as const : "/signup";
-  const primaryLabel = isAuthenticated ? "献立を開く" : "無料で始める";
+  const primaryHref = campaignQuery ? `/menus?${campaignQuery}` as const : "/menus";
+  const primaryLabel = "無料でメニューを見る";
 
   return (
     <main className="min-h-dvh bg-[#faf9f6] text-kondate-ink">
@@ -55,11 +55,11 @@ export default async function LandingPage({ searchParams }: { searchParams?: Pro
           <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-l-2 border-kondate-accent pl-4">
             <p className="text-sm leading-6">家族みんなで<br /><span className="text-kondate-muted">家族プラン</span></p>
             <p className="flex items-baseline gap-1"><span className="text-sm">月</span><span className="text-[38px] font-semibold leading-none tabular-nums">480</span><span className="text-sm">円</span></p>
-            <span className="text-xs text-kondate-muted">ひとりで試せる無料版も</span>
+            <span className="text-xs text-kondate-muted">メニュー閲覧は登録不要・無料</span>
           </div>
           <div className="mt-7">
             <Link href={primaryHref} className={buttonClass({ className: "min-h-14 w-full justify-between px-6 sm:w-64" })}>{primaryLabel}<ArrowRight size={18} aria-hidden="true" /></Link>
-            <p className="mt-2 text-xs leading-6 text-kondate-muted">{isAuthenticated ? "保存した献立の続きから使えます。" : "カード登録不要。まずは無料版で試せます。"}</p>
+            <p className="mt-2 text-xs leading-6 text-kondate-muted">{isAuthenticated ? "保存した献立の続きから使えます。" : "最初の7日分は無料。カード登録・自動課金なし。"}</p>
             <Link href="/demo/planner" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm underline decoration-kondate-line underline-offset-8 hover:decoration-kondate-muted">登録せずに献立生成を試す<ArrowRight size={15} aria-hidden="true" /></Link>
           </div>
         </div>
@@ -140,7 +140,7 @@ export default async function LandingPage({ searchParams }: { searchParams?: Pro
           <p className="mt-2 flex items-baseline gap-1"><span className="text-sm">月</span><span className="text-5xl font-medium tabular-nums">480</span><span className="text-sm">円</span></p>
           <p className="mt-2 text-xs text-kondate-muted">1契約で、家族みんなが使えます。</p>
           <ul className="mt-5 space-y-2 text-sm text-kondate-muted">
-            {["献立・買い物共有", "チェック状態の同期", "わが家のメニュー登録"].map((item) => <li key={item} className="flex items-center gap-2"><Check size={14} aria-hidden="true" />{item}</li>)}
+            {["献立・買い物共有", "チェック状態の同期", "週間・月間献立の継続利用"].map((item) => <li key={item} className="flex items-center gap-2"><Check size={14} aria-hidden="true" />{item}</li>)}
           </ul>
           <Link href="/pricing" className={buttonClass({ variant: "ink", fullWidth: true, className: "mt-6" })}>家族プランを見る<ArrowRight size={15} aria-hidden="true" /></Link>
         </div>

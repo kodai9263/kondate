@@ -1,3 +1,5 @@
+import { normalizeRecipeSelection, recipeSelectionDestination } from "@/lib/billing/firstWeek";
+import { buttonClass } from "@/components/ui/Button";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -51,6 +53,7 @@ export default async function RecipeStepsPage({
       <header className="mt-4 border-b border-kondate-line pb-5">
         <div className="flex flex-wrap items-center gap-2"><h1 className="font-mincho text-[26px] font-bold">{recipe.name}</h1>{kind === "community" ? <span className="rounded-sm bg-kondate-accentSoft px-2 py-1 text-xs text-kondate-accent">みんな</span> : null}{recipe.hasCustomization ? <span className="rounded-sm bg-kondate-doneSoft px-2 py-1 text-xs text-kondate-done">アレンジ済み</span> : null}</div>
         <p className="mt-1.5 text-sm text-kondate-muted">材料をそろえて、作り方を上から順番に進めてください。</p>
+        {normalizeRecipeSelection(`${kind}:${identifier}`) ? <div className="mt-4 flex flex-wrap gap-3"><Link href={recipeSelectionDestination(`${kind}:${identifier}`)} className={buttonClass({})}>この料理を献立に入れる</Link><Link href={recipeSelectionDestination(`${kind}:${identifier}`, true)} className={buttonClass({ variant: "secondary" })}>お気に入りに保存</Link></div> : null}
         {recipe.sourceUrl ? <a href={recipe.sourceUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm text-kondate-accent underline-offset-4 hover:underline">元レシピを見る<ExternalLink size={16} aria-hidden="true" /></a> : null}
       </header>
 

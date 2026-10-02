@@ -1,3 +1,4 @@
+vi.mock("@/lib/billing/firstWeek.server", () => ({ getFirstWeekAccess: async () => ({ paid: true, trial: { start_date: null, selected_start: "2026-09-26" }, user: { is_anonymous: false } }) }));
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PlanMeal } from "@/types/domain";
 

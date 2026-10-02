@@ -2,7 +2,6 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { RecipeForm } from "@/components/features/recipes/RecipeForm";
-import { isActiveSubscriptionStatus } from "@/lib/billing/entitlements";
 import { isRecipePublisher } from "@/lib/recipes/publisher";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
@@ -22,10 +21,6 @@ export default async function NewRecipePage({ searchParams }: { searchParams: Pr
   if (!user) redirect("/login");
   const { data: profile } = await supabase.from("profiles").select("household_id").eq("id", user.id).maybeSingle();
   if (!profile?.household_id) redirect("/app/recipes");
-  const { data: subscription } = await supabase.from("household_subscriptions").select("status,current_period_end").eq("household_id", profile.household_id).maybeSingle();
-  if (!subscription || !isActiveSubscriptionStatus(subscription.status, subscription.current_period_end)) {
-    redirect("/pricing?required=custom_recipes");
-  }
   return (
     <main className="mx-auto min-h-dvh w-full max-w-3xl px-4 pb-28 pt-5 sm:px-6">
       <Link href="/app/recipes" className="inline-flex min-h-11 items-center gap-2 text-sm text-kondate-muted transition-colors hover:text-kondate-ink"><ArrowLeft size={18} aria-hidden="true" />メニュー一覧</Link>

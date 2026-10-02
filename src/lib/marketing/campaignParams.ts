@@ -1,3 +1,4 @@
+import { normalizeMenuNext } from "@/lib/billing/firstWeek";
 import { normalizeInviteToken } from "@/lib/family/invites";
 import { normalizeSignupSource } from "@/lib/marketing/signupSource";
 
@@ -28,6 +29,7 @@ export function buildMonitorSignupHref(searchParams: SearchParams) {
 
 export function buildSignupReturnHref(formData: FormData, result: { error: string } | { success: string }) {
   const query = new URLSearchParams();
+  if (formData.get("next")) query.set("next", normalizeMenuNext(formData.get("next")));
   const source = normalizeSignupSource(formData.get("signupSource"));
   const invite = normalizeInviteToken(formData.get("inviteToken"));
   if (source) query.set("source", source);

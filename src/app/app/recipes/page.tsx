@@ -1,11 +1,10 @@
-import { ChevronRight, Crown, Plus } from "lucide-react";
+import { ChevronRight, Plus } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { buttonClass } from "@/components/ui/Button";
 import { ArchiveRecipeButton } from "@/components/features/recipes/ArchiveRecipeButton";
 import { databaseRecipeTime, isDinnerCandidate } from "@/lib/nutrition/cookingTime";
 import { officialNutritionRecipes } from "@/lib/nutrition/catalog";
-import { isActiveSubscriptionStatus } from "@/lib/billing/entitlements";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
 export default async function RecipesPage({ searchParams }: { searchParams: Promise<{ created?: string; deleted?: string; error?: string }> }) {
@@ -30,7 +29,7 @@ export default async function RecipesPage({ searchParams }: { searchParams: Prom
     const sourceId = getMetaString(recipe.meta, "source_recipe_id");
     return sourceId ? [sourceId] : [];
   }));
-  const paid = subscription ? isActiveSubscriptionStatus(subscription.status, subscription.current_period_end) : false;
+  void subscription;
   const excludedRecipeKeys = new Set((exclusions ?? []).map((row) => row.recipe_key));
   const visibleCommunityRecipes = (communityRecipeRows ?? []).filter((recipe) => {
     const exclusionKey = getMetaString(recipe.meta, "community_key") ?? `community:${recipe.id}`;
@@ -38,7 +37,8 @@ export default async function RecipesPage({ searchParams }: { searchParams: Prom
   });
   const visibleOfficialRecipes = officialNutritionRecipes.filter((recipe) => !excludedRecipeKeys.has(recipe.id) && !customizedOfficialKeys.has(recipe.id) && isDinnerCandidate(recipe));
   const visibleRecipeCount = visibleCommunityRecipes.length + visibleOfficialRecipes.length;
-  return <main className="mx-auto min-h-dvh w-full max-w-5xl px-4 pb-28 pt-5 sm:px-6"><header className="flex items-end justify-between gap-4 border-b border-kondate-line pb-5"><div><h1 className="font-mincho text-[26px] font-bold">メニュー</h1><p className="mt-1.5 text-sm text-kondate-muted">完成まで40分以内の料理から選べます。</p></div><Link href={paid ? "/app/recipes/new" : "/pricing?required=custom_recipes"} className={buttonClass({ className: "shrink-0 px-4 text-sm" })}>{paid ? <Plus size={18} aria-hidden="true" /> : <Crown size={18} aria-hidden="true" />}{paid ? "登録" : "家族プラン"}</Link></header>
+  return <main className="mx-auto min-h-dvh w-full max-w-5xl px-4 pb-28 pt-5 sm:px-6"><header className="flex items-end justify-between gap-4 border-b border-kondate-line pb-5"><div><h1 className="font-mincho text-[26px] font-bold">メニュー</h1><p className="mt-1.5 text-sm text-kondate-muted">完成まで40分以内の料理から選べます。</p></div><Link href="/app/recipes/new" className={buttonClass({ className: "shrink-0 px-4 text-sm" })}><Plus size={18} aria-hidden="true" />登録</Link></header>
+    <Link href="/app/favorites" className="mt-4 inline-flex min-h-11 items-center text-sm underline">お気に入りを見る</Link>
     <p className="mt-4 text-xs leading-6 text-kondate-muted">40分を超える料理と時間未確認の料理は、いったん候補から外しています。保存済みの献立はそのままです。</p>
     {created ? <p role="status" className="mt-5 rounded border border-kondate-done/30 bg-kondate-doneSoft p-3 text-sm">{created === "community" ? "メニューに追加しました。40分以内の料理が献立の候補に入ります。" : "新しいメニューを登録しました。40分以内の料理が献立の候補に入ります。"}</p> : null}
     {deleted ? <p role="status" className="mt-5 rounded border border-kondate-done/30 bg-kondate-doneSoft p-3 text-sm">メニューを削除しました。今後の献立候補には入りません。</p> : null}

@@ -6,7 +6,7 @@ import { addManualShoppingItem, changeShoppingPeriod, completeShopping, dismissS
 const item = { weekStart: "2026-09-20", rangeStart: "2026-09-19", rangeEnd: "2026-09-25", periodMode: "week", category: "肉", name: "planned-v1:actual", position: 0, checked: true };
 beforeEach(() => {
   vi.clearAllMocks();
-  mock.context.mockResolvedValue({ period: { storageWeekStart: item.weekStart, start: item.rangeStart, end: item.rangeEnd, mode: item.periodMode }, supabase: { rpc: mock.rpc } });
+  mock.context.mockResolvedValue({ paid: true, period: { storageWeekStart: item.weekStart, start: item.rangeStart, end: item.rangeEnd, mode: item.periodMode }, supabase: { rpc: mock.rpc } });
   mock.shopping.mockResolvedValue({ groups: [{ category: "肉", items: [{ category: "肉", name: item.name, label: "豚肉 400g", position: 0,
     contributions: [{ key: "meal-key", date: "2026-09-20", meal: "夕食", original: "豚肉 400g", scale: 1 }] }] }] });
   mock.saved.mockResolvedValue({ checkedKeys: [`肉\u001f${item.name}`], dismissedKeys: [], manualItems: [] });
@@ -71,4 +71,13 @@ describe("買い物保存時の照合", () => {
     expect(await undoShoppingCompletion({ ...item, completionId })).toEqual({ ok: true, completedCount: 2 });
     expect(mock.rpc).toHaveBeenCalledWith("undo_planned_shopping_completion", expect.objectContaining({ target_completion_id: completionId }));
   });
+});
+
+it("無料のチェックは固定期間用RPCを使い期間変更は拒否する", async () => {
+  mock.context.mockResolvedValue({ paid: false, period: { storageWeekStart: item.weekStart, start: item.rangeStart, end: item.rangeEnd, mode: item.periodMode }, supabase: { rpc: mock.rpc } });
+  expect(await setShoppingItemChecked(item)).toEqual({ ok: true });
+  expect(mock.rpc).toHaveBeenCalledWith("update_first_week_shopping",expect.objectContaining({ target_start: item.rangeStart, operation: "check" }));
+  mock.rpc.mockClear();
+  expect(await changeShoppingPeriod({ ...item, mode: "today" })).toEqual({ ok: false });
+  expect(mock.rpc).not.toHaveBeenCalled();
 });

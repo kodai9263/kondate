@@ -1,3 +1,4 @@
+import { normalizeMenuNext } from "@/lib/billing/firstWeek";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseServer, isSupabaseConfigured } from "@/lib/supabase/server";
 import { getSafeAuthRedirect } from "@/lib/auth/redirects";
@@ -16,5 +17,5 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.redirect(new URL("/login?error=callback", requestUrl.origin));
+  return NextResponse.redirect(new URL(`/login?error=callback&next=${encodeURIComponent(normalizeMenuNext(next))}`, requestUrl.origin));
 }

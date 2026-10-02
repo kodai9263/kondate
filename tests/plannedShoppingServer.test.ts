@@ -1,3 +1,4 @@
+vi.mock("@/lib/billing/firstWeek.server", () => ({ getFirstWeekAccess: async () => ({ paid: true, trial: { start_date: null, selected_start: "2026-09-26" }, user: { is_anonymous: false } }) }));
 import { createHash } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const mock = vi.hoisted(() => ({ settings: {} as Record<string, unknown>, completions: [] as Array<Record<string, unknown>>, planner: vi.fn(), resolve: vi.fn() }));
