@@ -8,6 +8,12 @@ import { loadShopping, performShoppingAction, saveShoppingChecked, type Shopping
 import { ShoppingAccessError, ShoppingSessionError } from "./shopping";
 import { clearShoppingCache, loadShoppingCache, saveShoppingCache } from "./shoppingCache";
 import { loadToday, type TodaySnapshot } from "./today";
+import { loadAccountPreview, type AccountPreview } from "./account";
+import { createFamilyInvite, loadFamilyInvites, revokeFamilyInvite, type FamilyInvite } from "./invites";
+import { loadFamilySize, saveFamilySize, type FamilySizeSettings } from "./familySize";
+import { checkAccountDeletion, requestAccountDeletion, type DeletionStatus } from "./deletion";
+
+const deletionReceiptKey = "kondate-account-deletion-receipt-v1";
 
 export function App() {
   const [email, setEmail] = useState("");
@@ -41,6 +47,33 @@ export function App() {
   const [reminderSettings, setReminderSettings] = useState<ReminderSettings>(defaultReminderSettings);
   const [reminderBusy, setReminderBusy] = useState(false);
   const [reminderMessage, setReminderMessage] = useState("");
+  const [accountPreview, setAccountPreview] = useState<AccountPreview | null>(null);
+  const [accountError, setAccountError] = useState("");
+  const [familyInvites, setFamilyInvites] = useState<FamilyInvite[]>([]);
+  const [inviteError, setInviteError] = useState("");
+  const [inviteBusy, setInviteBusy] = useState(false);
+  const [familySize, setFamilySize] = useState<FamilySizeSettings | null>(null);
+  const [adultCountDraft, setAdultCountDraft] = useState("");
+  const [childCountDraft, setChildCountDraft] = useState("");
+  const [familySizeError, setFamilySizeError] = useState("");
+  const [familySizeMessage, setFamilySizeMessage] = useState("");
+  const [familySizeBusy, setFamilySizeBusy] = useState(false);
+  const [deletionReceipt, setDeletionReceipt] = useState(() => localStorage.getItem(deletionReceiptKey));
+  const [deletionStatus, setDeletionStatus] = useState<DeletionStatus["status"] | null>(null);
+  const [deletionConfirmation, setDeletionConfirmation] = useState("");
+  const [deletionBusy, setDeletionBusy] = useState(false);
+  const [deletionError, setDeletionError] = useState("");
+
+  useEffect(() => {
+    if (!deletionReceipt || !online) return;
+    let cancelled = false;
+    void checkAccountDeletion(deletionReceipt).then((result) => {
+      if (!cancelled) { setDeletionStatus(result.status); setDeletionError(""); }
+    }).catch((cause: unknown) => {
+      if (!cancelled) setDeletionError(displayError(cause, "退会の状況を確認できませんでした。"));
+    });
+    return () => { cancelled = true; };
+  }, [deletionReceipt, online]);
 
   function acceptShopping(value: ShoppingSnapshot, ownerId: string) {
     setSnapshot(value);
@@ -155,9 +188,19 @@ export function App() {
         setUserId(null);
         setSnapshot(null);
         setTodaySnapshot(null);
+        setAccountPreview(null);
+        setAccountError("");
+        setFamilyInvites([]);
+        setFamilySize(null);
         if (event === "SIGNED_OUT") void discardShoppingCache().catch(() => {});
       } else if (authReady.current) {
-        if (currentUserId.current && currentUserId.current !== session.user.id) setSnapshot(null);
+        if (currentUserId.current && currentUserId.current !== session.user.id) {
+          setSnapshot(null);
+          setAccountPreview(null);
+          setAccountError("");
+          setFamilyInvites([]);
+          setFamilySize(null);
+        }
         currentUserId.current = session.user.id;
         setUserId(session.user.id);
         setAccessToken(session.access_token);
@@ -218,6 +261,44 @@ export function App() {
     });
     return () => { cancelled = true; };
   }, [accessToken, refreshEpoch]);
+
+  useEffect(() => {
+    if (!accessToken || activeTab !== "settings") return;
+    if (!online) return;
+    let cancelled = false;
+    void loadAccountPreview(accessToken).then((value) => {
+      if (!cancelled) { setAccountPreview(value); setAccountError(""); }
+    }).catch((cause: unknown) => {
+      if (!cancelled) { setAccountPreview(null); setAccountError(displayError(cause, "アカウント情報を読み込めませんでした。")); }
+    });
+    return () => { cancelled = true; };
+  }, [accessToken, activeTab, online, refreshEpoch]);
+
+  useEffect(() => {
+    if (!accessToken || activeTab !== "settings" || !online) return;
+    let cancelled = false;
+    void loadFamilySize(accessToken).then((value) => {
+      if (cancelled) return;
+      setFamilySize(value);
+      setAdultCountDraft(String(value.adultCount));
+      setChildCountDraft(String(value.childCount));
+      setFamilySizeError("");
+    }).catch((cause: unknown) => {
+      if (!cancelled) { setFamilySize(null); setFamilySizeError(displayError(cause, "家族の人数を読み込めませんでした。")); }
+    });
+    return () => { cancelled = true; };
+  }, [accessToken, activeTab, online, refreshEpoch]);
+
+  useEffect(() => {
+    if (!accessToken || activeTab !== "settings" || !online || !accountPreview || accountPreview.account.isAnonymous) return;
+    let cancelled = false;
+    void loadFamilyInvites(accessToken).then((value) => {
+      if (!cancelled) { setFamilyInvites(value); setInviteError(""); }
+    }).catch((cause: unknown) => {
+      if (!cancelled) setInviteError(displayError(cause, "招待リンクを読み込めませんでした。"));
+    });
+    return () => { cancelled = true; };
+  }, [accessToken, activeTab, online, accountPreview, refreshEpoch]);
 
   async function submitAuth(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -338,6 +419,13 @@ export function App() {
     setSnapshot(null);
     setCachedOnly(false);
     setTodaySnapshot(null);
+    setAccountPreview(null);
+    setAccountError("");
+    setFamilyInvites([]);
+    setInviteError("");
+    setFamilySize(null);
+    setFamilySizeError("");
+    setFamilySizeMessage("");
     setReminderSettings(defaultReminderSettings);
     setNotice("");
   }
@@ -353,6 +441,102 @@ export function App() {
     } finally {
       setReminderBusy(false);
     }
+  }
+
+  async function createInvite() {
+    if (!accessToken || !online || inviteBusy) return;
+    setInviteBusy(true);
+    setInviteError("");
+    try {
+      const invite = await createFamilyInvite(accessToken);
+      setFamilyInvites((current) => [invite, ...current]);
+    } catch (cause) {
+      setInviteError(displayError(cause, "招待リンクを作成できませんでした。"));
+    } finally {
+      setInviteBusy(false);
+    }
+  }
+
+  async function shareInvite(invite: FamilyInvite) {
+    try {
+      if (navigator.share) await navigator.share({ title: "きょうのごはん 家族への招待", url: invite.url });
+      else if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(invite.url);
+      else throw new Error("この端末では共有できません。リンクを長押ししてコピーしてください。");
+    } catch (cause) {
+      if (cause instanceof DOMException && cause.name === "AbortError") return;
+      setInviteError(displayError(cause, "共有できませんでした。リンクを長押ししてコピーしてください。"));
+    }
+  }
+
+  async function revokeInvite(invite: FamilyInvite) {
+    if (!accessToken || !online || inviteBusy || !window.confirm("この招待リンクを使えなくしますか？")) return;
+    setInviteBusy(true);
+    setInviteError("");
+    try {
+      await revokeFamilyInvite(accessToken, invite.id);
+      setFamilyInvites((current) => current.filter((item) => item.id !== invite.id));
+    } catch (cause) {
+      setInviteError(displayError(cause, "招待リンクを解除できませんでした。"));
+    } finally {
+      setInviteBusy(false);
+    }
+  }
+
+  async function saveFamilySizeSettings() {
+    if (!accessToken || !online || familySizeBusy || !familySize) return;
+    if (!/^[1-9][0-9]*$/.test(adultCountDraft) || !/^(0|[1-9][0-9]*)$/.test(childCountDraft)) {
+      setFamilySizeError("大人は1〜10人、子どもは0〜10人で入力してください。");
+      return;
+    }
+    const adult = Number(adultCountDraft);
+    const child = Number(childCountDraft);
+    if (adult < 1 || adult > 10 || child < 0 || child > 10) {
+      setFamilySizeError("大人は1〜10人、子どもは0〜10人で入力してください。");
+      return;
+    }
+    setFamilySizeBusy(true);
+    setFamilySizeError("");
+    setFamilySizeMessage("");
+    try {
+      const saved = await saveFamilySize(accessToken, adult, child);
+      setFamilySize(saved);
+      setAdultCountDraft(String(saved.adultCount));
+      setChildCountDraft(String(saved.childCount));
+      setFamilySizeMessage("家族の人数を保存しました。献立と買い物を更新します。");
+      setRefreshEpoch((value) => value + 1);
+    } catch (cause) {
+      setFamilySizeError(displayError(cause, "家族の人数を保存できませんでした。"));
+    } finally {
+      setFamilySizeBusy(false);
+    }
+  }
+
+  async function deleteAccount() {
+    if (!accessToken || !online || deletionBusy || deletionConfirmation !== "削除") return;
+    if (!window.confirm("このアカウントを削除します。元に戻せません。続けますか？")) return;
+    setDeletionBusy(true);
+    setDeletionError("");
+    try {
+      const result = await requestAccountDeletion(accessToken);
+      setDeletionReceipt(result.receipt);
+      setDeletionStatus(result.status);
+      try { localStorage.setItem(deletionReceiptKey, result.receipt); }
+      catch { setDeletionError("受付番号を端末に保存できませんでした。この画面の番号を控えてください。"); }
+      await signOut();
+    } catch (cause) {
+      setDeletionError(displayError(cause, "退会を受け付けられませんでした。"));
+    } finally {
+      setDeletionBusy(false);
+    }
+  }
+
+  async function refreshDeletionStatus() {
+    if (!deletionReceipt || !online || deletionBusy) return;
+    setDeletionBusy(true);
+    setDeletionError("");
+    try { setDeletionStatus((await checkAccountDeletion(deletionReceipt)).status); }
+    catch (cause) { setDeletionError(displayError(cause, "退会の状況を確認できませんでした。")); }
+    finally { setDeletionBusy(false); }
   }
 
   const items = snapshot ? [
@@ -376,6 +560,16 @@ export function App() {
       {!isConfigured ? <section className="card setup-message" role="alert">
         <h1>接続設定を確認してください</h1>
         <p>アプリの認証先がまだ設定されていません。開発用の設定を確認してください。</p>
+      </section> : deletionReceipt ? <section className="login-card">
+        <span className="section-tag">ACCOUNT</span><h1>退会の状況</h1>
+        <p>{deletionStatus === "completed" ? "アカウントの削除が完了しました。" : "退会を受け付け、処理を続けています。"}</p>
+        <p className="hint">受付番号：{deletionReceipt}</p>
+        {deletionStatus !== "completed" && <button className="primary-button" type="button" disabled={!online || deletionBusy}
+          onClick={() => void refreshDeletionStatus()}>{deletionBusy ? "確認中…" : "状況を再確認"}</button>}
+        {deletionError && <p className="error-message" role="alert">{deletionError}</p>}
+        {deletionStatus === "completed" && <button type="button" className="text-button" onClick={() => {
+          localStorage.removeItem(deletionReceiptKey); setDeletionReceipt(null); setDeletionStatus(null);
+        }}>ログイン画面へ</button>}
       </section> : restoringSession ? <p className="loading" role="status">ログイン状態を確認中…</p> : !accessToken ? <section className="login-card">
         <span className="section-tag">きょうのごはん</span>
         <h1>{authMode === "signup" ? "無料で始める" : authMode === "reset" ? "パスワードを再設定" : <>今日の献立も、<br />買い物も、手のひらに。</>}</h1>
@@ -422,6 +616,62 @@ export function App() {
             {reminderMessage && <p className="notice-message" role="status">{reminderMessage}</p>}
             <p className="read-only-note">通知は端末の状況により遅れる場合があります。ログアウトすると予約は解除されます。</p>
           </> : <p className="read-only-note">通知はスマホアプリで設定できます。</p>}
+          <section className="account-card">
+            <h2>家族と契約</h2>
+            {!online && <p className="read-only-note">契約と家族の情報は、接続しているときに確認できます。</p>}
+            {online && accountError && <p className="error-message" role="alert">{accountError}</p>}
+            {online && !accountPreview && !accountError && <p className="read-only-note" role="status">アカウント情報を確認中…</p>}
+            {online && accountPreview && <>
+              <p>{accountPreview.account.displayName}さんの家族：{accountPreview.household.memberCount}人</p>
+              <p>{accountPreview.subscription.active ? "家族プランを利用中" : "無料プラン"}</p>
+              {accountPreview.subscription.provider === "stripe" && <p className="read-only-note">契約はWeb版から管理できます。</p>}
+            </>}
+          </section>
+          <section className="account-card">
+            <h2>家族の人数</h2>
+            <p>献立と買い物の分量計算に使います。</p>
+            {!online && <p className="read-only-note">人数の変更には通信が必要です。</p>}
+            {online && !familySize && !familySizeError && <p className="read-only-note" role="status">人数を確認中…</p>}
+            {online && familySize && <>
+              <div className="family-size-fields">
+                <label>大人<input type="number" inputMode="numeric" min="1" max="10" step="1" value={adultCountDraft}
+                  onChange={(event) => { setAdultCountDraft(event.target.value); setFamilySizeMessage(""); }} /></label>
+                <label>子ども<input type="number" inputMode="numeric" min="0" max="10" step="1" value={childCountDraft}
+                  onChange={(event) => { setChildCountDraft(event.target.value); setFamilySizeMessage(""); }} /></label>
+              </div>
+              <button className="primary-button" type="button" disabled={familySizeBusy} onClick={() => void saveFamilySizeSettings()}>
+                {familySizeBusy ? "保存中…" : "人数を保存"}</button>
+            </>}
+            {familySizeError && <p className="error-message" role="alert">{familySizeError}</p>}
+            {familySizeMessage && <p className="notice-message" role="status">{familySizeMessage}</p>}
+          </section>
+          {online && accountPreview && !accountPreview.account.isAnonymous && <section className="account-card">
+            <h2>家族を招待</h2>
+            <p>招待リンクを家族に送ると、同じ献立と買い物リストを使えます。</p>
+            {!accountPreview.subscription.active && <p className="read-only-note">招待リンクの作成には家族プランが必要です。</p>}
+            {accountPreview.subscription.active && <button className="primary-button" type="button"
+              disabled={!online || inviteBusy} onClick={() => void createInvite()}>{inviteBusy ? "作成中…" : "招待リンクを作る"}</button>}
+            {inviteError && <p className="error-message" role="alert">{inviteError}</p>}
+            {familyInvites.map((invite) => <div className="invite-entry" key={invite.id}>
+              <p>有効期限：{new Date(invite.expiresAt).toLocaleString("ja-JP")}</p>
+              <input type="text" readOnly aria-label="家族への招待リンク" value={invite.url} onFocus={(event) => event.target.select()} />
+              <button type="button" onClick={() => void shareInvite(invite)}>共有する</button>
+              <button type="button" disabled={inviteBusy} onClick={() => void revokeInvite(invite)}>リンクを解除</button>
+            </div>)}
+          </section>}
+          <section className="account-card">
+            <h2>退会</h2>
+            <p>アカウントとあなたのプロフィールを削除します。元に戻せません。</p>
+            {accountPreview && <p>{accountPreview.household.lastMember ? "家族の最後の一人のため、共有していた献立と買い物も削除します。" : "ほかの家族の献立と買い物は残し、あなたの操作履歴から名前を外します。"}</p>}
+            {accountPreview?.subscription.provider === "stripe" && <p>退会しても定期購入は自動解約されません。契約元で別途解約してください。</p>}
+            {!accountPreview?.deletionAvailable ? <p className="read-only-note">退会受付は準備中です。</p> : <>
+              <label className="deletion-confirmation">確認のため「削除」と入力してください<input type="text" autoComplete="off"
+                value={deletionConfirmation} onChange={(event) => setDeletionConfirmation(event.target.value)} /></label>
+              <button className="primary-button danger-button" type="button" disabled={!online || deletionBusy || deletionConfirmation !== "削除"}
+                onClick={() => void deleteAccount()}>{deletionBusy ? "処理中…" : "アカウントを削除する"}</button>
+            </>}
+            {deletionError && <p className="error-message" role="alert">{deletionError}</p>}
+          </section>
         </section> : activeTab === "today" ? <section className="today-page">
           <div className="page-heading"><span className="section-tag">TODAY</span><h1>今日の献立</h1>
             <p>{todaySnapshot ? `${formatDate(todaySnapshot.today.date)}（${todaySnapshot.today.dow}）` :

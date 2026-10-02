@@ -42,6 +42,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      household_settings: {
+        Row: {
+          household_id: string;
+          adult_count: number;
+          child_count: number;
+          default_servings: number;
+        };
+        Insert: {
+          household_id: string;
+          adult_count?: number;
+          child_count?: number;
+          default_servings?: number;
+        };
+        Update: {
+          household_id?: string;
+          adult_count?: number;
+          child_count?: number;
+          default_servings?: number;
+        };
+        Relationships: [];
+      };
       household_subscriptions: {
         Row: {
           household_id: string;
@@ -224,6 +245,10 @@ export type Database = {
           invite_token_input: string;
         };
         Returns: string;
+      };
+      revoke_household_invite: {
+        Args: { invite_id_input: string };
+        Returns: void;
       };
       complete_planned_shopping: {
         Args: {
