@@ -22,7 +22,7 @@ export function getEntitlements(input: { status: string; currentPeriodEnd?: stri
   const active = isActiveSubscriptionStatus(input.status, input.currentPeriodEnd);
   return premiumFeatureKeys.reduce(
     (acc, key) => {
-      acc[key] = active;
+      acc[key] = key === "unlimited_custom_recipes" || active;
       return acc;
     },
     {} as Record<PremiumFeatureKey, boolean>,

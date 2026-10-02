@@ -8,7 +8,7 @@ import { buttonClass } from "@/components/ui/Button";
 const requiredMessages: Record<string, string> = {
   family_sharing: "家族を招待するには家族プランが必要です。",
   family_access: "この家族グループを複数人で使うには家族プランが必要です。データはそのまま保持されています。",
-  custom_recipes: "わが家のメニュー登録には家族プランが必要です。",
+  next_week: "最初の7日分は引き続き無料です。来週も献立と買い物をまとめて準備するには、家族プランをご利用ください。",
 };
 
 export function PricingSection({ isAuthenticated = false, requiredFeature, currentPlanId, canManageSubscription = false }: { isAuthenticated?: boolean; requiredFeature?: string; currentPlanId?: string; canManageSubscription?: boolean }) {
@@ -22,7 +22,7 @@ export function PricingSection({ isAuthenticated = false, requiredFeature, curre
         </p>
         <h1 className="mt-2 text-2xl font-black leading-tight">夕飯の迷いと買い物メモ作成を、家族でなくす。</h1>
         <p className="mt-2 text-sm leading-6 text-kondate-muted">
-          無料で試して、家族共有が必要になったら家族プランへ。1契約で家族全員が利用できます。
+          最初の7日分を無料で試して、2週目から家族プランへ。カード登録なし・自動課金なし。1契約で家族全員が利用できます。
         </p>
       </div>
 

@@ -38,6 +38,7 @@ export function ShoppingList({
   weekStart,
   latestCompletionId,
   loadError = false,
+  firstWeek = false, disableCompletion = false,
 }: {
   groups: ShoppingListGroup[];
   initialManualItems: Array<{ id: string; category: string; name: string; position: number; checked: boolean; source: "manual" }>;
@@ -50,6 +51,7 @@ export function ShoppingList({
   weekStart: string;
   latestCompletionId: string | null;
   loadError?: boolean;
+  firstWeek?: boolean; disableCompletion?: boolean;
 }) {
   const router = useRouter();
   const [checkedKeys, setCheckedKeys] = useState(() => new Set(initialCheckedKeys));
@@ -144,6 +146,7 @@ export function ShoppingList({
       checked: nextChecked,
     });
 
+    if (result.ok && nextChecked) (window as typeof window & { gtag?: (command: string, event: string, params: Record<string, boolean>) => void }).gtag?.("event", "shopping_item_checked", { first_week: firstWeek });
     router.refresh();
     setPendingKeys((current) => updateSet(current, itemKey, false));
     if (!result.ok) {
@@ -259,13 +262,13 @@ export function ShoppingList({
         <div className="mt-3 h-[3px] overflow-hidden rounded-full bg-kondate-line"><div className="h-full rounded-full bg-kondate-done transition-[width] duration-200 motion-reduce:transition-none" style={{ width: totalCount === 0 ? "0%" : `${(checkedCount / totalCount) * 100}%` }} /></div>
       </section>
 
-      {totalCount > 0 ? <Button variant="primary" fullWidth disabled={checkedCount === 0 || isCompleting || isUndoing || pendingKeys.size > 0}
+      {!disableCompletion ? (totalCount > 0 ? <Button variant="primary" fullWidth disabled={checkedCount === 0 || isCompleting || isUndoing || pendingKeys.size > 0}
         onClick={completeCheckedItems}><CheckCheck size={19} aria-hidden="true" />{isCompleting ? "保存中…" : `買い物を完了（${checkedCount}品）`}</Button>
         : <p className="rounded-lg border border-kondate-done/30 bg-kondate-done/10 p-4 text-sm leading-7 text-kondate-ink">
           {latestCompletionId ? "この期間で買うものは完了しています。" : "この期間で買うものはありません。"}
-        </p>}
+        </p>) : null}
 
-      {latestCompletionId ? <Button variant="secondary" size="sm" disabled={isCompleting || isUndoing || pendingKeys.size > 0}
+      {latestCompletionId && !disableCompletion ? <Button variant="secondary" size="sm" disabled={isCompleting || isUndoing || pendingKeys.size > 0}
         onClick={undoCompletion}><RotateCcw size={15} aria-hidden="true" />{isUndoing ? "取り消し中…" : "直前の完了を取り消す"}</Button> : null}
 
       {notice ? <p role="status" className="rounded border border-kondate-done/30 bg-kondate-done/10 p-3 text-sm text-kondate-ink">{notice}</p> : null}

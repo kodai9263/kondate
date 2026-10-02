@@ -1,3 +1,5 @@
+import { getFirstWeekAccess } from "@/lib/billing/firstWeek.server";
+import { firstWeekDates } from "@/lib/billing/firstWeek";
 import { getBreakfastVersions } from "@/lib/breakfast/server";
 import { breakfastForDate } from "@/lib/breakfast/settings";
 import { Settings } from "lucide-react";
@@ -18,6 +20,10 @@ import { getTodayPlanState } from "@/lib/today/server";
 export default async function AppHomePage({ searchParams }: { searchParams: Promise<{ mealFeedback?: string; notice?: string }> }) {
   const params = await searchParams;
   const baseToday = findTodayPlan(menuData);
+  const access = await getFirstWeekAccess();
+  if (!access.paid && (!access.trial?.start_date || !firstWeekDates(access.trial.start_date).includes(baseToday.date))) {
+    return <main className="mx-auto max-w-xl px-4 pb-28 pt-6"><h1 className="font-mincho text-2xl font-bold">きょうのごはん</h1><p className="mt-4 leading-7">{!access.trial?.start_date ? "人数とアレルギーを確認して、最初の7日分の献立と買い物を無料で試しましょう。" : "最初の7日分は、引き続き無料で編集・買い物チェックができます。"}</p><div className="mt-5 grid gap-3"><Link href="/app/planner" className={buttonClass({})}>{access.trial?.start_date ? "無料の7日分を開く" : "最初の7日分を作る"}</Link><Link href="/menus" className={buttonClass({ variant: "secondary" })}>無料でメニューを見る</Link><Link href="/app/favorites" className={buttonClass({ variant: "secondary" })}>お気に入りを見る</Link>{access.trial?.start_date ? <><Link href="/pricing?required=next_week" className={buttonClass({ variant: "secondary" })}>来週も献立と買い物をまとめて準備する</Link><Link href="/app/planner?history=1" className="inline-flex min-h-11 items-center underline">保存済みの献立を見る</Link></> : null}</div><p className="mt-5 text-sm leading-7 text-kondate-muted">最初の7日分は期限なし・カード登録なし・自動課金なし。次の7日分から月480円・年4,800円です。</p></main>;
+  }
   const [year, month] = baseToday.date.split("-").map(Number);
   const [plannerContext, breakfastState] = await Promise.all([getHouseholdPlannerContext(year, month), getBreakfastVersions()]);
   const breakfast = breakfastForDate(breakfastState.versions, baseToday.date);

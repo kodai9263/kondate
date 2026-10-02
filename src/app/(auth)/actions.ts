@@ -10,6 +10,8 @@ import { redirectIfAuthenticated } from "@/lib/auth/session";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { getSupabaseServer, isSupabaseConfigured } from "@/lib/supabase/server";
 
+import { normalizeMenuNext } from "@/lib/billing/firstWeek";
+
 const emailSchema = z.string().trim().email();
 const passwordSchema = z.string().min(8).max(128);
 
@@ -59,16 +61,17 @@ export async function login(formData: FormData) {
     .object({ email: emailSchema, password: passwordSchema })
     .safeParse({ email: formData.get("email"), password: formData.get("password") });
   const inviteToken = normalizeInviteToken(formData.get("inviteToken"));
+  const next = normalizeMenuNext(formData.get("next"));
 
-  if (!parsed.success) redirect("/login?error=invalid");
+  if (!parsed.success) redirect(`/login?error=invalid&next=${encodeURIComponent(next)}`);
 
   const supabase = await getSupabaseServer();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
-  if (error) redirect("/login?error=credentials");
+  if (error) redirect(`/login?error=credentials&next=${encodeURIComponent(next)}`);
 
   await supabase.rpc("ensure_current_user_household");
   if (await joinInviteIfPresent(supabase, inviteToken)) redirect("/app?notice=family-joined");
-  redirect("/app");
+  redirect(next);
 }
 
 export async function signup(formData: FormData) {
@@ -87,6 +90,7 @@ export async function signup(formData: FormData) {
       password: formData.get("password"),
     });
   const inviteToken = normalizeInviteToken(formData.get("inviteToken"));
+  const next = normalizeMenuNext(formData.get("next"));
 
   if (!parsed.success) redirect(buildSignupReturnHref(formData, { error: "invalid" }));
 
@@ -107,7 +111,7 @@ export async function signup(formData: FormData) {
         ...(signupSource ? { signup_source: signupSource } : {}),
         ...(monitorClaimToken ? { monitor_claim_token: monitorClaimToken } : {}),
       },
-      emailRedirectTo: `${getAppUrl()}/auth/callback?next=${inviteToken ? `/invite/${inviteToken}` : "/app"}`,
+      emailRedirectTo: `${getAppUrl()}/auth/callback?next=${encodeURIComponent(inviteToken ? `/invite/${inviteToken}` : next)}`,
     },
   });
 
@@ -119,7 +123,7 @@ export async function signup(formData: FormData) {
 
   await supabase.rpc("ensure_current_user_household");
   if (await joinInviteIfPresent(supabase, inviteToken)) redirect("/app?notice=family-joined");
-  redirect("/app");
+  redirect(next);
 }
 
 export async function requestPasswordReset(formData: FormData) {

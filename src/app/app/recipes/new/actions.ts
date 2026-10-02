@@ -75,15 +75,6 @@ export async function createRecipe(formData: FormData) {
   const { data: profile } = await supabase.from("profiles").select("household_id").eq("id", user.id).single();
   if (!profile?.household_id) redirect("/app/recipes/new?error=profile");
 
-  const { data: subscription } = await supabase
-    .from("household_subscriptions")
-    .select("status,current_period_end")
-    .eq("household_id", profile.household_id)
-    .maybeSingle();
-  if (!subscription || !isActiveSubscriptionStatus(subscription.status, subscription.current_period_end)) {
-    redirect("/pricing?required=custom_recipes");
-  }
-
   const values = parsed.data;
   let sourceUrl = "";
   try {

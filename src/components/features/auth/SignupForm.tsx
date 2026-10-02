@@ -4,7 +4,8 @@ import { useRef } from "react";
 import { signup } from "@/app/(auth)/actions";
 import { AuthField, AuthSubmit } from "@/components/features/auth/AuthFields";
 
-export function SignupForm({ inviteToken, signupSource, campaignFields = {}, placement = "signup" }: {
+export function SignupForm({ inviteToken, signupSource, campaignFields = {}, placement = "signup", next }: {
+  next?: string;
   inviteToken?: string | null;
   signupSource?: string | null;
   campaignFields?: Record<string, string>;
@@ -26,6 +27,7 @@ export function SignupForm({ inviteToken, signupSource, campaignFields = {}, pla
         track("monitor_signup_start");
       }
     }} onSubmit={() => track("monitor_signup_submit")}>
+      {next ? <input type="hidden" name="next" value={next} /> : null}
       {inviteToken ? <input type="hidden" name="inviteToken" value={inviteToken} /> : null}
       {signupSource ? <input type="hidden" name="signupSource" value={signupSource} /> : null}
       {Object.entries(campaignFields).map(([name, value]) => <input key={name} type="hidden" name={name} value={value} />)}
