@@ -35,13 +35,9 @@ export async function loadReminderSettings(): Promise<ReminderSettings> {
     : defaultReminderSettings;
 }
 
-function nextOccurrence(reminder: Reminder) {
+function weeklySchedule(reminder: Reminder) {
   const [hour, minute] = reminder.time.split(":").map(Number);
-  const at = new Date();
-  at.setHours(hour, minute, 0, 0);
-  at.setDate(at.getDate() + (reminder.weekday - at.getDay() + 7) % 7);
-  if (at.getTime() <= Date.now()) at.setDate(at.getDate() + 7);
-  return at;
+  return { on: { weekday: reminder.weekday + 1, hour, minute } };
 }
 
 async function schedule(settings: ReminderSettings) {
@@ -49,12 +45,12 @@ async function schedule(settings: ReminderSettings) {
   const notifications: LocalNotificationSchema[] = [];
   if (settings.shopping.enabled) notifications.push({
     id: 4101, title: "きょうのごはん", body: "買い物リストを確認しましょう",
-    schedule: { at: nextOccurrence(settings.shopping) }, extra: { tab: "shopping" },
+    schedule: weeklySchedule(settings.shopping), extra: { tab: "shopping" },
     isExactNotification: false,
   });
   if (settings.preparation.enabled) notifications.push({
     id: 4102, title: "きょうのごはん", body: "今日の段取りを確認しましょう",
-    schedule: { at: nextOccurrence(settings.preparation) }, extra: { tab: "today" },
+    schedule: weeklySchedule(settings.preparation), extra: { tab: "today" },
     isExactNotification: false,
   });
   if (notifications.length) await LocalNotifications.schedule({ notifications });
