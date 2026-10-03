@@ -27,6 +27,6 @@ export default async function PublicMenusPage({ searchParams }: { searchParams: 
     <p className="mt-4 text-sm text-kondate-muted">{recipes.length}品・完成まで40分以内</p>
     <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-label="公開メニュー">{recipes.map((recipe) => <Link key={`${recipe.kind}:${recipe.id}`} href={`/menus/${recipe.kind}/${recipe.id}${campaignSuffix}`} className="rounded-lg border border-kondate-line bg-white p-4 hover:border-kondate-accent"><h2 className="font-mincho text-lg font-bold">{recipe.name}</h2><p className="mt-2 text-sm text-kondate-muted">完成まで約{recipe.minutes}分</p></Link>)}</section>
     {!recipes.length ? <p className="mt-8">料理が見つかりませんでした。別の料理名で検索してください。</p> : null}
-    <aside className="mt-8 rounded-lg border border-kondate-line bg-white p-5"><h2 className="font-semibold">献立と買い物も、まとめて準備</h2><p className="mt-2 text-sm leading-7 text-kondate-muted">無料登録で最初の7日分を試せます。期限なし・カード登録なし・自動課金なし。次の7日分から月480円、年払いは4,800円です。</p><Link href={{ pathname: "/signup", query: campaignFields }} className={buttonClass({ className: "mt-4" })}>無料登録して献立を試す</Link></aside>
+    <aside className="mt-8 rounded-lg border border-kondate-line bg-white p-5"><h2 className="font-semibold">献立と買い物も、まとめて準備</h2><p className="mt-2 text-sm leading-7 text-kondate-muted">登録から14日間、献立と買い物リストを無料で使えます。カード登録なし・自動課金なし。体験終了後の継続利用は月480円、年払いは4,800円です。</p><Link href={{ pathname: "/signup", query: campaignFields }} className={buttonClass({ className: "mt-4" })}>無料登録して献立を試す</Link></aside>
   </main>;
 }

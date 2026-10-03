@@ -1,5 +1,6 @@
 "use client";
 
+import { FreeTrialNotice } from "@/components/features/billing/FreeTrialNotice";
 import type { Route } from "next";
 import { firstWeekDates } from "@/lib/billing/firstWeek";
 import { AlertTriangle, ChevronLeft, ChevronRight, LockKeyhole, Search, X } from "lucide-react";
@@ -38,9 +39,11 @@ type MonthlyPlannerProps = {
   readOnly?: boolean;
   selectionUnavailable?: boolean;
   firstWeekStarted?: boolean;
+  trialExpiresAt?: string;
+  trialExpired?: boolean;
 };
 
-export function MonthlyPlanner({ recipes, initialView, initialDate, today, shoppingDay = defaultShoppingDay, familySize = defaultFamilySize, allergies = [], excludedRecipeCount = 0, preferredRecipeIds = [], preferenceExcludedCount = 0, initialRecipeIds = {}, initialLockedRecipeIds = {}, sideDishes = [], initialSideSelections = {}, demo = false, firstWeekStart, readOnly = false, selectionUnavailable = false, firstWeekStarted = false }: MonthlyPlannerProps) {
+export function MonthlyPlanner({ recipes, initialView, initialDate, today, shoppingDay = defaultShoppingDay, familySize = defaultFamilySize, allergies = [], excludedRecipeCount = 0, preferredRecipeIds = [], preferenceExcludedCount = 0, initialRecipeIds = {}, initialLockedRecipeIds = {}, sideDishes = [], initialSideSelections = {}, demo = false, firstWeekStart, readOnly = false, selectionUnavailable = false, firstWeekStarted = false, trialExpiresAt, trialExpired = false }: MonthlyPlannerProps) {
   const router = useRouter();
   const weekStartDay = normalizeShoppingDay(shoppingDay);
   const [isNavigating, startNavigation] = useTransition();
@@ -196,8 +199,9 @@ export function MonthlyPlanner({ recipes, initialView, initialDate, today, shopp
       </header>
       <div className="mt-3 min-h-6">{status}</div>
       {selectionUnavailable ? <p role="status" className="mt-3 text-sm text-kondate-alert">選んだ料理は、アレルギーや調理時間などの条件に合わないため追加していません。別の料理を選んでください。</p> : null}
+      {trialExpiresAt ? <FreeTrialNotice expiresAt={trialExpiresAt} expired={trialExpired} /> : null}
       {readOnly ? <p className="mt-3 text-sm">保存済み献立の閲覧です。編集・新しい献立は<Link href="/pricing?required=next_week" className="underline">家族プラン</Link>で利用できます。</p> : null}
-      {firstWeekStart ? <section className="my-4 rounded border border-kondate-line bg-white p-4"><p className="text-sm leading-7">この7日分は、編集も買い物チェックも期限なしで無料。次の7日分から月480円・年4,800円。自動課金はありません。</p><div className="mt-3 flex flex-wrap gap-3"><Button disabled={busy || visiblePlan.length !== 7} onClick={() => { if (visiblePlan[0]) void updateDay(visiblePlan[0], {}); }}>この7日分を保存</Button>{firstWeekSaved ? <Link href="/app/shopping" className={buttonClass({ variant: "secondary" })}>買い物リストを見る</Link> : <p className="inline-flex min-h-11 items-center text-xs text-kondate-muted">保存すると買い物リストが使えます</p>}<Link href="/pricing?required=next_week" className="inline-flex min-h-11 items-center text-sm underline">次の7日分を作る</Link></div></section> : null}
+      {firstWeekStart ? <section className="my-4 rounded border border-kondate-line bg-white p-4"><p className="text-sm leading-7">登録から14日間、献立と買い物リストを無料で使えます。体験終了後は月480円・年4,800円。自動課金はありません。</p><div className="mt-3 flex flex-wrap gap-3"><Button disabled={busy || visiblePlan.length !== 7} onClick={() => { if (visiblePlan[0]) void updateDay(visiblePlan[0], {}); }}>この7日分を保存</Button>{firstWeekSaved ? <Link href="/app/shopping" className={buttonClass({ variant: "secondary" })}>買い物リストを見る</Link> : <p className="inline-flex min-h-11 items-center text-xs text-kondate-muted">保存すると買い物リストが使えます</p>}<Link href="/pricing?required=next_week" className="inline-flex min-h-11 items-center text-sm underline">次の7日分を作る</Link></div></section> : null}
       {allergies.length > 0 ? <section role="status" className="mt-3 rounded border border-kondate-alert/30 bg-kondate-alertSoft p-4"><p className="flex items-center gap-2 text-sm font-semibold text-kondate-alert"><AlertTriangle size={18} aria-hidden="true" />{excludedRecipeCount > 0 ? `${excludedRecipeCount}品をアレルギー候補として除外中` : "登録したアレルギーを照合中"}</p><p className="mt-2 text-xs leading-6 text-kondate-muted">料理名・副菜・登録材料による補助判定です。調味料や加工品の原材料表示は必ず確認してください。</p></section> : null}
       {preferredRecipeIds.length > 0 || preferenceExcludedCount > 0 ? <p className="mt-4 border-l-2 border-kondate-accent bg-white px-4 py-3 text-sm text-kondate-muted">献立評価を反映中：好評 {preferredRecipeIds.length}品・除外 {preferenceExcludedCount}品</p> : null}
       <section className="mt-4" aria-label={view === "week" ? "週間献立" : "月間献立"}>

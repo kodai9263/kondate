@@ -73,11 +73,16 @@ describe("買い物保存時の照合", () => {
   });
 });
 
-it("無料のチェックは固定期間用RPCを使い期間変更は拒否する", async () => {
-  mock.context.mockResolvedValue({ paid: false, period: { storageWeekStart: item.weekStart, start: item.rangeStart, end: item.rangeEnd, mode: item.periodMode }, supabase: { rpc: mock.rpc } });
+it("無料体験でも通常の期間切替とチェック用RPCを使う", async () => {
+  mock.context.mockResolvedValue({ paid: false, canPlan: true, period: { storageWeekStart: item.weekStart, start: item.rangeStart, end: item.rangeEnd, mode: item.periodMode }, supabase: { rpc: mock.rpc } });
   expect(await setShoppingItemChecked(item)).toEqual({ ok: true });
-  expect(mock.rpc).toHaveBeenCalledWith("update_first_week_shopping",expect.objectContaining({ target_start: item.rangeStart, operation: "check" }));
-  mock.rpc.mockClear();
+  expect(mock.rpc).toHaveBeenCalledWith("update_planned_shopping", expect.objectContaining({ operation: "check" }));
+  expect(await changeShoppingPeriod({ ...item, mode: "today" })).toEqual({ ok: true });
+  expect(mock.rpc).toHaveBeenCalledWith("update_planned_shopping", expect.objectContaining({ operation: "period" }));
+});
+it("体験終了による権限エラーでは買い物を更新しない", async () => {
+  mock.context.mockRejectedValue(new Error("free_trial_expired"));
+  expect(await setShoppingItemChecked(item)).toEqual({ ok: false });
   expect(await changeShoppingPeriod({ ...item, mode: "today" })).toEqual({ ok: false });
   expect(mock.rpc).not.toHaveBeenCalled();
 });

@@ -2,11 +2,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   createClient: vi.fn(), canAccessHousehold: vi.fn(),
+  planningAccess: vi.fn(),
   getHouseholdPlannerContext: vi.fn(), getBreakfastVersions: vi.fn(),
   findTodayPlan: vi.fn(), resolveMonthlyDinnerPlan: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/mobile", () => ({ createMobileRequestClient: mocks.createClient }));
+vi.mock("@/lib/billing/firstWeek.server", () => ({ getFirstWeekAccess: mocks.planningAccess }));
 vi.mock("@/lib/billing/entitlements", () => ({ canAccessHousehold: mocks.canAccessHousehold }));
 vi.mock("@/lib/nutrition/server", () => ({ getHouseholdPlannerContext: mocks.getHouseholdPlannerContext }));
 vi.mock("@/lib/breakfast/server", () => ({ getBreakfastVersions: mocks.getBreakfastVersions }));
@@ -41,6 +43,7 @@ function fakeClient() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.planningAccess.mockResolvedValue({ paid: true, canPlan: true, trial: null });
   mocks.createClient.mockReturnValue(fakeClient());
   mocks.canAccessHousehold.mockReturnValue(true);
   mocks.getHouseholdPlannerContext.mockResolvedValue({
@@ -78,4 +81,11 @@ describe("スマホ向け今日の献立API", () => {
     expect(mocks.getHouseholdPlannerContext).toHaveBeenCalledWith(2026, 9, true, expect.any(Object), token);
     expect(OPTIONS(request()).status).toBe(204);
   });
+});
+
+it("体験終了後はモバイルAPIでも新しい献立を生成しない", async () => {
+  mocks.planningAccess.mockResolvedValue({ paid: false, canPlan: false, trial: null });
+  const response = await GET(request("capacitor://localhost", `Bearer ${token}`));
+  expect(response.status).toBe(403);
+  expect(mocks.getHouseholdPlannerContext).not.toHaveBeenCalled();
 });

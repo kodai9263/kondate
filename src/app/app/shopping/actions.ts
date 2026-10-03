@@ -35,8 +35,7 @@ async function mutate(input: PeriodInput, operation: string, item: Record<string
       if (!expected || expected.name !== item.name) return { ok: false };
     }
     // DBでも期間と所有権を行ロックの下で確認し、別端末の期間変更との競合を防ぐ。
-    if (!context.paid && operation === "period") return { ok: false };
-    const { data, error } = !context.paid ? await context.supabase.rpc("update_first_week_shopping", { target_start: context.period.start, operation, item }) : await context.supabase.rpc("update_planned_shopping", {
+    const { data, error } = await context.supabase.rpc("update_planned_shopping", {
       target_week_start: input.weekStart, expected_range_start: input.rangeStart, expected_range_end: input.rangeEnd,
       expected_period_mode: input.periodMode, operation, item,
     });

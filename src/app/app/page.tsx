@@ -1,5 +1,5 @@
+import { FreeTrialNotice } from "@/components/features/billing/FreeTrialNotice";
 import { getFirstWeekAccess } from "@/lib/billing/firstWeek.server";
-import { firstWeekDates } from "@/lib/billing/firstWeek";
 import { getBreakfastVersions } from "@/lib/breakfast/server";
 import { breakfastForDate } from "@/lib/breakfast/settings";
 import { Settings } from "lucide-react";
@@ -21,8 +21,8 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
   const params = await searchParams;
   const baseToday = findTodayPlan(menuData);
   const access = await getFirstWeekAccess();
-  if (!access.paid && (!access.trial?.start_date || !firstWeekDates(access.trial.start_date).includes(baseToday.date))) {
-    return <main className="mx-auto max-w-xl px-4 pb-28 pt-6"><h1 className="font-mincho text-2xl font-bold">きょうのごはん</h1><p className="mt-4 leading-7">{!access.trial?.start_date ? "人数とアレルギーを確認して、最初の7日分の献立と買い物を無料で試しましょう。" : "最初の7日分は、引き続き無料で編集・買い物チェックができます。"}</p><div className="mt-5 grid gap-3"><Link href="/app/planner" className={buttonClass({})}>{access.trial?.start_date ? "無料の7日分を開く" : "最初の7日分を作る"}</Link><Link href="/menus" className={buttonClass({ variant: "secondary" })}>無料でメニューを見る</Link><Link href="/app/favorites" className={buttonClass({ variant: "secondary" })}>お気に入りを見る</Link>{access.trial?.start_date ? <><Link href="/pricing?required=next_week" className={buttonClass({ variant: "secondary" })}>来週も献立と買い物をまとめて準備する</Link><Link href="/app/planner?history=1" className="inline-flex min-h-11 items-center underline">保存済みの献立を見る</Link></> : null}</div><p className="mt-5 text-sm leading-7 text-kondate-muted">最初の7日分は期限なし・カード登録なし・自動課金なし。次の7日分から月480円・年4,800円です。</p></main>;
+  if (!access.canPlan || (!access.paid && !access.trial)) {
+    return <main className="mx-auto max-w-xl px-4 pb-28 pt-6"><h1 className="font-mincho text-2xl font-bold">きょうのごはん</h1><p className="mt-4 leading-7">{access.canPlan ? "人数とアレルギーを確認して、献立と買い物リストを無料で試しましょう。" : "14日間の無料体験が終了しました。保存済みの献立は残り、閲覧できます。継続利用には家族プランをご利用ください。"}</p><div className="mt-5 grid gap-3"><Link href={access.canPlan ? "/app/planner/setup" : "/pricing?required=trial_expired"} className={buttonClass({})}>{access.canPlan ? "無料体験で献立を作る" : "継続利用のプランを見る"}</Link><Link href="/menus" className={buttonClass({ variant: "secondary" })}>無料でメニューを見る</Link><Link href="/app/favorites" className={buttonClass({ variant: "secondary" })}>お気に入りを見る</Link><Link href="/app/planner?history=1" className="inline-flex min-h-11 items-center underline">保存済みの献立を見る</Link></div><p className="mt-5 text-sm leading-7 text-kondate-muted">登録から14日間無料・カード登録なし・自動課金なし。体験終了後の継続利用は月480円・年4,800円です。</p></main>;
   }
   const [year, month] = baseToday.date.split("-").map(Number);
   const [plannerContext, breakfastState] = await Promise.all([getHouseholdPlannerContext(year, month), getBreakfastVersions()]);
@@ -68,6 +68,7 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
           <Link href="/account" aria-label="アカウント設定" title="アカウント設定" className={buttonClass({ variant: "secondary", size: "icon" })}><Settings size={19} /></Link>
         </div>
       </header>
+      {!access.paid && access.freeTrial ? <FreeTrialNotice expiresAt={access.freeTrial.expires_at} /> : null}
       {params.notice === "family-joined" ? <p role="status" className="mb-5 rounded border border-kondate-done/30 bg-kondate-doneSoft p-3 text-sm text-kondate-ink">家族グループに参加しました。</p> : null}
       {breakfastState.error || planState.loadError ? <p role="alert" className="mb-4 text-sm text-kondate-alert">献立やチェック状態を読み込めませんでした。再読み込みしてお試しください。</p> : null}
       <div className="space-y-8"><TodayBoard familySize={familySize} feedbackStatus={params.mealFeedback} today={today} initialTaskBindings={taskBindings} dinnerAvailable={Boolean(plannedDinner)} /><ShoppingSummaryLink shoppingDayLabel={shoppingDayLabel} itemCount={shoppingItemCount} periodLabel={shoppingPeriodLabel} loadError={!shopping} /></div>

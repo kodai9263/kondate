@@ -45,7 +45,7 @@ export async function saveMonthlyDinnerPlan(input: unknown): Promise<{ ok: boole
   }
 
   const access = await getFirstWeekAccess();
-  if (!access.paid) return { ok: false, message: "次の献立には家族プランが必要です。" };
+  if (!access.canPlan || (!access.paid && !access.trial)) return { ok: false, message: "無料体験が終了しました。継続利用には家族プランが必要です。" };
   const supabase = await getSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, message: "ログイン状態を確認してください。" };
@@ -109,7 +109,7 @@ export async function saveFirstWeekPlan(input: unknown): Promise<{ ok: boolean; 
   const parsed = firstWeekSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: "献立の内容を確認してください。" };
   const access = await getFirstWeekAccess();
-  if (!access.trial || !isCompleteFirstWeek(access.trial.selected_start, parsed.data.entries)) return { ok: false, message: "最初の7日分を確認してください。" };
+  if (!access.canPlan || !access.trial || !isCompleteFirstWeek(parsed.data.entries.map((entry) => entry.date).sort()[0], parsed.data.entries)) return { ok: false, message: "利用期間と7日分の献立を確認してください。" };
   const ids = [...new Set(parsed.data.entries.map((entry) => entry.recipeId))];
   const { data: recipes, error: recipeError } = await access.supabase.from("recipes").select("id,name,cook_minutes,meta,category,household_id").in("id", ids).is("archived_at", null);
   if (recipeError || recipes?.length !== ids.length || recipes.some((recipe) => {

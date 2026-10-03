@@ -26,11 +26,11 @@ describe("募集導線を通常の無料登録へ統一", () => {
   it("紹介ページから通常登録へ流入元を引き継ぐ", async () => {
     const html = renderToStaticMarkup(await LandingPage({ searchParams: Promise.resolve({ utm_source: "ig" }) }));
     expect(html).toContain('href="/menus?utm_source=ig"');
-    expect(html).not.toMatch(/モニター|先着10|14日間/);
+    expect(html).not.toMatch(/モニター|先着10/);
   });
   it.each([undefined, "monitor-full", "monitor-unavailable"])("古い募集指定・募集エラーでも枠を参照せず通常登録する（%s）", async (error) => {
     const html = renderToStaticMarkup(await SignupPage({ searchParams: Promise.resolve({ source: "monitor", error, utm_source: "instagram" }) }));
-    expect(html).not.toMatch(/モニター|残り10|14日間|受付を終了/);
+    expect(html).not.toMatch(/モニター|残り10|受付を終了/);
     expect(html).not.toContain('name="signupSource"');
     expect(html).not.toContain('name="source"');
     expect(html).toContain('name="utm_source" value="instagram"');
