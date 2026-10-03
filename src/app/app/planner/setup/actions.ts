@@ -14,9 +14,10 @@ export async function configureFirstWeek(formData: FormData) {
   try { firstWeekDates(parsed.data.start); } catch { redirect(`/app/planner/setup?error=invalid${suffix}`); }
   const allergens = normalizeAllergies([...formData.getAll("allergies"), ...parseCustomAllergies(formData.get("otherAllergies"))]);
   if (allergens.length > 30) redirect(`/app/planner/setup?error=invalid${suffix}`);
-  const { supabase } = await getFirstWeekAccess();
+  const { supabase, canPlan } = await getFirstWeekAccess();
+  if (!canPlan) redirect("/pricing?required=trial_expired");
   const { error } = await supabase.rpc("configure_first_week", { start_input: parsed.data.start, adults: parsed.data.adults, children: parsed.data.children, allergens });
   if (error) redirect(`/app/planner/setup?error=save${suffix}`);
   revalidatePath("/app");
-  redirect(`/app/planner?${recipe ? `recipe=${encodeURIComponent(recipe)}` : "view=week"}`);
+  redirect(`/app/planner?view=week&date=${parsed.data.start}${recipe ? `&recipe=${encodeURIComponent(recipe)}` : ""}`);
 }

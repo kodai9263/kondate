@@ -8,7 +8,7 @@ import { findTodayPlan } from "@/lib/services/planService";
 import { getCampaignFields } from "@/lib/marketing/campaignParams";
 
 const features = [
-  { title: "最初の7日分の献立", body: "用意された献立をもとに、家族の好みに合わせて変更できます。毎日、一から考える手間を減らせます。" },
+  { title: "14日間の無料体験", body: "用意された献立をもとに、家族の好みに合わせて変更できます。毎日、一から考える手間を減らせます。" },
   { title: "今日の手順を確認", body: "朝に準備することと、夜に作る手順をまとめています。終わったところにチェックを入れながら進められます。" },
   { title: "買うものをリストに", body: "食材を売り場ごとに確認できます。足りないものは追加して、買ったものにはその場でチェック。" },
 ];
@@ -59,7 +59,7 @@ export default async function LandingPage({ searchParams }: { searchParams?: Pro
           </div>
           <div className="mt-7">
             <Link href={primaryHref} className={buttonClass({ className: "min-h-14 w-full justify-between px-6 sm:w-64" })}>{primaryLabel}<ArrowRight size={18} aria-hidden="true" /></Link>
-            <p className="mt-2 text-xs leading-6 text-kondate-muted">{isAuthenticated ? "保存した献立の続きから使えます。" : "最初の7日分は無料。カード登録・自動課金なし。"}</p>
+            <p className="mt-2 text-xs leading-6 text-kondate-muted">{isAuthenticated ? "保存した献立の続きから使えます。" : "登録から14日間無料。カード登録・自動課金なし。"}</p>
             <Link href="/demo/planner" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm underline decoration-kondate-line underline-offset-8 hover:decoration-kondate-muted">登録せずに献立生成を試す<ArrowRight size={15} aria-hidden="true" /></Link>
           </div>
         </div>

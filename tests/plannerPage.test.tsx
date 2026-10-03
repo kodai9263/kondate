@@ -1,7 +1,7 @@
-vi.mock("@/lib/billing/firstWeek.server", () => ({ getFirstWeekAccess: async () => ({ paid: mocks.paid, trial: mocks.trial, user: { is_anonymous: false } }) }));
+vi.mock("@/lib/billing/firstWeek.server", () => ({ getFirstWeekAccess: async () => ({ canPlan: mocks.canPlan, paid: mocks.paid, trial: mocks.trial, user: { is_anonymous: false } }) }));
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ context: vi.fn(), shoppingDay: 6, paid: true, trial: { start_date: null, selected_start: "2026-09-26" } as { start_date: string | null; selected_start: string } | null }));
+const mocks = vi.hoisted(() => ({ context: vi.fn(), shoppingDay: 6, paid: true, canPlan: true, trial: { start_date: null, selected_start: "2026-09-26" } as { start_date: string | null; selected_start: string } | null }));
 vi.mock("@/lib/nutrition/server", () => ({ getHouseholdPlannerContext: mocks.context }));
 vi.mock("@/components/features/planner/MonthlyPlanner", () => ({ MonthlyPlanner: () => null }));
 import PlannerPage from "@/app/app/planner/page";
@@ -10,6 +10,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.shoppingDay = 6;
   mocks.paid = true;
+  mocks.canPlan = true;
   mocks.trial = { start_date: null, selected_start: "2026-09-26" };
   mocks.context.mockImplementation(async (_year: number, month: number) => ({
     recipes: [], sideDishes: [], initialSideSelections: month === 10 ? { "2026-10-01": { mode: "none", sideDishId: null } } : {}, preferences: { adultCount: 2, childCount: 0, allergies: [], shoppingDay: mocks.shoppingDay },
@@ -52,12 +53,13 @@ it("同じ日付でもまとめ買い曜日に合わせて取得月を変える"
   expect(saturday.props.children[1].key).not.toBe(sunday.props.children[1].key);
 });
 
-it("無料は指定URLに関係なく最初の7日分を表示する", async () => {
+it("無料体験中は翌週や別月も表示できる", async () => {
   mocks.paid = false;
   mocks.trial = { selected_start: "2026-12-29", start_date: "2026-12-29" };
   const page = await PlannerPage({ searchParams: Promise.resolve({ month: "2027-02" }) });
-  expect(mocks.context.mock.calls).toEqual([[2026,12,true],[2027,1,true]]);
-  expect(page.props.children[1].props.firstWeekStart).toBe("2026-12-29");
+  expect(mocks.context.mock.calls).toEqual([[2027,2,true]]);
+  expect(page.props.children[1].props.firstWeekStart).toBeUndefined();
+  expect(page.props.children[1].props.readOnly).toBe(false);
 });
 it("無料の保存済み閲覧は編集不可にする", async () => {
   mocks.paid = false;
@@ -70,4 +72,10 @@ it("既存の有料会員は無料設定がなくても献立を開ける", asyn
   mocks.trial = null;
   const page = await PlannerPage({ searchParams: Promise.resolve({ month: "2026-10" }) });
   expect(page.props.children[1].props.initialView).toBe("month");
+});
+
+it("体験終了後はURLの指定に関わらず閲覧のみになる", async () => {
+  mocks.paid = false; mocks.canPlan = false;
+  const page = await PlannerPage({ searchParams: Promise.resolve({ month: "2026-10" }) });
+  expect(page.props.children[1].props.readOnly).toBe(true);
 });

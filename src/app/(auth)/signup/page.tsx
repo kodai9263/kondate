@@ -18,7 +18,7 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
   // 古い募集URLも通常登録に統一し、キャンペーンの残枠には依存させない。
   const displayError = error === "monitor-full" || error === "monitor-unavailable" ? undefined : error;
   return (
-    <AuthShell title={checkEmail ? "メールをご確認ください" : "無料で始める"} description={checkEmail ? "確認メールのリンクを開くと、利用を開始できます。" : "最初の7日分の献立と買い物リストを無料で試せます。期限なし・カード登録なし・自動課金なし。次の7日分から月480円・年4,800円です。"}>
+    <AuthShell title={checkEmail ? "メールをご確認ください" : "無料で始める"} description={checkEmail ? "確認メールのリンクを開くと、利用を開始できます。" : "登録から14日間、献立と買い物リストを無料で使えます。カード登録なし・自動課金なし。体験終了後の継続利用は月480円・年4,800円です。"}>
       <AuthMessage error={displayError} success={success} />
       {inviteToken ? <p className="mb-4 rounded-lg border border-kondate-line bg-kondate-bg p-3 text-sm text-kondate-muted">家族グループへの招待を受けて登録します。</p> : null}
       {checkEmail ? <p className="text-sm leading-7 text-kondate-muted">この画面で再登録する必要はありません。受信トレイと迷惑メールフォルダを確認し、確認メールのリンクを開いてください。</p> : <SignupForm next={next} inviteToken={inviteToken} campaignFields={getCampaignFields(params)} />}

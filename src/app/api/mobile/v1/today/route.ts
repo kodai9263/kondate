@@ -1,4 +1,5 @@
 import { getBreakfastVersions } from "@/lib/breakfast/server";
+import { getFirstWeekAccess } from "@/lib/billing/firstWeek.server";
 import { breakfastForDate } from "@/lib/breakfast/settings";
 import { getAdultEquivalent } from "@/lib/family/servings";
 import { menuData } from "@/lib/menuData";
@@ -24,6 +25,9 @@ export async function GET(request: Request) {
   try {
     const authorized = await authorizeMobileRequest(request, origin);
     if (authorized instanceof Response) return authorized;
+    const access = await getFirstWeekAccess(authorized.supabase, authorized.accessToken);
+    if (!access.canPlan) return mobileJsonError("free_trial_expired", 403, origin);
+    if (!access.paid && !access.trial) return mobileJsonError("planner_setup_required", 403, origin);
     const baseToday = findTodayPlan(menuData);
     const [year, month] = baseToday.date.split("-").map(Number);
     const [planner, breakfastState] = await Promise.all([

@@ -1,5 +1,4 @@
 import { getFirstWeekAccess } from "@/lib/billing/firstWeek.server";
-import { firstWeekDates } from "@/lib/billing/firstWeek";
 import { createHash } from "node:crypto";
 import { cache } from "react";
 import { getBreakfastVersions } from "@/lib/breakfast/server";
@@ -26,17 +25,15 @@ export const getShoppingContext = cache(async (client?: ShoppingClient, accessTo
     .select("shopping_day,shopping_period_mode,shopping_range_start,shopping_range_end").eq("household_id", profile.household_id).single();
   if (settingsError || !settings) throw new Error("shopping_period_unavailable");
   const access = await getFirstWeekAccess(supabase, accessToken);
-  if (!access.paid && !access.trial?.start_date) throw new Error("first_week_not_started");
+  if (!access.canPlan) throw new Error("free_trial_expired");
+  if (!access.paid && !access.trial) throw new Error("setup_required");
   const period = getShoppingPeriod(settings.shopping_day, now, {
     mode: settings.shopping_period_mode, start: settings.shopping_range_start, end: settings.shopping_range_end,
   });
-  if (!access.paid) {
-    period.mode = "custom"; period.start = access.trial!.start_date!; period.end = firstWeekDates(period.start)[6]; period.storageWeekStart = period.start;
-  }
   const { data: list, error: listError } = await supabase.from("shopping_lists")
     .select("id").eq("household_id", profile.household_id).eq("week_start", period.storageWeekStart).maybeSingle();
   if (listError) throw new Error("shopping_list_unavailable");
-  return { supabase, preferences, paid: access.paid, householdId: profile.household_id as string, period, listId: list?.id as string | undefined };
+  return { supabase, preferences, paid: access.paid, canPlan: access.canPlan, householdId: profile.household_id as string, period, listId: list?.id as string | undefined };
 });
 
 export const getPlannedShopping = cache(async (client?: ShoppingClient, accessToken?: string) => {
@@ -50,7 +47,7 @@ export const getPlannedShopping = cache(async (client?: ShoppingClient, accessTo
         ? await getHouseholdPlannerContext(year, month, true, context.supabase, accessToken)
         : await getHouseholdPlannerContext(year, month, true);
       const dinners = resolveMonthlyDinnerPlan(year, month, planner);
-      return context.paid ? dinners : dinners.filter((day) => Boolean(planner.initialRecipeIds[day.date]));
+      return dinners;
     })),
     client ? getBreakfastVersions(context.supabase) : getBreakfastVersions(),
     getShoppingCompletions(context),
