@@ -4,7 +4,7 @@ import { LocalNotifications } from "@capacitor/local-notifications";
 import { isConfigured, supabase } from "./supabase";
 import { clearReminderSettings, defaultReminderSettings, loadReminderSettings, remindersAvailable,
   renewReminderSchedules, saveReminderSettings, type Reminder, type ReminderSettings } from "./reminders";
-import { loadShopping, performShoppingAction, saveShoppingChecked, type ShoppingAction, type ShoppingItem, type ShoppingSnapshot } from "./shopping";
+import { loadShopping, performShoppingAction, saveShoppingChecked, withShoppingItemChecked, type ShoppingAction, type ShoppingItem, type ShoppingSnapshot } from "./shopping";
 import { ShoppingAccessError, ShoppingSessionError } from "./shopping";
 import { clearShoppingCache, loadShoppingCache, saveShoppingCache } from "./shoppingCache";
 import { loadToday, type TodaySnapshot } from "./today";
@@ -296,11 +296,17 @@ export function App() {
 
   async function toggleItem(item: ShoppingItem) {
     if (!accessToken || !userId || !snapshot || !online || cachedOnly || saving || actionBusy) return;
+    const previousSnapshot = snapshot;
     setSaving(true);
     setError("");
+    // 表示は即時に更新し、端末キャッシュには保存が確定した結果だけを入れる。
+    setSnapshot(withShoppingItemChecked(snapshot, item, !item.checked));
     try {
-      acceptShopping(await saveShoppingChecked(accessToken, snapshot, item), userId);
+      const saved = await saveShoppingChecked(accessToken, previousSnapshot, item);
+      if (currentUserId.current === userId) acceptShopping(saved, userId);
     } catch (cause) {
+      if (currentUserId.current !== userId) return;
+      setSnapshot(previousSnapshot);
       if (cause instanceof ShoppingAccessError || cause instanceof ShoppingSessionError) { setSnapshot(null); await discardShoppingCache(); }
       setError(displayError(cause, "保存できませんでした。接続を確認してください。"));
     } finally {
@@ -517,7 +523,7 @@ export function App() {
             <h2>確認したいこと</h2>
             <ul>{snapshot.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
           </section>}
-          <p className="read-only-note">品物をタップするとチェックを保存します。圏外では変更できません。</p>
+          <p className="read-only-note">{saving ? "チェックを保存中…" : "品物をタップするとチェックを保存します。圏外では変更できません。"}</p>
         </>}
         </>}
       </>}

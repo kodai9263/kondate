@@ -133,26 +133,30 @@ export function ShoppingList({
     setCheckedKeys((current) => updateSet(current, itemKey, nextChecked));
     setPendingKeys((current) => updateSet(current, itemKey, true));
 
-    const result = await setShoppingItemChecked({
-      id: item.id,
-      source: item.source ?? "auto",
-      rangeStart,
-      rangeEnd,
-      periodMode,
-      weekStart,
-      category: item.category,
-      name: item.name,
-      position: item.position,
-      checked: nextChecked,
-    });
-
-    if (result.ok && nextChecked) (window as typeof window & { gtag?: (command: string, event: string, params: Record<string, boolean>) => void }).gtag?.("event", "shopping_item_checked", { first_week: firstWeek });
-    router.refresh();
-    setPendingKeys((current) => updateSet(current, itemKey, false));
-    if (!result.ok) {
+    try {
+      const result = await setShoppingItemChecked({
+        id: item.id,
+        source: item.source ?? "auto",
+        rangeStart,
+        rangeEnd,
+        periodMode,
+        weekStart,
+        category: item.category,
+        name: item.name,
+        position: item.position,
+        checked: nextChecked,
+      });
+      if (!result.ok) throw new Error("shopping_save_failed");
+      // Server Action側で再検証するため、成功後の追加取得は不要。
+    } catch {
       setCheckedKeys((current) => updateSet(current, itemKey, wasChecked));
       setError("保存できませんでした。通信状態を確認して、もう一度お試しください。");
+      router.refresh();
+      return;
+    } finally {
+      setPendingKeys((current) => updateSet(current, itemKey, false));
     }
+    if (nextChecked) (window as typeof window & { gtag?: (command: string, event: string, params: Record<string, boolean>) => void }).gtag?.("event", "shopping_item_checked", { first_week: firstWeek });
   }
 
   async function addItem(event: React.FormEvent<HTMLFormElement>) {
@@ -289,7 +293,7 @@ export function ShoppingList({
 }
 
 function ShoppingGroup({ category, items, checkedKeys, pendingKeys, onToggle, onDelete, onDismiss }: { category: string; items: ShoppingListItem[]; checkedKeys: Set<string>; pendingKeys: Set<string>; onToggle: (item: ShoppingListItem) => void; onDelete?: (item: ManualItem) => void; onDismiss?: (item: ShoppingListItem) => void }) {
-  return <section aria-labelledby={`shopping-${category}`}><h2 id={`shopping-${category}`} className="border-b border-kondate-line pb-2 text-sm font-semibold">{category}<span className="ml-2 text-xs font-normal tabular-nums text-kondate-faint">{items.length}品</span></h2><div className="mt-2 divide-y divide-kondate-line">{items.map((item) => { const itemKey = buildShoppingItemKey(item.category, item.name); const checked = checkedKeys.has(itemKey); const pending = pendingKeys.has(itemKey) || (item.id ? pendingKeys.has(item.id) : false); const canDelete = Boolean((onDelete && item.id && item.source === "manual") || onDismiss); return <div key={item.id ?? itemKey} className="grid grid-cols-[minmax(0,1fr)_44px] items-center"><button type="button" aria-pressed={checked} disabled={pending} onClick={() => onToggle(item)} className="grid min-h-12 w-full cursor-pointer grid-cols-[26px_1fr] items-center gap-3 py-2 text-left transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-kondate-ink disabled:cursor-wait disabled:opacity-50"><span className={["flex size-[26px] items-center justify-center rounded-full border transition-colors", checked ? "border-kondate-done bg-kondate-done text-white" : "border-kondate-line bg-white text-transparent"].join(" ")}><Check size={15} strokeWidth={2.5} aria-hidden="true" /></span><span className={["text-[15px] leading-7", checked ? "text-kondate-faint line-through" : "text-kondate-ink"].join(" ")}>{item.label}</span></button>{canDelete ? <Button variant="danger" size="icon" aria-label={`${item.label}を買い物リストから削除`} disabled={pending} onClick={() => onDelete && item.id && item.source === "manual" ? onDelete(item as ManualItem) : onDismiss?.(item)}><Trash2 size={18} /></Button> : <span />}</div>; })}</div></section>;
+  return <section aria-labelledby={`shopping-${category}`}><h2 id={`shopping-${category}`} className="border-b border-kondate-line pb-2 text-sm font-semibold">{category}<span className="ml-2 text-xs font-normal tabular-nums text-kondate-faint">{items.length}品</span></h2><div className="mt-2 divide-y divide-kondate-line">{items.map((item) => { const itemKey = buildShoppingItemKey(item.category, item.name); const checked = checkedKeys.has(itemKey); const pending = pendingKeys.has(itemKey) || (item.id ? pendingKeys.has(item.id) : false); const canDelete = Boolean((onDelete && item.id && item.source === "manual") || onDismiss); return <div key={item.id ?? itemKey} className="grid grid-cols-[minmax(0,1fr)_44px] items-center"><button type="button" aria-pressed={checked} aria-busy={pending} disabled={pending} onClick={() => onToggle(item)} className="grid min-h-12 w-full touch-manipulation cursor-pointer grid-cols-[26px_1fr] items-center gap-3 py-2 text-left transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-kondate-ink disabled:cursor-wait"><span className={["flex size-[26px] items-center justify-center rounded-full border transition-colors", checked ? "border-kondate-done bg-kondate-done text-white" : "border-kondate-line bg-white text-transparent"].join(" ")}><Check size={15} strokeWidth={2.5} aria-hidden="true" /></span><span className={["text-[15px] leading-7", checked ? "text-kondate-faint line-through" : "text-kondate-ink"].join(" ")}>{item.label}</span></button>{canDelete ? <Button variant="danger" size="icon" aria-label={`${item.label}を買い物リストから削除`} disabled={pending} onClick={() => onDelete && item.id && item.source === "manual" ? onDelete(item as ManualItem) : onDismiss?.(item)}><Trash2 size={18} /></Button> : <span />}</div>; })}</div></section>;
 }
 
 function updateSet(current: Set<string>, key: string, included: boolean): Set<string> {

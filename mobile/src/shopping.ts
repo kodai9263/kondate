@@ -24,6 +24,18 @@ export type ShoppingSnapshot = {
   latestCompletion: { id: string; completedAt: string } | null;
 };
 
+// 名前が同じ別カテゴリの品物や手動品を巻き込まずに表示だけを更新する。
+export function withShoppingItemChecked(snapshot: ShoppingSnapshot, target: ShoppingItem, checked: boolean): ShoppingSnapshot {
+  const update = (item: ShoppingItem) => {
+    const matches = target.source === "manual"
+      ? item.source === "manual" && Boolean(target.id) && item.id === target.id
+      : item.source === "auto" && item.category === target.category && item.name === target.name && item.position === target.position;
+    return matches ? { ...item, checked } : item;
+  };
+  return { ...snapshot, groups: snapshot.groups.map((group) => ({ ...group, items: group.items.map(update) })),
+    manualItems: snapshot.manualItems.map(update) };
+}
+
 export type ShoppingAction =
   | { action: "add"; name: string }
   | { action: "delete"; id: string }

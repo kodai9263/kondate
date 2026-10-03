@@ -97,3 +97,7 @@ h1 { margin: 7px 0 4px; font-family: "Noto Serif JP", serif; font-size: 29px; li
 .reminder-fields label { display: grid; gap: 6px; color: #594c43; font-size: 12px; font-weight: 700; }
 .reminder-fields select, .reminder-fields input { width: 100%; min-width: 0; min-height: 44px; border: 1px solid #d9c9ba; border-radius: 9px; padding: 8px; background: #fffefa; color: #2b2724; font-size: 16px; }
 @media (min-width: 640px) { .app-shell { border-left: 1px solid #eaded1; border-right: 1px solid #eaded1; } }
+
+/* 保存待ちでも即時反映したチェックを鮮明に保つ。 */
+.shopping-item-button { touch-action: manipulation; }
+.shopping-item-button:disabled { opacity: 1; }
