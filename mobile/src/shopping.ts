@@ -1,5 +1,6 @@
 export class ShoppingAccessError extends Error {}
 export class ShoppingSessionError extends Error {}
+export class ShoppingConflictError extends Error {}
 
 export type ShoppingItem = {
   source: "auto" | "manual";
@@ -69,7 +70,7 @@ export async function saveShoppingChecked(accessToken: string, snapshot: Shoppin
     }),
     cache: "no-store",
   });
-  if (response.status === 409) throw new Error("献立や買い物期間が変更されました。リストを更新してください。");
+  if (response.status === 409) throw new ShoppingConflictError("献立や買い物期間が変更されました。リストを更新してください。");
   return parseShoppingResponse(response);
 }
 
@@ -87,7 +88,7 @@ export async function performShoppingAction(accessToken: string, snapshot: Shopp
     }),
     cache: "no-store",
   });
-  if (response.status === 409) throw new Error("買い物リストが更新されました。最新の内容を確認してください。");
+  if (response.status === 409) throw new ShoppingConflictError("買い物リストが更新されました。最新の内容を確認してください。");
   if (response.status === 401) throw new ShoppingSessionError("ログインの有効期限が切れました。もう一度ログインしてください。");
   if (response.status === 403) throw new ShoppingAccessError("この家族の買い物リストにはアクセスできません。");
   if (!response.ok) throw new Error("保存できませんでした。接続を確認してください。");

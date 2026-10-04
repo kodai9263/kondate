@@ -1,12 +1,13 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Capacitor, type PluginListenerHandle } from "@capacitor/core";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { isConfigured, supabase } from "./supabase";
 import { clearReminderSettings, defaultReminderSettings, loadReminderSettings, remindersAvailable,
   renewReminderSchedules, saveReminderSettings, type Reminder, type ReminderSettings } from "./reminders";
-import { loadShopping, performShoppingAction, saveShoppingChecked, withShoppingItemChecked, type ShoppingAction, type ShoppingItem, type ShoppingSnapshot } from "./shopping";
+import { loadShopping, performShoppingAction, saveShoppingChecked, type ShoppingAction, type ShoppingItem, type ShoppingSnapshot } from "./shopping";
 import { ShoppingAccessError, ShoppingSessionError } from "./shopping";
 import { clearShoppingCache, loadShoppingCache, saveShoppingCache } from "./shoppingCache";
+import { ShoppingMutationQueue, type ShoppingChange } from "./shoppingQueue";
 import { loadToday, type TodaySnapshot } from "./today";
 
 export function App() {
@@ -17,6 +18,8 @@ export function App() {
   const [authNotice, setAuthNotice] = useState("");
   const authReady = useRef(false);
   const cacheGeneration = useRef(0);
+  const mutationQueue = useRef<ShoppingMutationQueue | null>(null);
+  const shoppingRevision = useRef(0);
   const cacheWrite = useRef<Promise<void>>(Promise.resolve());
   const currentUserId = useRef<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -42,15 +45,20 @@ export function App() {
   const [reminderBusy, setReminderBusy] = useState(false);
   const [reminderMessage, setReminderMessage] = useState("");
 
-  function acceptShopping(value: ShoppingSnapshot, ownerId: string) {
-    setSnapshot(value);
-    setCachedOnly(false);
+  const cacheShopping = useCallback((value: ShoppingSnapshot, ownerId: string) => {
     const generation = cacheGeneration.current;
     cacheWrite.current = cacheWrite.current.catch(() => {}).then(async () => {
       if (generation === cacheGeneration.current) await saveShoppingCache(ownerId, value);
     });
     void cacheWrite.current.catch(() => setNotice("端末への保存ができませんでした。圏外での閲覧は利用できない可能性があります。"));
-  }
+  }, []);
+
+  const acceptShopping = useCallback((value: ShoppingSnapshot, ownerId: string) => {
+    if (mutationQueue.current?.pending) return;
+    setSnapshot(value);
+    setCachedOnly(false);
+    cacheShopping(value, ownerId);
+  }, [cacheShopping]);
 
   async function discardShoppingCache() {
     cacheGeneration.current += 1;
@@ -60,7 +68,7 @@ export function App() {
 
   useEffect(() => {
     const onOnline = () => setOnline(true);
-    const onOffline = () => setOnline(false);
+    const onOffline = () => { mutationQueue.current?.cancel(); setSaving(false); setOnline(false); };
     window.addEventListener("online", onOnline);
     window.addEventListener("offline", onOffline);
     return () => {
@@ -151,13 +159,15 @@ export function App() {
       if (!session) {
         authReady.current = false;
         currentUserId.current = null;
+        mutationQueue.current?.cancel();
+        setSaving(false);
         setAccessToken(null);
         setUserId(null);
         setSnapshot(null);
         setTodaySnapshot(null);
         if (event === "SIGNED_OUT") void discardShoppingCache().catch(() => {});
       } else if (authReady.current) {
-        if (currentUserId.current && currentUserId.current !== session.user.id) setSnapshot(null);
+        if (currentUserId.current && currentUserId.current !== session.user.id) { mutationQueue.current?.cancel(); setSaving(false); setSnapshot(null); }
         currentUserId.current = session.user.id;
         setUserId(session.user.id);
         setAccessToken(session.access_token);
@@ -169,26 +179,27 @@ export function App() {
   useEffect(() => {
     if (!accessToken || !userId) return;
     let cancelled = false;
+    const revision = shoppingRevision.current;
     if (!online) {
       void loadShoppingCache(userId).then((value) => {
-        if (!cancelled) {
+        if (!cancelled && revision === shoppingRevision.current) {
           setLoading(false);
           setSnapshot(value);
           setCachedOnly(true);
           setError(value ? "" : "保存済みのリストがありません。接続してリストを保存してください。");
         }
       }).catch(() => {
-        if (!cancelled) { setLoading(false); setError("保存済みのリストを読み込めませんでした。"); }
+        if (!cancelled && revision === shoppingRevision.current) { setLoading(false); setError("保存済みのリストを読み込めませんでした。"); }
       });
       return () => { cancelled = true; };
     }
     void loadShopping(accessToken).then((value) => {
-      if (!cancelled) {
+      if (!cancelled && revision === shoppingRevision.current) {
         acceptShopping(value, userId);
         setError("");
       }
     }).catch((cause: unknown) => {
-      if (cancelled) return;
+      if (cancelled || revision !== shoppingRevision.current) return;
       if (cause instanceof ShoppingAccessError || cause instanceof ShoppingSessionError) {
         setSnapshot(null);
         setCachedOnly(false);
@@ -196,17 +207,17 @@ export function App() {
         setError(displayError(cause, "買い物リストを読み込めませんでした。"));
       } else {
         void loadShoppingCache(userId).then((value) => {
-          if (cancelled) return;
+          if (cancelled || revision !== shoppingRevision.current) return;
           setSnapshot(value);
           setCachedOnly(true);
           setError(value ? "" : "保存済みのリストがありません。接続してリストを保存してください。");
         }).catch(() => {
-          if (!cancelled) setError(displayError(cause, "買い物リストを読み込めませんでした。"));
+          if (!cancelled && revision === shoppingRevision.current) setError(displayError(cause, "買い物リストを読み込めませんでした。"));
         });
       }
-    }).finally(() => { if (!cancelled) setLoading(false); });
+    }).finally(() => { if (!cancelled && revision === shoppingRevision.current) setLoading(false); });
     return () => { cancelled = true; };
-  }, [accessToken, userId, online, refreshEpoch]);
+  }, [accessToken, userId, online, refreshEpoch, acceptShopping]);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -294,24 +305,41 @@ export function App() {
     }
   }
 
-  async function toggleItem(item: ShoppingItem) {
-    if (!accessToken || !userId || !snapshot || !online || cachedOnly || saving || actionBusy) return;
-    const previousSnapshot = snapshot;
-    setSaving(true);
+  async function queueChange(change: ShoppingChange) {
+    if (!accessToken || !userId || !snapshot || !online || cachedOnly || actionBusy || loading) return;
     setError("");
-    // 表示は即時に更新し、端末キャッシュには保存が確定した結果だけを入れる。
-    setSnapshot(withShoppingItemChecked(snapshot, item, !item.checked));
-    try {
-      const saved = await saveShoppingChecked(accessToken, previousSnapshot, item);
-      if (currentUserId.current === userId) acceptShopping(saved, userId);
-    } catch (cause) {
-      if (currentUserId.current !== userId) return;
-      setSnapshot(previousSnapshot);
-      if (cause instanceof ShoppingAccessError || cause instanceof ShoppingSessionError) { setSnapshot(null); await discardShoppingCache(); }
-      setError(displayError(cause, "保存できませんでした。接続を確認してください。"));
-    } finally {
-      setSaving(false);
+    setNotice("");
+    let queue = mutationQueue.current;
+    if (!queue?.pending) {
+      const ownerId = userId;
+      const current = () => currentUserId.current === ownerId && mutationQueue.current === queue;
+      queue = new ShoppingMutationQueue(snapshot, {
+        execute: (confirmed, operation) => operation.kind === "check"
+          ? saveShoppingChecked(accessToken, confirmed, { ...operation.item, checked: !operation.checked })
+          : performShoppingAction(accessToken, confirmed, operation.kind === "delete"
+            ? { action: "delete", id: operation.id }
+            : { action: "dismiss", category: operation.item.category, name: operation.item.name, position: operation.item.position }),
+        reload: () => loadShopping(accessToken),
+        onState: (value, pending) => { if (current()) { setSnapshot(value); setSaving(pending > 0); } },
+        onConfirmed: (value) => { if (current()) cacheShopping(value, ownerId); },
+        onError: (cause) => {
+          if (!current()) return;
+          if (cause instanceof ShoppingAccessError || cause instanceof ShoppingSessionError) {
+            setSnapshot(null);
+            setSaving(false);
+            void discardShoppingCache().catch(() => {});
+          }
+          setError(displayError(cause, "保存できませんでした。接続を確認してください。"));
+        },
+      });
+      mutationQueue.current = queue;
     }
+    shoppingRevision.current += 1;
+    queue.enqueue(change);
+  }
+
+  async function toggleItem(item: ShoppingItem) {
+    await queueChange({ kind: "check", item, checked: !item.checked });
   }
 
   async function runAction(action: ShoppingAction, successMessage: string) {
@@ -334,6 +362,8 @@ export function App() {
   async function signOut() {
     authReady.current = false;
     currentUserId.current = null;
+    mutationQueue.current?.cancel();
+    setSaving(false);
     try { await discardShoppingCache(); }
     catch { setError("端末内の保存済みリストを削除できませんでした。端末の保存領域を確認してください。"); }
     try { await clearReminderSettings(); }
@@ -511,11 +541,11 @@ export function App() {
           {snapshot.latestCompletion && <button className="undo-button" type="button" disabled={shoppingReadOnly || actionBusy || saving}
             onClick={() => void runAction({ action: "undo", completionId: snapshot.latestCompletion!.id }, "直前の買い物完了を取り消しました。")}>直前の完了を取り消す</button>}
           {snapshot.groups.map((group) => <ShoppingGroup key={group.category} title={group.category} items={group.items}
-            disabled={shoppingReadOnly || saving || actionBusy} onToggle={toggleItem}
-            onDismiss={group.category === "調味料(在庫確認)" ? (item) => runAction({ action: "dismiss", category: item.category, name: item.name, position: item.position }, "調味料をリストから外しました。") : undefined} />)}
+            disabled={shoppingReadOnly || loading || actionBusy} onToggle={toggleItem}
+            onDismiss={group.category === "調味料(在庫確認)" ? (item) => queueChange({ kind: "dismiss", item }) : undefined} />)}
           {snapshot.manualItems.length > 0 && <ShoppingGroup title="手動で追加したもの" items={snapshot.manualItems}
-            disabled={shoppingReadOnly || saving || actionBusy} onToggle={toggleItem}
-            onDelete={(item) => item.id ? runAction({ action: "delete", id: item.id }, "買うものを削除しました。") : Promise.resolve()} />}
+            disabled={shoppingReadOnly || loading || actionBusy} onToggle={toggleItem}
+            onDelete={(item) => item.id ? queueChange({ kind: "delete", id: item.id }) : Promise.resolve()} />}
           {items.length === 0 && <p className="empty">この期間に買うものはありません。</p>}
           {snapshot.hasDismissedSeasonings && <button className="restore-button" type="button" disabled={shoppingReadOnly || actionBusy || saving}
             onClick={() => void runAction({ action: "restore" }, "非表示にした調味料を戻しました。")}>非表示の調味料を戻す</button>}
@@ -523,7 +553,7 @@ export function App() {
             <h2>確認したいこと</h2>
             <ul>{snapshot.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
           </section>}
-          <p className="read-only-note">{saving ? "チェックを保存中…" : "品物をタップするとチェックを保存します。圏外では変更できません。"}</p>
+          <p className="read-only-note">{saving ? "変更を保存中…（続けて操作できます）" : "品物をタップするとチェックを保存します。圏外では変更できません。"}</p>
         </>}
         </>}
       </>}
