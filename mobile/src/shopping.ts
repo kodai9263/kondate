@@ -11,6 +11,7 @@ export type ShoppingItem = {
   position: number;
   checked: boolean;
   needsReview?: boolean;
+  pending?: boolean;
 };
 
 export type ShoppingSnapshot = {

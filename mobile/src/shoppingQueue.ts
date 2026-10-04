@@ -2,10 +2,12 @@ import { ShoppingAccessError, ShoppingSessionError, ShoppingConflictError, withS
   type ShoppingItem, type ShoppingSnapshot } from "./shopping";
 
 export type ShoppingChange = { kind: "check"; item: ShoppingItem; checked: boolean }
+  | { kind: "add"; item: ShoppingItem }
   | { kind: "delete"; id: string }
   | { kind: "dismiss"; item: ShoppingItem };
 
 export function applyShoppingChange(snapshot: ShoppingSnapshot, change: ShoppingChange): ShoppingSnapshot {
+  if (change.kind === "add") return { ...snapshot, manualItems: [...snapshot.manualItems, change.item] };
   if (change.kind === "check") return withShoppingItemChecked(snapshot, change.item, change.checked);
   if (change.kind === "delete") return { ...snapshot, manualItems: snapshot.manualItems.filter((item) => item.id !== change.id) };
   return { ...snapshot, hasDismissedSeasonings: true, groups: snapshot.groups.map((group) => ({ ...group,

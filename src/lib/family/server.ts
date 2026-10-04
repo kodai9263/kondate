@@ -1,3 +1,4 @@
+import { getMobileContext, getMobileSettings } from "@/lib/mobile/context";
 import { normalizeAllergies } from "@/lib/family/allergies";
 import { defaultBreakfastChoices, normalizeBreakfastChoices } from "@/lib/breakfast/preferences";
 import { defaultFamilySize, defaultShoppingDay, normalizeFamilySize, normalizeShoppingDay } from "@/lib/family/servings";
@@ -7,15 +8,16 @@ type HouseholdClient = Awaited<ReturnType<typeof getSupabaseServer>>;
 
 export async function getCurrentHouseholdPreferences(strict = false, client?: HouseholdClient, accessToken?: string) {
   const supabase = client ?? await getSupabaseServer();
-  const { data: { user } } = await supabase.auth.getUser(accessToken);
+  const trusted = getMobileContext(supabase);
+  const { data: { user } } = trusted ? { data: { user: trusted.user } } : await supabase.auth.getUser(accessToken);
   if (strict && !user) throw new Error("household_preferences_unavailable");
   if (!user) return { ...defaultFamilySize, shoppingDay: defaultShoppingDay, allergies: [], breakfastChoices: defaultBreakfastChoices };
 
-  const { data: profile } = await supabase.from("profiles").select("household_id").eq("id", user.id).maybeSingle();
+  const { data: profile } = trusted ? { data: { household_id: trusted.householdId } } : await supabase.from("profiles").select("household_id").eq("id", user.id).maybeSingle();
   if (strict && !profile?.household_id) throw new Error("household_preferences_unavailable");
   if (!profile?.household_id) return { ...defaultFamilySize, shoppingDay: defaultShoppingDay, allergies: [], breakfastChoices: defaultBreakfastChoices };
 
-  const { data: settings, error: settingsError } = await supabase
+  const { data: settings, error: settingsError } = trusted ? await getMobileSettings(supabase) : await supabase
     .from("household_settings")
     .select("adult_count, child_count, shopping_day, allergies, breakfast_choices")
     .eq("household_id", profile.household_id)

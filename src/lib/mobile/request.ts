@@ -1,3 +1,4 @@
+import { registerMobileContext } from "./context";
 import { canAccessHousehold } from "@/lib/billing/entitlements";
 import { createMobileRequestClient } from "@/lib/supabase/mobile";
 
@@ -45,5 +46,6 @@ export async function authorizeMobileRequest(request: Request, origin: string | 
     status: subscription?.status, currentPeriodEnd: subscription?.current_period_end })) {
     return mobileJsonError("family_access_required", 403, origin);
   }
+  registerMobileContext(supabase, { user, householdId: profile.household_id, subscription });
   return { supabase, accessToken: bearer[1], userId: user.id, householdId: profile.household_id };
 }
