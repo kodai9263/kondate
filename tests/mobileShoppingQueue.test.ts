@@ -85,3 +85,25 @@ describe("買い物の連続操作保存", () => {
     const result = applyShoppingChange(base, { kind: "dismiss", item }); expect(result.groups[0].items).toEqual([]); expect(result.manualItems).toHaveLength(2); expect(result.hasDismissedSeasonings).toBe(true);
   });
 });
+
+
+describe("品物の即時追加", () => {
+  const added: ShoppingItem = { source: "manual", id: "temporary", category: "その他", name: "卵", position: 2, checked: false, pending: true };
+  it("追加保存中も後続の追加と削除を保持し、確定IDで置き換える", async () => {
+    const { queue, first, handlers } = fixture();
+    queue.enqueue({ kind: "add", item: added });
+    queue.enqueue({ kind: "delete", id: "one" });
+    expect(handlers.onState.mock.lastCall?.[0].manualItems.map((x: ShoppingItem) => x.id)).toEqual(["two", "temporary"]);
+    first.resolve({ ...base, manualItems: [...base.manualItems, { ...added, id: "saved", pending: undefined }] });
+    await vi.waitFor(() => expect(queue.pending).toBe(false));
+    expect(handlers.onState.mock.lastCall?.[0].manualItems.map((x: ShoppingItem) => x.id)).toEqual(["two", "saved"]);
+  });
+  it("追加の応答が失われても重複登録しない", async () => {
+    const { queue, first, handlers } = fixture();
+    handlers.reload.mockResolvedValue({ ...base, manualItems: [...base.manualItems, { ...added, id: "saved", pending: undefined }] });
+    queue.enqueue({ kind: "add", item: added }); first.reject(new Error("response lost"));
+    await vi.waitFor(() => expect(queue.pending).toBe(false));
+    expect(handlers.execute).toHaveBeenCalledTimes(1);
+    expect(handlers.onState.mock.lastCall?.[0].manualItems.filter((x: ShoppingItem) => x.name === "卵")).toHaveLength(1);
+  });
+});

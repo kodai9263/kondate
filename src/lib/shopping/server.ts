@@ -1,3 +1,4 @@
+import { getMobileContext, getMobileSettings } from "@/lib/mobile/context";
 import { getFirstWeekAccess } from "@/lib/billing/firstWeek.server";
 import { createHash } from "node:crypto";
 import { cache } from "react";
@@ -17,11 +18,12 @@ export const getShoppingContext = cache(async (client?: ShoppingClient, accessTo
   const now = new Date();
   const supabase = client ?? await getSupabaseServer();
   const preferences = await getCurrentHouseholdPreferences(true, supabase, accessToken);
-  const { data: { user } } = await supabase.auth.getUser(accessToken);
+  const trusted = getMobileContext(supabase);
+  const { data: { user } } = trusted ? { data: { user: trusted.user } } : await supabase.auth.getUser(accessToken);
   if (!user) throw new Error("shopping_auth_required");
-  const { data: profile, error: profileError } = await supabase.from("profiles").select("household_id").eq("id", user.id).single();
+  const { data: profile, error: profileError } = trusted ? { data: { household_id: trusted.householdId }, error: null } : await supabase.from("profiles").select("household_id").eq("id", user.id).single();
   if (profileError || !profile?.household_id) throw new Error("shopping_household_unavailable");
-  const { data: settings, error: settingsError } = await supabase.from("household_settings")
+  const { data: settings, error: settingsError } = trusted ? await getMobileSettings(supabase) : await supabase.from("household_settings")
     .select("shopping_day,shopping_period_mode,shopping_range_start,shopping_range_end").eq("household_id", profile.household_id).single();
   if (settingsError || !settings) throw new Error("shopping_period_unavailable");
   const access = await getFirstWeekAccess(supabase, accessToken);

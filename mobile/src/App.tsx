@@ -21,6 +21,8 @@ export function App() {
   const mutationQueue = useRef<ShoppingMutationQueue | null>(null);
   const shoppingRevision = useRef(0);
   const cacheWrite = useRef<Promise<void>>(Promise.resolve());
+  const freshOwner = useRef<string | null>(null);
+  const lastResumeRefresh = useRef(0);
   const currentUserId = useRef<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -55,6 +57,8 @@ export function App() {
 
   const acceptShopping = useCallback((value: ShoppingSnapshot, ownerId: string) => {
     if (mutationQueue.current?.pending) return;
+    freshOwner.current = ownerId;
+    lastResumeRefresh.current = Date.now();
     setSnapshot(value);
     setCachedOnly(false);
     cacheShopping(value, ownerId);
@@ -79,9 +83,12 @@ export function App() {
 
   useEffect(() => {
     if (!accessToken) return;
-    const refreshWhenVisible = () => {
+    const refreshWhenVisible = (event: Event) => {
       if (document.visibilityState === "visible") {
-        if (navigator.onLine) setRefreshEpoch((value) => value + 1);
+        if (!navigator.onLine || mutationQueue.current?.pending) return;
+        if (event.type !== "online" && Date.now() - lastResumeRefresh.current < 30_000) return;
+        lastResumeRefresh.current = Date.now();
+        setRefreshEpoch((value) => value + 1);
         void renewReminderSchedules().catch(() => setReminderMessage("通知を確認できませんでした。設定を開いて確認してください。"));
       }
     };
@@ -159,6 +166,7 @@ export function App() {
       if (!session) {
         authReady.current = false;
         currentUserId.current = null;
+        freshOwner.current = null;
         mutationQueue.current?.cancel();
         setSaving(false);
         setAccessToken(null);
@@ -193,12 +201,22 @@ export function App() {
       });
       return () => { cancelled = true; };
     }
+    let fresh = false;
+    if (freshOwner.current !== userId) {
+      void loadShoppingCache(userId).then((value) => {
+        if (value && !cancelled && !fresh && revision === shoppingRevision.current) {
+          setSnapshot(value); setCachedOnly(true);
+        }
+      }).catch(() => {});
+    }
     void loadShopping(accessToken).then((value) => {
+      fresh = true;
       if (!cancelled && revision === shoppingRevision.current) {
         acceptShopping(value, userId);
         setError("");
       }
     }).catch((cause: unknown) => {
+      fresh = true;
       if (cancelled || revision !== shoppingRevision.current) return;
       if (cause instanceof ShoppingAccessError || cause instanceof ShoppingSessionError) {
         setSnapshot(null);
@@ -316,12 +334,14 @@ export function App() {
       queue = new ShoppingMutationQueue(snapshot, {
         execute: (confirmed, operation) => operation.kind === "check"
           ? saveShoppingChecked(accessToken, confirmed, { ...operation.item, checked: !operation.checked })
-          : performShoppingAction(accessToken, confirmed, operation.kind === "delete"
+          : performShoppingAction(accessToken, confirmed, operation.kind === "add"
+            ? { action: "add", name: operation.item.name }
+            : operation.kind === "delete"
             ? { action: "delete", id: operation.id }
             : { action: "dismiss", category: operation.item.category, name: operation.item.name, position: operation.item.position }),
         reload: () => loadShopping(accessToken),
         onState: (value, pending) => { if (current()) { setSnapshot(value); setSaving(pending > 0); } },
-        onConfirmed: (value) => { if (current()) cacheShopping(value, ownerId); },
+        onConfirmed: (value) => { if (current()) { lastResumeRefresh.current = Date.now(); cacheShopping(value, ownerId); } },
         onError: (cause) => {
           if (!current()) return;
           if (cause instanceof ShoppingAccessError || cause instanceof ShoppingSessionError) {
@@ -339,7 +359,7 @@ export function App() {
   }
 
   async function toggleItem(item: ShoppingItem) {
-    await queueChange({ kind: "check", item, checked: !item.checked });
+    if (!item.pending) await queueChange({ kind: "check", item, checked: !item.checked });
   }
 
   async function runAction(action: ShoppingAction, successMessage: string) {
@@ -362,6 +382,7 @@ export function App() {
   async function signOut() {
     authReady.current = false;
     currentUserId.current = null;
+    freshOwner.current = null;
     mutationQueue.current?.cancel();
     setSaving(false);
     try { await discardShoppingCache(); }
@@ -497,7 +518,7 @@ export function App() {
         </section>}
 
         {snapshot && <p className={!shoppingReadOnly && !error ? "sync-status" : "sync-status stale"} role="status">
-          {!shoppingReadOnly && !error ? "● 最新の買い物リスト" : "● オフライン・保存済みのリスト（変更には接続が必要です）"}
+          {!shoppingReadOnly && !error ? "● 最新の買い物リスト" : online ? "● 保存済みのリスト（最新状態の確認後に変更できます）" : "● オフライン・保存済みのリスト（変更には接続が必要です）"}
           <small>取得：{formatTimestamp(snapshot.fetchedAt)}</small>
         </p>}
 
@@ -529,12 +550,16 @@ export function App() {
           <form className="add-item" onSubmit={(event) => {
             event.preventDefault();
             const name = newItemName.trim();
-            if (name) void runAction({ action: "add", name }, "買うものを追加しました。");
+            if (name && !shoppingReadOnly && !actionBusy && !loading) {
+              void queueChange({ kind: "add", item: { source: "manual", id: crypto.randomUUID(), category: "その他",
+                name, position: snapshot.manualItems.length, checked: false, pending: true } });
+              setNewItemName("");
+            }
           }}>
             <label htmlFor="new-item">買うものを追加</label>
             <div><input id="new-item" value={newItemName} maxLength={200} placeholder="例：牛乳"
               onChange={(event) => setNewItemName(event.target.value)} />
-              <button type="submit" disabled={shoppingReadOnly || actionBusy || saving || !newItemName.trim()}>追加</button></div>
+              <button type="submit" disabled={shoppingReadOnly || actionBusy || loading || !newItemName.trim()}>追加</button></div>
           </form>
           {items.some((item) => item.checked) && <button className="complete-button" type="button"
             disabled={shoppingReadOnly || actionBusy || saving} onClick={() => void runAction({ action: "complete" }, "買い物の完了を保存しました。")}>チェックした品を買い物完了にする</button>}
@@ -590,13 +615,13 @@ function ShoppingGroup({ title, items, disabled, onToggle, onDelete, onDismiss }
   return <section className="shopping-group">
     <h2>{title}<span>{items.filter((item) => !item.checked).length}件</span></h2>
     <ul>{items.map((item) => <li key={`${item.source}:${item.category}:${item.name}:${item.position}`} className={item.checked ? "checked" : ""}>
-      <button className="shopping-item-button" type="button" disabled={disabled} aria-pressed={item.checked}
+      <button className="shopping-item-button" type="button" disabled={disabled || item.pending} aria-pressed={item.checked}
         aria-label={`${item.label ?? item.name}を${item.checked ? "未購入に戻す" : "購入済みにする"}`}
         onClick={() => void onToggle(item)}>
         <span className="check-symbol" aria-hidden="true">{item.checked ? "✓" : ""}</span>
-        <span>{item.label ?? item.name}{item.needsReview && <small>数量確認</small>}</span>
+        <span>{item.label ?? item.name}{item.needsReview && <small>数量確認</small>}{item.pending && <small>保存中</small>}</span>
       </button>
-      {(onDelete || onDismiss) && <button className="item-delete" type="button" disabled={disabled}
+      {(onDelete || onDismiss) && <button className="item-delete" type="button" disabled={disabled || item.pending}
         aria-label={`${item.label ?? item.name}をリストから外す`} onClick={() => void (onDelete ?? onDismiss)?.(item)}>削除</button>}
     </li>)}</ul>
   </section>;
