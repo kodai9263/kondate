@@ -12,6 +12,7 @@ export type Nutrition = {
 
 export type NutritionRecipe = {
   id: string;
+  detailIdentifier?: string;
   name: string;
   side: string;
   cookMinutes: number;
