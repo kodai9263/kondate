@@ -55,9 +55,9 @@ export async function getHouseholdPlannerContext(year: number, month: number, st
     if (customizationId) {
       const customization = customizationRows.get(customizationId);
       const mapped = customization ? mapDatabaseRecipe(customization, "custom") : [];
-      return mapped.map((item) => ({ ...item, totalMinutes: undefined, isCustom: false, seasonMonths: recipe.seasonMonths }));
+      return mapped.map((item) => ({ ...item, totalMinutes: undefined, isCustom: false, detailIdentifier: recipe.id, seasonMonths: recipe.seasonMonths }));
     }
-    return [{ ...recipe, id: databaseId }];
+    return [{ ...recipe, id: databaseId, detailIdentifier: recipe.id }];
   });
   const community = (officialRows ?? []).flatMap((row) => {
     const meta = row.meta && typeof row.meta === "object" ? row.meta as Record<string, unknown> : {};
@@ -67,7 +67,7 @@ export async function getHouseholdPlannerContext(year: number, month: number, st
     const customizationId = stepCustomizationIds.get(row.id);
     if (customizationId) {
       const customization = customizationRows.get(customizationId);
-      return customization ? mapDatabaseRecipe(customization, "community").map((recipe) => ({ ...recipe, totalMinutes: undefined })) : [];
+      return customization ? mapDatabaseRecipe(customization, "community").map((recipe) => ({ ...recipe, totalMinutes: undefined, detailIdentifier: row.id })) : [];
     }
     return mapDatabaseRecipe(row as Record<string, unknown>, "community");
   });
