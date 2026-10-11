@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 import { officialNutritionRecipes } from "@/lib/nutrition/catalog";
 import { resolveMonthlyDinnerPlan } from "@/lib/nutrition/planner";
 import { buildPlannedShopping } from "@/lib/shopping/build";
-import { parseIngredientLine } from "@/lib/shopping/ingredients";
+import { isCookingWaterOrIce, parseIngredientLine } from "@/lib/shopping/ingredients";
 import { formatShoppingPeriod, getShoppingPeriod, isShoppingRange, shoppingDates } from "@/lib/shopping/period";
+import type { PlannedDinner } from "@/types/nutrition";
 import type { BreakfastVersion } from "@/lib/breakfast/settings";
 
 const recipe = (id: string) => officialNutritionRecipes.find((recipe) => recipe.id === id)!;
@@ -61,6 +62,28 @@ describe("買い物の7日間", () => {
 });
 
 describe("献立からの材料集計", () => {
+  it("調理用の水と氷を除外し、水菜・水煮缶・飲料は残す", () => {
+    const result = build([{ ...dinner("hamburg"), recipe: { ...recipe("hamburg"), isCustom: true,
+      ingredientsText: "水 800ml\n氷 適量\n水（調理用） 大さじ4\n水菜 1束\n大豆水煮缶 1缶\nミネラルウォーター 1本" } }], [breakfast(["水 100ml", "氷 少々"])]);
+    const names = result.groups.flatMap((group) => group.items.map((item) => item.label));
+    expect(names).toEqual(expect.arrayContaining(["水菜 1束", "大豆水煮缶 1缶", "ミネラルウォーター"]));
+    expect(names).toHaveLength(3);
+    expect(result.groups.some((group) => group.category === "水・氷（調理用）")).toBe(false);
+  });
+  it("主菜と副菜の表示名を分け、購入済み判定に使うmealは維持する", () => {
+    const result = build([{ ...dinner("hamburg"), recipe: { ...recipe("hamburg"), isCustom: true,
+      name: "ハンバーグ", side: "野菜スープ", ingredientsText: "玉ねぎ 1個\n【スープ】玉ねぎ 1個" } }]);
+    const item = result.groups.flatMap((group) => group.items)[0];
+    expect(item.contributions.map((source) => source.menuName)).toEqual(["ハンバーグ", "野菜スープ"]);
+    expect(item.contributions.every((source) => source.meal === "ハンバーグ")).toBe(true);
+  });
+  it("基準人数のない差し替え副菜にも副菜名を表示する", () => {
+    const day: PlannedDinner = { ...dinner("hamburg"), sideMode: "custom",
+      recipe: { ...recipe("hamburg"), isCustom: true, ingredientsText: "玉ねぎ 1個" },
+      sideDish: { id: "test-side", name: "冷ややっこ", ingredientsText: "豆腐 1丁", steps: [] } };
+    const result = buildPlannedShopping({ start: day.date, end: day.date, dinners: [day], breakfastVersions: [], servings: 4 });
+    expect(result.groups.flatMap((group) => group.items).find((item) => item.label.startsWith("豆腐"))?.contributions[0].menuName).toBe("冷ややっこ");
+  });
   it("鶏肉は人数換算と日別合算の後に購入枚数を切り上げ、必要重量を残す", () => {
     const dinners = ["2026-09-19", "2026-09-20"].map((date) => ({ ...dinner("hamburg", date),
       recipe: { ...recipe("hamburg"), isCustom: true, servingsBase: 4,
@@ -223,6 +246,7 @@ describe("献立からの材料集計", () => {
     const contributions = result.groups.flatMap((group) => group.items.flatMap((item) => item.contributions));
     for (const line of recipe.ingredientsText!.split("\n")) {
       for (const ingredient of parseIngredientLine(line)) {
+        if (isCookingWaterOrIce(ingredient.name)) continue;
         expect(contributions.some((source) => source.original === ingredient.original), ingredient.original).toBe(true);
         if (!/適量|少々/.test(ingredient.original)) expect(ingredient.amount, ingredient.original).not.toBeNull();
       }

@@ -18,7 +18,7 @@ export type ShoppingPageData = {
 };
 
 export function ShoppingPageView({ period, groups, warnings, preferences, listId, latestCompletion, saved, fixedPeriod = false, trialExpiresAt }: ShoppingPageData) {
-  const listGroups = groups.map((group) => ({ category: group.category, items: group.items.map(({ category, name, label, position }) => ({ category, name, label, position })) }));
+  const listGroups = groups.map((group) => ({ category: group.category, items: group.items.map(({ category, name, label, position, contributions }) => ({ category, name, label, position, menuNames: [...new Set(contributions.map((source) => source.menuName ?? source.meal))] })) }));
   return <main className="mx-auto min-h-dvh w-full max-w-[640px] px-4 pb-28 pt-5">
     <header className="border-b border-kondate-line pb-5">
       <h1 className="font-mincho text-[26px] font-bold">買い物リスト</h1>
