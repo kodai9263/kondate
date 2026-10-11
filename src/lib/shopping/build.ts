@@ -39,13 +39,13 @@ export function buildPlannedShopping({ start, end, dinners, breakfastVersions, s
   }
   for (const date of dates) {
     const plannedDinner = byDate.get(date);
-    const dinner = plannedDinner?.recipe;
+    const dinner = plannedDinner?.skipped ? undefined : plannedDinner?.recipe;
     const dinnerIngredientsText = plannedDinner ? resolveDinnerIngredients(plannedDinner) : undefined;
     const breakfast = breakfastForDate(breakfastVersions, date);
-    meals.push({ date, dinner: dinner?.name ?? null, breakfast: breakfast?.name ?? null });
-    if (!dinner) warnings.push(`${date}：夕食が未設定です。`);
-    else if (!dinnerIngredientsText?.trim()) warnings.push(`${date}：${dinner.name}の材料が未登録です。メニューで確認してください。`);
-    else {
+    meals.push({ date, dinner: plannedDinner?.skipped ? "作らない日" : dinner?.name ?? null, breakfast: breakfast?.name ?? null });
+    if (!dinner && !plannedDinner?.skipped) warnings.push(`${date}：夕食が未設定です。`);
+    else if (dinner && !dinnerIngredientsText?.trim()) warnings.push(`${date}：${dinner.name}の材料が未登録です。メニューで確認してください。`);
+    else if (dinner && dinnerIngredientsText) {
       const base = dinner.servingsBase;
       const scalable = typeof base === "number" && Number.isFinite(base) && base > 0;
       if (!scalable) warnings.push(`${date}：${dinner.name}は基準人数が不明です。材料の数量を確認してください。`);

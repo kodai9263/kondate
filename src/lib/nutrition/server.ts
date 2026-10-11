@@ -17,7 +17,7 @@ export async function getHouseholdPlannerContext(year: number, month: number, st
     supabase.from("recipes").select("id,name,cook_minutes,servings_base,image_url,protein_source,meta,recipe_nutrition(energy_kcal,protein_g,fat_g,carbs_g,fiber_g,salt_g,vegetables_g)").not("household_id", "is", null).neq("category", "breakfast").is("archived_at", null),
     supabase.from("recipes").select("id,name,cook_minutes,servings_base,image_url,protein_source,meta,recipe_nutrition(energy_kcal,protein_g,fat_g,carbs_g,fiber_g,salt_g,vegetables_g)").is("household_id", null).is("archived_at", null),
     supabase.from("meal_preferences").select("recipe_name,rating,updated_at").order("updated_at", { ascending: false }).limit(500),
-    supabase.from("plan_entries").select("date,recipe_id,locked,side_mode,side_dish_id").eq("meal_type", "dinner").gte("date", firstDate).lte("date", lastDate),
+    supabase.from("plan_entries").select("date,recipe_id,locked,side_mode,side_dish_id,status").eq("meal_type", "dinner").gte("date", firstDate).lte("date", lastDate),
     supabase.from("household_recipe_exclusions").select("recipe_key"),
     supabase.from("side_dishes").select("id,household_id,name,ingredients_text,steps_text").is("archived_at", null).order("created_at", { ascending: false }),
   ]);
@@ -81,6 +81,7 @@ export async function getHouseholdPlannerContext(year: number, month: number, st
   const recipes = preferenceAllowed.length > 0 ? preferenceAllowed : filtered.allowed;
   const preferredRecipeIds = recipes.filter((recipe) => latestRatings.get(recipe.name) === "love").map((recipe) => recipe.id);
   const availableRecipeIds = new Set(recipes.map((recipe) => recipe.id));
+  const initialSkippedDates = (savedRows ?? []).filter((row) => row.status === "skipped").map((row) => row.date);
   const initialRecipeIds: Record<string, string> = {};
   const initialLockedRecipeIds: Record<string, string> = {};
   const initialSideSelections: Record<string, SideSelection> = {};
@@ -105,6 +106,7 @@ export async function getHouseholdPlannerContext(year: number, month: number, st
     preferredRecipeIds,
     initialRecipeIds,
     initialLockedRecipeIds,
+    initialSkippedDates,
     initialSideSelections,
     sideDishes,
     excludedRecipeCount: filtered.excluded.length,

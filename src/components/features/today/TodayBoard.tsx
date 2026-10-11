@@ -20,12 +20,14 @@ export function TodayBoard({
   today,
   initialTaskBindings,
   dinnerAvailable = true,
+  dinnerSkipped = false,
 }: {
   familySize: FamilySize;
   feedbackStatus?: string;
   today: PlanMeal;
   initialTaskBindings: TodayTaskBindings;
   dinnerAvailable?: boolean;
+  dinnerSkipped?: boolean;
 }) {
   const [taskBindings, setTaskBindings] = useState(initialTaskBindings);
   const [pendingStepIds, setPendingStepIds] = useState(() => new Set<string>());
@@ -109,7 +111,7 @@ export function TodayBoard({
         <p className="text-sm text-kondate-muted">{formatDateLabel(today)}</p>
         <h1 className="font-mincho mt-1.5 text-[27px] font-bold leading-tight">{today.dinner.dinner}</h1>
         <p className="mt-1.5 text-[15px] text-kondate-muted">{today.dinner.side}</p>
-        {dinnerAvailable ? <p className="mt-3 text-xs text-kondate-faint">{formatServingLabel(familySize)}・{today.dinner.totalMin ? `完成まで約${today.dinner.totalMin}分` : `夜 ${today.dinner.cookMin}分`}</p> : <p role="status" className="mt-3 text-sm leading-7 text-kondate-muted">条件に合う40分以内の料理がありません。<Link href="/app/recipes" className="text-kondate-accent underline">メニューを確認する</Link></p>}
+        {dinnerAvailable ? <p className="mt-3 text-xs text-kondate-faint">{formatServingLabel(familySize)}・{today.dinner.totalMin ? `完成まで約${today.dinner.totalMin}分` : `夜 ${today.dinner.cookMin}分`}</p> : dinnerSkipped ? <p role="status" className="mt-3 text-sm leading-7 text-kondate-muted">夕食の準備はお休みです。<Link href="/app/planner" className="text-kondate-accent underline">献立を戻す</Link></p> : <p role="status" className="mt-3 text-sm leading-7 text-kondate-muted">条件に合う40分以内の料理がありません。<Link href="/app/recipes" className="text-kondate-accent underline">メニューを確認する</Link></p>}
 
         <div className="mt-5 flex items-center gap-3">
           <span className="h-[3px] flex-1 overflow-hidden rounded-full bg-kondate-line">

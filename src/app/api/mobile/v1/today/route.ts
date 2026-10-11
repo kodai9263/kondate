@@ -40,12 +40,14 @@ export async function GET(request: Request) {
       ? { ...breakfast, minutes: breakfast.minutes ?? undefined } : null };
     const monthlyPlan = resolveMonthlyDinnerPlan(year, month, planner);
     const plannedDinner = monthlyPlan.find((day) => day.date === baseToday.date);
-    const recipe = plannedDinner?.recipe;
-    const ingredients = plannedDinner ? resolveDinnerIngredients(plannedDinner) : undefined;
+    const dinnerSkipped = Boolean(plannedDinner?.skipped);
+    const cookingDinner = dinnerSkipped ? undefined : plannedDinner;
+    const recipe = cookingDinner?.recipe;
+    const ingredients = cookingDinner ? resolveDinnerIngredients(cookingDinner) : undefined;
     const selectedToday = { ...fallbackToday, dinner: {
       ...fallbackToday.dinner,
-      dinner: recipe?.name ?? "夕食の候補がありません",
-      side: plannedDinner ? plannedSideName(plannedDinner) : "",
+      dinner: dinnerSkipped ? "今日は作らない日" : recipe?.name ?? "夕食の候補がありません",
+      side: cookingDinner ? plannedSideName(cookingDinner) : "",
       prepMin: 0,
       cookMin: recipe?.cookMinutes ?? 0,
       totalMin: recipe?.timeUnconfirmed ? undefined : recipe?.totalMinutes,
@@ -53,17 +55,17 @@ export async function GET(request: Request) {
       servingsBase: recipe?.servingsBase,
       ingredientsScalable: Boolean(recipe?.servingsBase),
       morning: [],
-      evening: plannedDinner ? resolveDinnerSteps(plannedDinner) ?? [] : [],
+      evening: cookingDinner ? resolveDinnerSteps(cookingDinner) ?? [] : [],
       seasonings: ingredients?.split("\n").filter(Boolean) ?? [],
-      sideSteps: resolveCustomSideSteps(plannedDinner?.sideDish),
-      sideServingsBase: plannedDinner?.sideDish?.servingsBase,
+      sideSteps: resolveCustomSideSteps(cookingDinner?.sideDish),
+      sideServingsBase: cookingDinner?.sideDish?.servingsBase,
     } };
 
     const { data, error } = await authorized.supabase.from("v_daily_plan")
       .select("plan_entry_id,household_id,meal_type,recipe_name,prep_minutes,cook_minutes,meta,steps,side_mode,side_dish")
       .eq("household_id", authorized.householdId).eq("date", baseToday.date);
     if (error) return mobileJsonError("today_unavailable", 503, origin);
-    const rows = (data ?? []) as DailyPlanRow[];
+    const rows = ((data ?? []) as DailyPlanRow[]).filter((row) => !dinnerSkipped || row.meal_type === "breakfast");
     const today = mergeTodayPlan(selectedToday, rows);
     return Response.json({ version: 1, fetchedAt: new Date().toISOString(), today,
       taskBindings: buildTodayTaskBindings(today, rows),

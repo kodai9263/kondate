@@ -27,6 +27,12 @@ select jsonb_agg(jsonb_build_object('date',to_char(d,'YYYY-MM-DD'),'recipeId',:'
 select save_first_week(:'entries'::jsonb,4);
 select pg_temp.check_true((select count(*) = 7 from plan_entries where date between '2026-12-29' and '2027-01-04'),'年またぎの7日分と副菜指定を保存');
 select pg_temp.check_true((select bool_and(side_mode = 'none') from plan_entries where date between '2026-12-29' and '2027-01-04'),'副菜なしを保持');
+select save_first_week(jsonb_set(:'entries'::jsonb,'{0,skipped}','true'),4);
+select pg_temp.check_true((select status = 'skipped' and recipe_id = :'recipe' and side_mode = 'none' from plan_entries where date = '2026-12-29'),'作らない日を元の料理と副菜指定と一緒に保存');
+select pg_temp.check_true((select count(*) = 6 from plan_entries where date between '2026-12-30' and '2027-01-04' and status = 'planned'),'他の日の状態は維持');
+select save_first_week(:'entries'::jsonb,4);
+select pg_temp.check_true((select status = 'planned' and recipe_id = :'recipe' and side_mode = 'none' from plan_entries where date = '2026-12-29'),'元の料理と副菜指定に復元');
+
 select pg_temp.expect_error(format('select save_first_week(%L,4)',replace(:'entries','2027-01-04','2027-01-05')),'invalid_first_week');
 select configure_first_week('2027-01-05',2,1,'{}');
 insert into plan_entries(household_id,date,meal_type,recipe_id,servings) values(:'home','2027-01-05','dinner',:'recipe',4);
