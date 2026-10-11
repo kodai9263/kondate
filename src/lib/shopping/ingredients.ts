@@ -91,3 +91,8 @@ export function ingredientCategory(name: string) {
   if (/缶|水煮|ビーンズ|冷凍|乾燥|のり|わかめ|かつお節|昆布|紅生姜|クリームコーン|カットトマト/.test(name)) return "冷凍・缶詰・乾物";
   return "野菜・その他";
 }
+
+// 調理用の水・氷だけを除外し、水菜や水煮の商品は残す。
+export function isCookingWaterOrIce(name: string) {
+  return /^(?:水|氷)(?:\s*\([^)]*\))?$/.test(name.normalize("NFKC").trim());
+}

@@ -41,7 +41,7 @@ export function resolveCustomSideSteps(sideDish: Pick<SideDish, "ingredientsText
   return sideDish ? scopeSideSeasonings(sideDish.ingredientsText.split(/\r?\n/), sideDish.steps).steps : [];
 }
 
-function isDefaultSideIngredientLine(line: string, sideName: string) {
+export function isDefaultSideIngredientLine(line: string, sideName: string) {
   const group = parseSeasoningLine(line);
   if (group?.name.startsWith("副菜の")) return true;
   if (group?.name.startsWith("主菜の")) return false;

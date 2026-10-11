@@ -1,10 +1,10 @@
 import { breakfastForDate, type BreakfastVersion } from "@/lib/breakfast/settings";
 import type { PlannedDinner } from "@/types/nutrition";
-import { isSeparateSideIngredient, resolveDinnerIngredients } from "@/lib/nutrition/sideDish";
-import { formatIngredientAmount, ingredientCategory, normalizedQuantity, parseIngredientLine } from "./ingredients";
+import { isDefaultSideIngredientLine, isSeparateSideIngredient, replaceSideIngredients, resolveDinnerIngredients } from "@/lib/nutrition/sideDish";
+import { formatIngredientAmount, ingredientCategory, isCookingWaterOrIce, normalizedQuantity, parseIngredientLine } from "./ingredients";
 import { shoppingDates } from "./period";
 
-export type ShoppingContribution = { key: string; date: string; meal: string; original: string; scale: number };
+export type ShoppingContribution = { key: string; date: string; meal: string; menuName?: string; original: string; scale: number };
 export type PlannedShoppingItem = { category: string; name: string; label: string; position: number; needsReview: boolean; contributions: ShoppingContribution[] };
 export type PlannedShoppingGroup = { category: string; items: PlannedShoppingItem[] };
 
@@ -21,13 +21,14 @@ export function buildPlannedShopping({ start, end, dinners, breakfastVersions, s
   const contributionOccurrences = new Map<string, number>();
   const warnings: string[] = [];
   const meals: Array<{ date: string; dinner: string | null; breakfast: string | null }> = [];
-  function add(line: string, date: string, meal: string, scale: number, unscaled = false) {
+  function add(line: string, date: string, meal: string, scale: number, unscaled = false, menuName = meal) {
     for (const ingredient of parseIngredientLine(line)) {
+      if (isCookingWaterOrIce(ingredient.name)) continue;
       const [amount, unit] = ingredient.amount === null ? [null, ""] : normalizedQuantity(ingredient.amount * scale, ingredient.unit);
       const contributionBase = JSON.stringify([date, meal, ingredient.original, ingredient.name, amount, unit, ingredient.note, scale, unscaled]);
       const occurrence = contributionOccurrences.get(contributionBase) ?? 0;
       contributionOccurrences.set(contributionBase, occurrence + 1);
-      const contribution = { key: JSON.stringify([contributionBase, occurrence]), date, meal, original: ingredient.original, scale };
+      const contribution = { key: JSON.stringify([contributionBase, occurrence]), date, meal, menuName, original: ingredient.original, scale };
       if (purchasedKeys.has(contribution.key)) continue;
       const key = JSON.stringify([ingredient.name, unit, ingredient.note, unscaled]);
       const existing = entries.get(key);
@@ -49,9 +50,15 @@ export function buildPlannedShopping({ start, end, dinners, breakfastVersions, s
       const base = dinner.servingsBase;
       const scalable = typeof base === "number" && Number.isFinite(base) && base > 0;
       if (!scalable) warnings.push(`${date}：${dinner.name}は基準人数が不明です。材料の数量を確認してください。`);
-      for (const line of dinnerIngredientsText.split(/\r?\n/).filter((line) => line.trim())) {
+      const lines = dinnerIngredientsText.split(/\r?\n/).filter((line) => line.trim());
+      const mainLineCount = plannedDinner?.sideMode === "custom"
+        ? (replaceSideIngredients(dinner.ingredientsText, dinner.side, "none", null) ?? "").split(/\r?\n/).filter((line) => line.trim()).length
+        : lines.length;
+      for (const [index, line] of lines.entries()) {
         const sideBase = plannedDinner?.sideMode === "custom" && isSeparateSideIngredient(line) ? plannedDinner.sideDish?.servingsBase : undefined;
-        add(line, date, dinner.name, sideBase ? servings / sideBase : scalable ? servings / base : 1, !sideBase && !scalable);
+        const isSide = plannedDinner?.sideMode === "custom" ? index >= mainLineCount : isDefaultSideIngredientLine(line, dinner.side);
+        const menuName = isSide ? (plannedDinner?.sideMode === "custom" ? plannedDinner.sideDish?.name : dinner.side) || dinner.name : dinner.name;
+        add(line, date, dinner.name, sideBase ? servings / sideBase : scalable ? servings / base : 1, !sideBase && !scalable, menuName);
       }
       // おかずの公式レシピに省略されている主食を、推測の数量で埋めない。
       const hasStaple = dinnerIngredientsText.split(/\r?\n/).flatMap(parseIngredientLine)
