@@ -65,6 +65,7 @@ export function materializeDinnerPlan(
   recipes: NutritionRecipe[],
   changedRecipeIds: Record<string, string>,
   lockedRecipeIds: Record<string, string>,
+  skippedDates: string[] = [],
 ) {
   const recipeById = new Map(recipes.map((recipe) => [recipe.id, recipe]));
   const days = new Map(generatedPlan.map((day) => [day.date, day]));
@@ -77,6 +78,7 @@ export function materializeDinnerPlan(
     ...day,
     recipe: recipeById.get(changedRecipeIds[day.date]) ?? day.recipe,
     locked: Boolean(lockedRecipeIds[day.date]),
+    ...(skippedDates.includes(day.date) ? { skipped: true } : {}),
   }));
 }
 
@@ -84,12 +86,13 @@ export function materializeDinnerPlan(
 export function resolveMonthlyDinnerPlan(year: number, month: number, context: {
   recipes: NutritionRecipe[]; preferredRecipeIds: string[];
   initialRecipeIds: Record<string, string>; initialLockedRecipeIds: Record<string, string>;
+  initialSkippedDates?: string[];
   sideDishes?: SideDish[]; initialSideSelections?: Record<string, SideSelection>;
 }) {
   const generated = generateMonthlyDinnerPlan({ year, month, recipes: context.recipes,
     preferredRecipeIds: context.preferredRecipeIds, lockedRecipeIds: context.initialLockedRecipeIds, seed: 1 });
   return applySideSelections(
-    materializeDinnerPlan(generated, context.recipes, context.initialRecipeIds, context.initialLockedRecipeIds),
+    materializeDinnerPlan(generated, context.recipes, context.initialRecipeIds, context.initialLockedRecipeIds, context.initialSkippedDates),
     context.initialSideSelections ?? {},
     context.sideDishes ?? [],
   );

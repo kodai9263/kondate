@@ -30,12 +30,14 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
   const fallbackToday = { ...baseToday, breakfast: breakfast ? { ...breakfast, minutes: breakfast.minutes ?? undefined } : null };
   const monthlyPlan = resolveMonthlyDinnerPlan(year, month, plannerContext);
   const plannedDinner = monthlyPlan.find((day) => day.date === fallbackToday.date);
-  const selectedRecipe = plannedDinner?.recipe;
-  const selectedIngredientsText = plannedDinner ? resolveDinnerIngredients(plannedDinner) : undefined;
+  const dinnerSkipped = Boolean(plannedDinner?.skipped);
+  const cookingDinner = dinnerSkipped ? undefined : plannedDinner;
+  const selectedRecipe = cookingDinner?.recipe;
+  const selectedIngredientsText = cookingDinner ? resolveDinnerIngredients(cookingDinner) : undefined;
   const selectedToday = { ...fallbackToday, dinner: {
     ...fallbackToday.dinner,
-    dinner: selectedRecipe?.name ?? "夕食の候補がありません",
-    side: plannedDinner ? plannedSideName(plannedDinner) : "",
+    dinner: dinnerSkipped ? "今日は作らない日" : selectedRecipe?.name ?? "夕食の候補がありません",
+    side: cookingDinner ? plannedSideName(cookingDinner) : "",
     prepMin: 0,
     cookMin: selectedRecipe?.cookMinutes ?? 0,
     totalMin: selectedRecipe?.timeUnconfirmed ? undefined : selectedRecipe?.totalMinutes,
@@ -43,14 +45,14 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
     servingsBase: selectedRecipe?.servingsBase,
     ingredientsScalable: Boolean(selectedRecipe?.servingsBase),
     morning: [],
-    evening: plannedDinner ? resolveDinnerSteps(plannedDinner) ?? [] : [],
+    evening: cookingDinner ? resolveDinnerSteps(cookingDinner) ?? [] : [],
     seasonings: selectedIngredientsText?.split("\n").filter(Boolean) ?? [],
-    sideSteps: resolveCustomSideSteps(plannedDinner?.sideDish),
-    sideServingsBase: plannedDinner?.sideDish?.servingsBase,
+    sideSteps: resolveCustomSideSteps(cookingDinner?.sideDish),
+    sideServingsBase: cookingDinner?.sideDish?.servingsBase,
   } };
   const preferences = plannerContext.preferences;
-  const planState = await getTodayPlanState(selectedToday, plannedDinner ? {
-    recipeId: plannedDinner.recipe.id,
+  const planState = await getTodayPlanState(selectedToday, cookingDinner ? {
+    recipeId: cookingDinner.recipe.id,
     servings: Math.max(1, Math.ceil(getAdultEquivalent(preferences))),
   } : undefined);
   const { today, taskBindings } = planState;
@@ -71,7 +73,7 @@ export default async function AppHomePage({ searchParams }: { searchParams: Prom
       {!access.paid && access.freeTrial ? <FreeTrialNotice expiresAt={access.freeTrial.expires_at} /> : null}
       {params.notice === "family-joined" ? <p role="status" className="mb-5 rounded border border-kondate-done/30 bg-kondate-doneSoft p-3 text-sm text-kondate-ink">家族グループに参加しました。</p> : null}
       {breakfastState.error || planState.loadError ? <p role="alert" className="mb-4 text-sm text-kondate-alert">献立やチェック状態を読み込めませんでした。再読み込みしてお試しください。</p> : null}
-      <div className="space-y-8"><TodayBoard familySize={familySize} feedbackStatus={params.mealFeedback} today={today} initialTaskBindings={taskBindings} dinnerAvailable={Boolean(plannedDinner)} /><ShoppingSummaryLink shoppingDayLabel={shoppingDayLabel} itemCount={shoppingItemCount} periodLabel={shoppingPeriodLabel} loadError={!shopping} /></div>
+      <div className="space-y-8"><TodayBoard familySize={familySize} feedbackStatus={params.mealFeedback} today={today} initialTaskBindings={taskBindings} dinnerAvailable={Boolean(cookingDinner)} dinnerSkipped={dinnerSkipped} /><ShoppingSummaryLink shoppingDayLabel={shoppingDayLabel} itemCount={shoppingItemCount} periodLabel={shoppingPeriodLabel} loadError={!shopping} /></div>
     </main>
   );
 }

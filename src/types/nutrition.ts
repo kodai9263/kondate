@@ -50,6 +50,7 @@ export type PlannedDinner = {
   date: string;
   recipe: NutritionRecipe;
   locked: boolean;
+  skipped?: boolean;
   sideMode?: SideMode;
   sideDish?: SideDish | null;
 };

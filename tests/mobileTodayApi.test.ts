@@ -4,7 +4,7 @@ const mocks = vi.hoisted(() => ({
   createClient: vi.fn(), canAccessHousehold: vi.fn(),
   planningAccess: vi.fn(),
   getHouseholdPlannerContext: vi.fn(), getBreakfastVersions: vi.fn(),
-  findTodayPlan: vi.fn(), resolveMonthlyDinnerPlan: vi.fn(),
+  findTodayPlan: vi.fn(), resolveMonthlyDinnerPlan: vi.fn(), dailyRows: [] as Record<string, unknown>[],
 }));
 
 vi.mock("@/lib/supabase/mobile", () => ({ createMobileRequestClient: mocks.createClient }));
@@ -34,7 +34,7 @@ function fakeClient() {
       single: async () => ({ data: { household_id: "household-1" }, error: null }),
       maybeSingle: async () => ({ data: table === "profiles" ? { id: "user-1" }
         : { status: "active", current_period_end: null }, error: null }),
-      then: (resolve: (value: unknown) => unknown) => Promise.resolve({ data: [], error: null }).then(resolve),
+      then: (resolve: (value: unknown) => unknown) => Promise.resolve({ data: table === "v_daily_plan" ? mocks.dailyRows : [], error: null }).then(resolve),
     };
     return chain;
   });
@@ -43,6 +43,7 @@ function fakeClient() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.dailyRows = [];
   mocks.planningAccess.mockResolvedValue({ paid: true, canPlan: true, trial: null });
   mocks.createClient.mockReturnValue(fakeClient());
   mocks.canAccessHousehold.mockReturnValue(true);
@@ -57,6 +58,17 @@ beforeEach(() => {
 });
 
 describe("スマホ向け今日の献立API", () => {
+  it("作らない日は元の夕食と調理手順を返さず、朝食は維持する", async () => {
+    mocks.resolveMonthlyDinnerPlan.mockReturnValue([{ date: "2026-09-27", skipped: true, recipe: { name: "元の料理" } }]);
+    mocks.dailyRows = [{ meal_type: "dinner", recipe_name: "元の料理", steps: [{ phase: "evening", text: "調理する" }] }, { meal_type: "breakfast", recipe_name: "朝食", cook_minutes: 5, steps: [] }];
+    const response = await GET(request("capacitor://localhost", `Bearer ${token}`));
+    expect(response.status).toBe(200);
+    const value = await response.json();
+    expect(value.today.dinner).toMatchObject({ dinner: "今日は作らない日", evening: [], seasonings: [], sideSteps: [] });
+    expect(value.today.breakfast.name).toBe("朝食");
+    expect(value.taskBindings.evening).toEqual([]);
+  });
+
   it("認証のない端末と許可外の出所には献立を返さない", async () => {
     expect((await GET(request())).status).toBe(401);
     expect((await GET(request("https://other.example", `Bearer ${token}`))).status).toBe(403);

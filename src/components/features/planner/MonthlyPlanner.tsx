@@ -32,6 +32,7 @@ type MonthlyPlannerProps = {
   preferenceExcludedCount?: number;
   initialRecipeIds?: Record<string, string>;
   initialLockedRecipeIds?: Record<string, string>;
+  initialSkippedDates?: string[];
   sideDishes?: SideDish[];
   initialSideSelections?: Record<string, SideSelection>;
   demo?: boolean;
@@ -43,7 +44,7 @@ type MonthlyPlannerProps = {
   trialExpired?: boolean;
 };
 
-export function MonthlyPlanner({ recipes, initialView, initialDate, today, shoppingDay = defaultShoppingDay, familySize = defaultFamilySize, allergies = [], excludedRecipeCount = 0, preferredRecipeIds = [], preferenceExcludedCount = 0, initialRecipeIds = {}, initialLockedRecipeIds = {}, sideDishes = [], initialSideSelections = {}, demo = false, firstWeekStart, readOnly = false, selectionUnavailable = false, firstWeekStarted = false, trialExpiresAt, trialExpired = false }: MonthlyPlannerProps) {
+export function MonthlyPlanner({ recipes, initialView, initialDate, today, shoppingDay = defaultShoppingDay, familySize = defaultFamilySize, allergies = [], excludedRecipeCount = 0, preferredRecipeIds = [], preferenceExcludedCount = 0, initialRecipeIds = {}, initialLockedRecipeIds = {}, initialSkippedDates = [], sideDishes = [], initialSideSelections = {}, demo = false, firstWeekStart, readOnly = false, selectionUnavailable = false, firstWeekStarted = false, trialExpiresAt, trialExpired = false }: MonthlyPlannerProps) {
   const router = useRouter();
   const weekStartDay = normalizeShoppingDay(shoppingDay);
   const [isNavigating, startNavigation] = useTransition();
@@ -51,6 +52,7 @@ export function MonthlyPlanner({ recipes, initialView, initialDate, today, shopp
   const [date, setDate] = useState(initialDate);
   const candidateCount = recipes.filter((recipe) => isDinnerCandidate(recipe)).length;
   const [lockedRecipeIds, setLockedRecipeIds] = useState(initialLockedRecipeIds);
+  const [skippedDates, setSkippedDates] = useState(initialSkippedDates);
   const [changedRecipeIds, setChangedRecipeIds] = useState(initialRecipeIds);
   const [detailDate, setDetailDate] = useState<string | null>(null);
   const [pickerDate, setPickerDate] = useState<string | null>(null);
@@ -65,14 +67,14 @@ export function MonthlyPlanner({ recipes, initialView, initialDate, today, shopp
   const [saveStatus, setSaveStatus] = useState<"saved" | "error" | null>(null);
   const busy = isSaving || isNavigating;
   const plan = useMemo(() => {
-    const context = { recipes, preferredRecipeIds, initialRecipeIds: changedRecipeIds, initialLockedRecipeIds: lockedRecipeIds, sideDishes: sideDishList, initialSideSelections: sideSelections };
+    const context = { recipes, preferredRecipeIds, initialRecipeIds: changedRecipeIds, initialLockedRecipeIds: lockedRecipeIds, initialSkippedDates: skippedDates, sideDishes: sideDishList, initialSideSelections: sideSelections };
     if (!firstWeekStart) return resolvePlannerPeriod(view, date, context, weekStartDay);
     return [...new Set(firstWeekDates(firstWeekStart).map((day) => day.slice(0, 7)))].flatMap((key) => resolvePlannerPeriod("month", `${key}-01`, context));
-  }, [view, date, recipes, preferredRecipeIds, changedRecipeIds, lockedRecipeIds, firstWeekStart, sideDishList, sideSelections, weekStartDay]);
+  }, [view, date, recipes, preferredRecipeIds, changedRecipeIds, lockedRecipeIds, firstWeekStart, sideDishList, sideSelections, weekStartDay, skippedDates]);
   const days = firstWeekStart ? firstWeekDates(firstWeekStart) : plannerDates(view, date, weekStartDay);
   const byDate = new Map(plan.filter((day) => !readOnly || Boolean(initialRecipeIds[day.date])).map((day) => [day.date, day]));
   const visiblePlan = days.flatMap((day) => byDate.get(day) ? [byDate.get(day)!] : []);
-  const seasonalDays = visiblePlan.filter((day) => isRecipeInSeason(day.recipe, Number(day.date.slice(5, 7)))).length;
+  const seasonalDays = visiblePlan.filter((day) => !day.skipped && isRecipeInSeason(day.recipe, Number(day.date.slice(5, 7)))).length;
   const detailDay = detailDate ? byDate.get(detailDate) : undefined;
   const sidePickerDay = sidePickerDate ? plan.find((day) => day.date === sidePickerDate) : undefined;
   const pickerDay = pickerDate ? plan.find((day) => day.date === pickerDate) : undefined;
@@ -154,6 +156,7 @@ export function MonthlyPlanner({ recipes, initialView, initialDate, today, shopp
         return updated;
       });
       setSideSelections((previous) => ({ ...previous, ...Object.fromEntries(entries.map((entry) => [entry.date, { mode: entry.sideMode ?? "default", sideDishId: entry.sideDishId ?? null }])) }));
+      setSkippedDates((previous) => [...previous.filter((date) => !entries.some((entry) => entry.date === date)), ...entries.filter((entry) => entry.skipped).map((entry) => entry.date)]);
       setPickerDate(null);
       setSidePickerDate(null);
       setSaveStatus("saved");
@@ -205,21 +208,21 @@ export function MonthlyPlanner({ recipes, initialView, initialDate, today, shopp
       {allergies.length > 0 ? <section role="status" className="mt-3 rounded border border-kondate-alert/30 bg-kondate-alertSoft p-4"><p className="flex items-center gap-2 text-sm font-semibold text-kondate-alert"><AlertTriangle size={18} aria-hidden="true" />{excludedRecipeCount > 0 ? `${excludedRecipeCount}品をアレルギー候補として除外中` : "登録したアレルギーを照合中"}</p><p className="mt-2 text-xs leading-6 text-kondate-muted">料理名・副菜・登録材料による補助判定です。調味料や加工品の原材料表示は必ず確認してください。</p></section> : null}
       {preferredRecipeIds.length > 0 || preferenceExcludedCount > 0 ? <p className="mt-4 border-l-2 border-kondate-accent bg-white px-4 py-3 text-sm text-kondate-muted">献立評価を反映中：好評 {preferredRecipeIds.length}品・除外 {preferenceExcludedCount}品</p> : null}
       <section className="mt-4" aria-label={view === "week" ? "週間献立" : "月間献立"}>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-xs text-kondate-muted"><p>完成まで40分以内の料理から提案</p><p>旬 {seasonalDays}日・固定 {visiblePlan.filter((day) => day.locked).length}日</p></div>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-xs text-kondate-muted"><p>完成まで40分以内の料理から提案</p><p>旬 {seasonalDays}日・固定 {visiblePlan.filter((day) => !day.skipped && day.locked).length}日</p></div>
         {candidateCount === 0 ? <p role="status" className="mb-4 rounded border border-kondate-line p-4 text-sm text-kondate-muted">条件に合う40分以内の料理がありません。保存済みの献立だけを表示しています。</p> : null}
         {view === "week" ? <div className="grid gap-3">{days.map((day) => {
           const dinner = byDate.get(day);
-          return dinner ? <DinnerCard key={day} day={dinner} today={today} disabled={busy || !canEdit(dinner)} canChange={candidateCount > 0} onChange={() => openRecipePicker(day)} onSideChange={() => openSidePicker(day)} onLock={() => void updateDay(dinner, { locked: !dinner.locked })} /> : <article key={day} className="rounded-lg border border-kondate-line p-4 text-sm">{formatDay(day)}（{formatWeekday(day)}）<p className="mt-1 text-kondate-muted">条件に合う献立がありません。</p></article>;
+          return dinner ? <DinnerCard key={day} day={dinner} today={today} disabled={busy || !canEdit(dinner)} canChange={candidateCount > 0} onChange={() => openRecipePicker(day)} onSideChange={() => openSidePicker(day)} onLock={() => void updateDay(dinner, { locked: !dinner.locked })} onSkip={() => void updateDay(dinner, { skipped: !dinner.skipped })} /> : <article key={day} className="rounded-lg border border-kondate-line p-4 text-sm">{formatDay(day)}（{formatWeekday(day)}）<p className="mt-1 text-kondate-muted">条件に合う献立がありません。</p></article>;
         })}</div> : <>
           <p className="mb-3 text-xs text-kondate-muted">日付を押すと、副菜の確認や献立の変更ができます。</p>
           <div className="overflow-hidden rounded-lg border border-kondate-line bg-white">
             <div className="grid grid-cols-7 border-b border-kondate-line bg-kondate-bg text-center text-xs">{["月", "火", "水", "木", "金", "土", "日"].map((day) => <span key={day} className={`py-2 ${day === "日" ? "text-kondate-alert" : "text-kondate-muted"}`}>{day}</span>)}</div>
             <div className="grid grid-cols-7 gap-px bg-kondate-line">{monthCalendarDates(date).map((day, index) => {
               const dinner = day ? byDate.get(day) : undefined;
-              return day ? <button key={day} type="button" disabled={busy || !dinner} aria-label={`${formatDay(day)}（${formatWeekday(day)}） ${dinner?.recipe.name ?? "献立なし"}${dinner?.locked ? " 固定中" : ""}`} aria-current={day === today ? "date" : undefined} onClick={() => setDetailDate(day)} className={`flex min-h-28 min-w-0 flex-col items-start gap-1 px-1 py-2 text-left transition-colors hover:bg-kondate-doneSoft focus-visible:z-10 disabled:opacity-60 sm:min-h-36 sm:px-3 ${day === today ? "bg-kondate-doneSoft" : "bg-white"}`}>
+              return day ? <button key={day} type="button" disabled={busy || !dinner} aria-label={`${formatDay(day)}（${formatWeekday(day)}） ${dinner?.skipped ? "作らない日" : dinner?.recipe.name ?? "献立なし"}${dinner?.locked && !dinner.skipped ? " 固定中" : ""}`} aria-current={day === today ? "date" : undefined} onClick={() => setDetailDate(day)} className={`flex min-h-28 min-w-0 flex-col items-start gap-1 px-1 py-2 text-left transition-colors hover:bg-kondate-doneSoft focus-visible:z-10 disabled:opacity-60 sm:min-h-36 sm:px-3 ${day === today ? "bg-kondate-doneSoft" : "bg-white"}`}>
                 <span className={`inline-flex size-6 items-center justify-center rounded-full text-xs tabular-nums ${day === today ? "bg-kondate-accent font-bold text-white" : "text-kondate-muted"}`}>{Number(day.slice(8))}</span>
-                <span className="line-clamp-3 break-words text-[10px] font-semibold leading-relaxed sm:text-sm">{dinner?.recipe.name ?? "献立なし"}</span>
-                {dinner?.locked ? <LockKeyhole size={12} aria-hidden="true" className="mt-auto shrink-0 text-kondate-accent" /> : null}
+                <span className="line-clamp-3 break-words text-[10px] font-semibold leading-relaxed sm:text-sm">{dinner?.skipped ? "作らない日" : dinner?.recipe.name ?? "献立なし"}</span>
+                {dinner?.locked && !dinner.skipped ? <LockKeyhole size={12} aria-hidden="true" className="mt-auto shrink-0 text-kondate-accent" /> : null}
               </button> : <div key={`empty-${index}`} aria-hidden="true" className="bg-kondate-bg" />;
             })}</div>
           </div>
@@ -227,7 +230,7 @@ export function MonthlyPlanner({ recipes, initialView, initialDate, today, shopp
       </section>
       {detailDay ? <PlannerDialog labelId="dinner-detail-title" onClose={() => setDetailDate(null)}>
         <div className="flex items-center justify-between gap-3 border-b border-kondate-line p-4"><h2 id="dinner-detail-title" className="font-mincho text-lg font-bold">{formatDay(detailDay.date)}の夕食</h2><Button variant="secondary" size="icon" aria-label="閉じる" onClick={() => setDetailDate(null)}><X size={20} /></Button></div>
-        <div className="overflow-y-auto p-4"><DinnerCard day={detailDay} today={today} disabled={busy || !canEdit(detailDay)} canChange={candidateCount > 0} onChange={() => openRecipePicker(detailDay.date)} onSideChange={() => openSidePicker(detailDay.date)} onLock={() => void updateDay(detailDay, { locked: !detailDay.locked })} />{status ? <div className="mt-3">{status}</div> : null}<Button variant="secondary" className="mt-3 w-full" disabled={busy} onClick={() => navigate("week", detailDay.date)}>この週を見る</Button></div>
+        <div className="overflow-y-auto p-4"><DinnerCard day={detailDay} today={today} disabled={busy || !canEdit(detailDay)} canChange={candidateCount > 0} onChange={() => openRecipePicker(detailDay.date)} onSideChange={() => openSidePicker(detailDay.date)} onLock={() => void updateDay(detailDay, { locked: !detailDay.locked })} onSkip={() => void updateDay(detailDay, { skipped: !detailDay.skipped })} />{status ? <div className="mt-3">{status}</div> : null}<Button variant="secondary" className="mt-3 w-full" disabled={busy} onClick={() => navigate("week", detailDay.date)}>この週を見る</Button></div>
       </PlannerDialog> : null}
       {sidePickerDay ? <SideDishPicker day={sidePickerDay} sideDishes={sideDishList} allergies={allergies} demo={demo} onClose={() => setSidePickerDate(null)} onCreated={(sideDish) => setSideDishList((previous) => [sideDish, ...previous.filter((dish) => dish.id !== sideDish.id)])} onSelect={(mode, sideDish) => updateDay(sidePickerDay, { sideMode: mode, sideDish })} /> : null}
       {pickerDay ? <PlannerDialog labelId="recipe-picker-title" onClose={() => { if (!savingRef.current) setPickerDate(null); }}>
@@ -239,11 +242,11 @@ export function MonthlyPlanner({ recipes, initialView, initialDate, today, shopp
   );
 }
 
-function DinnerCard({ day, today, disabled, canChange, onChange, onSideChange, onLock }: { day: PlannedDinner; today: string; disabled: boolean; canChange: boolean; onChange: () => void; onSideChange: () => void; onLock: () => void }) {
+function DinnerCard({ day, today, disabled, canChange, onChange, onSideChange, onLock, onSkip }: { day: PlannedDinner; today: string; disabled: boolean; canChange: boolean; onChange: () => void; onSideChange: () => void; onLock: () => void; onSkip: () => void }) {
   return <article aria-label={`${formatDay(day.date)}の夕食`} className={`grid grid-cols-[2.5rem_minmax(0,1fr)] gap-2 rounded-lg border bg-white px-3 py-2 sm:grid-cols-[3.5rem_minmax(0,1fr)] sm:gap-3 sm:px-4 sm:py-3 ${day.date === today ? "border-kondate-accent" : "border-kondate-line"}`}>
     <div className="border-r border-kondate-line pr-2 text-center"><p className="text-sm font-semibold tabular-nums">{formatDay(day.date)}</p><p className="mt-0.5 text-xs text-kondate-muted">{formatWeekday(day.date)}</p>{day.date === today ? <span className="mt-1 block text-[10px] font-semibold text-kondate-accent">今日</span> : null}</div>
-    <div className="flex min-w-0 flex-wrap items-center justify-between gap-2"><div className="min-w-0 flex-1 basis-44"><h3 className="font-mincho text-base font-bold leading-snug sm:text-lg"><Link href={`/app/recipes/${day.recipe.isCustom ? "custom" : day.recipe.isCommunity ? "community" : "official"}/${encodeURIComponent(day.recipe.detailIdentifier ?? day.recipe.id)}` as Route} prefetch={false} aria-label={`${day.recipe.name}の材料・作り方を見る`} className="inline-flex min-h-11 items-center underline decoration-kondate-line underline-offset-4 hover:text-kondate-accent hover:decoration-kondate-accent">{day.recipe.name}</Link></h3><p className="mt-0.5 text-xs text-kondate-muted sm:text-sm">{plannedSideName(day)}</p>{!isDinnerCandidate(day.recipe) ? <p className="mt-1 text-xs text-kondate-muted">保存済み・新しい献立の候補対象外</p> : null}</div>
-      <div className="flex max-w-full flex-wrap gap-1.5"><Button variant="secondary" size="sm" disabled={disabled || !canChange} onClick={onChange} className="h-11 px-2">主菜を変更</Button><Button variant={day.locked ? "primary" : "secondary"} size="sm" disabled={disabled} aria-pressed={day.locked} onClick={onLock} className="h-11 px-2">{day.locked ? "固定中" : "固定"}</Button><Button variant="secondary" size="sm" disabled={disabled} onClick={onSideChange} className="h-11 px-2">副菜を変更</Button></div>
+    <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">{day.skipped ? <div className="min-w-0 flex-1 basis-44"><h3 className="font-mincho text-base font-bold leading-snug sm:text-lg">作らない日</h3><p className="mt-1 text-xs text-kondate-muted sm:text-sm">この日の夕食の材料は買い物リストに含めません。</p></div> : <div className="min-w-0 flex-1 basis-44"><h3 className="font-mincho text-base font-bold leading-snug sm:text-lg"><Link href={`/app/recipes/${day.recipe.isCustom ? "custom" : day.recipe.isCommunity ? "community" : "official"}/${encodeURIComponent(day.recipe.detailIdentifier ?? day.recipe.id)}` as Route} prefetch={false} aria-label={`${day.recipe.name}の材料・作り方を見る`} className="inline-flex min-h-11 items-center underline decoration-kondate-line underline-offset-4 hover:text-kondate-accent hover:decoration-kondate-accent">{day.recipe.name}</Link></h3><p className="mt-0.5 text-xs text-kondate-muted sm:text-sm">{plannedSideName(day)}</p>{!isDinnerCandidate(day.recipe) ? <p className="mt-1 text-xs text-kondate-muted">保存済み・新しい献立の候補対象外</p> : null}</div>}
+      <div className="flex max-w-full flex-wrap gap-1.5">{!day.skipped ? <><Button variant="secondary" size="sm" disabled={disabled || !canChange} onClick={onChange} className="h-11 px-2">主菜を変更</Button><Button variant={day.locked ? "primary" : "secondary"} size="sm" disabled={disabled} aria-pressed={day.locked} onClick={onLock} className="h-11 px-2">{day.locked ? "固定中" : "固定"}</Button><Button variant="secondary" size="sm" disabled={disabled} onClick={onSideChange} className="h-11 px-2">副菜を変更</Button></> : null}<Button variant="secondary" size="sm" disabled={disabled} aria-pressed={Boolean(day.skipped)} onClick={onSkip} className="h-11 px-2">{day.skipped ? "献立を戻す" : "この日は作らない"}</Button></div>
     </div>
   </article>;
 }

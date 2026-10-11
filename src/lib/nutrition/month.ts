@@ -4,6 +4,7 @@ export type SavedDinnerEntry = {
   date: string;
   recipeId: string;
   locked: boolean;
+  skipped?: boolean;
   sideMode?: SideMode;
   sideDishId?: string | null;
 };
@@ -40,6 +41,7 @@ export function toSavedDinnerEntries(plan: PlannedDinner[]): SavedDinnerEntry[] 
     date: day.date,
     recipeId: day.recipe.id,
     locked: day.locked,
+    ...(day.skipped ? { skipped: true } : {}),
     sideMode: day.sideMode ?? "default",
     sideDishId: day.sideDish?.id ?? null,
   }));

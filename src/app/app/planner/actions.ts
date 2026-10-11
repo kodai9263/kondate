@@ -23,6 +23,7 @@ const monthlyPlanSchema = z.object({
     date: z.string().date(),
     recipeId: z.string().uuid(),
     locked: z.boolean(),
+    skipped: z.boolean().optional(),
     sideMode: z.enum(["default", "none", "custom"]).default("default"),
     sideDishId: z.string().uuid().nullable().default(null),
   }).superRefine((entry, context) => {
@@ -86,7 +87,7 @@ export async function saveMonthlyDinnerPlan(input: unknown): Promise<{ ok: boole
     meal_type: "dinner",
     recipe_id: entry.recipeId,
     servings: parsed.data.servings,
-    status: "planned",
+    status: entry.skipped ? "skipped" : "planned",
     locked: entry.locked,
     side_mode: entry.sideMode,
     side_dish_id: entry.sideDishId,

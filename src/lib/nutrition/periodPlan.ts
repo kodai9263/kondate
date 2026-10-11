@@ -12,10 +12,11 @@ export function resolvePlannerPeriod(view: PlannerView, date: string, context: P
   }));
 }
 
-export function updatePlannerDay(plan: PlannedDinner[], date: string, change: { recipe?: NutritionRecipe; locked?: boolean; sideMode?: SideMode; sideDish?: SideDish | null }) {
+export function updatePlannerDay(plan: PlannedDinner[], date: string, change: { recipe?: NutritionRecipe; locked?: boolean; skipped?: boolean; sideMode?: SideMode; sideDish?: SideDish | null }) {
   const [year, month] = date.split("-").map(Number);
   const entries = plan.filter((day) => day.date.startsWith(date.slice(0, 7))).map((day) => day.date === date ? {
     ...day, recipe: change.recipe ?? day.recipe, locked: change.locked ?? day.locked,
+    ...((change.skipped ?? day.skipped) ? { skipped: true } : day.skipped ? { skipped: false } : {}),
     sideMode: change.sideMode ?? day.sideMode,
     sideDish: change.sideMode ? change.sideDish ?? null : day.sideDish,
   } : day);

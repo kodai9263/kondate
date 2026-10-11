@@ -43,6 +43,14 @@ beforeEach(() => {
 });
 
 describe("献立保存の時間制限", () => {
+  it("作らない日はスキップとして保存し、元の料理を維持する", async () => {
+    const value = input();
+    expect((await saveMonthlyDinnerPlan({ ...value, entries: value.entries.map((entry, index) => ({ ...entry, skipped: index === 0 })) })).ok).toBe(true);
+    const rows = mocks.upsert.mock.calls[0][0];
+    expect(rows[0]).toMatchObject({ status: "skipped", recipe_id: shortId });
+    expect(rows[1]).toMatchObject({ status: "planned", recipe_id: shortId });
+  });
+
   it("40分以内の献立を保存できる", async () => {
     expect(await saveMonthlyDinnerPlan(input())).toEqual({ ok: true });
     expect(mocks.upsert).toHaveBeenCalledOnce();
@@ -78,6 +86,15 @@ describe("献立保存の時間制限", () => {
 });
 
 describe("今日の献立の補充", () => {
+  it("作らない日は夕食を補充せず、保存済みの調理手順も表示しない", async () => {
+    mocks.daily = [{ meal_type: "dinner", recipe_name: "元の料理", steps: [{ phase: "evening", text: "調理する" }] }];
+    const skippedToday = { ...fallback, dinner: { ...fallback.dinner, dinner: "今日は作らない日" } };
+    const state = await getTodayPlanState(skippedToday);
+    expect(state.today.dinner.dinner).toBe("今日は作らない日");
+    expect(state.taskBindings.evening).toEqual([]);
+    expect(mocks.upsert).not.toHaveBeenCalled();
+  });
+
   it("候補がなければ旧テンプレートから夕食を作らない", async () => {
     const state = await getTodayPlanState(fallback);
     expect(state.loadError).toBeUndefined();
