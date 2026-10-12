@@ -8,7 +8,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mock.context.mockResolvedValue({ paid: true, period: { storageWeekStart: item.weekStart, start: item.rangeStart, end: item.rangeEnd, mode: item.periodMode }, supabase: { rpc: mock.rpc } });
   mock.shopping.mockResolvedValue({ groups: [{ category: "肉", items: [{ category: "肉", name: item.name, label: "豚肉 400g", position: 0,
-    contributions: [{ key: "meal-key", date: "2026-09-20", meal: "夕食", original: "豚肉 400g", scale: 1 }] }] }] });
+    contributions: [{ key: "meal-key", date: "2026-09-20", meal: "夕食", menuName: "豚のしょうが焼き", original: "豚肉 400g", scale: 1 }] }] }] });
   mock.saved.mockResolvedValue({ checkedKeys: [`肉\u001f${item.name}`], dismissedKeys: [], manualItems: [] });
   mock.rpc.mockResolvedValue({ data: { ok: true }, error: null });
 });
@@ -56,7 +56,7 @@ describe("買い物保存時の照合", () => {
     expect(await completeShopping(item)).toEqual({ ok: true, completionId: "30000000-0000-4000-8000-000000000001", completedCount: 1 });
     expect(mock.rpc).toHaveBeenCalledWith("complete_planned_shopping", expect.objectContaining({
       target_week_start: item.weekStart,
-      auto_items: [expect.objectContaining({ source: "auto", name: item.name, contributions: [expect.objectContaining({ key: "meal-key" })] })],
+      auto_items: [expect.objectContaining({ source: "auto", name: item.name, contributions: [{ key: "meal-key", date: "2026-09-20", meal: "夕食", original: "豚肉 400g", scale: 1 }] })],
       manual_ids: [],
     }));
   });
