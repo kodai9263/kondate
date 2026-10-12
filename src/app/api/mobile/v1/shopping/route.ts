@@ -1,3 +1,4 @@
+import { shoppingCompletionItem } from "@/lib/shopping/completion";
 import { z } from "zod";
 import { buildMobileShoppingSnapshot } from "@/lib/shopping/mobileSnapshot";
 import { getPlannedShopping, getSavedShoppingState } from "@/lib/shopping/server";
@@ -128,8 +129,7 @@ export async function POST(request: Request) {
       const checkedKeys = new Set(saved.checkedKeys);
       const autoItems = shopping.groups.flatMap((group) => group.items)
         .filter((item) => checkedKeys.has(buildShoppingItemKey(item.category, item.name)))
-        .map(({ category, name, label, position, contributions }) =>
-          ({ source: "auto", category, name, label, position, contributions }));
+        .map(shoppingCompletionItem);
       const manualItems = saved.manualItems.filter((item) => item.checked);
       if (autoItems.length + manualItems.length === 0) return mobileJsonError("nothing_checked", 409, origin);
       const { data, error } = await authorized.supabase.rpc("complete_planned_shopping", {

@@ -1,5 +1,7 @@
 "use server";
 
+import { shoppingCompletionItem } from "@/lib/shopping/completion";
+
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { buildShoppingItemKey, seasoningShoppingCategory } from "@/lib/services/shoppingService";
@@ -85,7 +87,7 @@ export async function completeShopping(input: unknown): Promise<Result> {
     const checkedKeys = new Set(saved.checkedKeys);
     const autoItems = shopping.groups.flatMap((group) => group.items)
       .filter((item) => checkedKeys.has(buildShoppingItemKey(item.category, item.name)))
-      .map(({ category, name, label, position, contributions }) => ({ source: "auto", category, name, label, position, contributions }));
+      .map(shoppingCompletionItem);
     const manualItems = saved.manualItems.filter((item) => item.checked);
     if (autoItems.length + manualItems.length === 0) return { ok: false };
     const { data, error } = await context.supabase.rpc("complete_planned_shopping", {

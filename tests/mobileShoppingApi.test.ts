@@ -183,7 +183,7 @@ describe("スマホ向け買い物API", () => {
       period: { storageWeekStart: check.weekStart, start: check.rangeStart, end: check.rangeEnd, mode: check.periodMode },
       groups: [{ category: "肉", items: [
         { category: "肉", name: "planned-v1:current", label: "豚肉", position: 0,
-          contributions: [{ key: "one", date: check.rangeStart, meal: "夕食", original: "豚肉", scale: 1 }] },
+          contributions: [{ key: "one", date: check.rangeStart, meal: "夕食", menuName: "豚のしょうが焼き", original: "豚肉", scale: 1 }] },
         { category: "肉", name: "planned-v1:next", label: "鶏肉", position: 1, contributions: [] },
       ] }], latestCompletion: null,
     });
@@ -194,7 +194,7 @@ describe("スマホ向け買い物API", () => {
     const response = await POST(postRequest({ ...check, item: undefined, action: "complete" }));
     expect(response.status).toBe(200);
     expect(mocks.rpc).toHaveBeenCalledWith("complete_planned_shopping", expect.objectContaining({
-      auto_items: [expect.objectContaining({ name: "planned-v1:current" })],
+      auto_items: [expect.objectContaining({ name: "planned-v1:current", contributions: [{ key: "one", date: check.rangeStart, meal: "夕食", original: "豚肉", scale: 1 }] })],
       manual_ids: ["11111111-1111-4111-8111-111111111111"],
     }));
   });

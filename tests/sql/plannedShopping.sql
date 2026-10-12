@@ -28,6 +28,8 @@ select :'today'::date - 1 as cycle \gset
 select extract(dow from :'cycle'::date)::int as weekday \gset
 select :'cycle'::date + ((7 - :weekday) % 7) as storage \gset
 update household_settings set shopping_day = :weekday where household_id in (:'home', :'other_home');
+-- 買い物保存の検証は家族プランが有効な家庭で行う。
+update household_subscriptions set status = 'active', current_period_end = null where household_id in (:'home', :'other_home');
 set role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000021', false);
 select id as old_manual from add_manual_shopping_item(:'storage', '洗剤') \gset
