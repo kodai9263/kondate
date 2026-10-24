@@ -62,6 +62,42 @@ describe("買い物の7日間", () => {
 });
 
 describe("献立からの材料集計", () => {
+  it("ひたひたなどの説明付きの水を除外し、水を含む商品名は残す", () => {
+    const ingredientsText = "水 ひたひた（500mlを目安に）\n水 かぶるくらい\n水 かぶる程度\n水 400cc\n水 適量\n水菜 1束\n水煮大豆 1袋\nミネラルウォーター 1本";
+    const result = build([{ ...dinner("hamburg"), recipe: { ...recipe("hamburg"), isCustom: true, servingsBase: 4, ingredientsText } }]);
+    const originals = result.groups.flatMap((group) => group.items.flatMap((item) => item.contributions.map((source) => source.original)));
+    expect(originals.sort()).toEqual(["水菜 1束", "ミネラルウォーター 1本", "水煮大豆 1袋"].sort());
+  });
+  it("大根の本数と長さを人数・日数分合算し、購入目安を一行にする", () => {
+    const dinners = ["大根 1/3本", "大根 10cm\n大根 8cm"].map((ingredientsText, index) => ({
+      ...dinner("hamburg", `2026-09-${19 + index}`), recipe: { ...recipe("hamburg"), isCustom: true, servingsBase: 4, ingredientsText },
+    }));
+    const result = build(dinners);
+    expect(labels(result)).toEqual(["大根 約1本（必要量約0.94本・1本約30cm）"]);
+    expect(result.groups[0].items[0].contributions.map((source) => source.original)).toEqual(["大根 1/3本", "大根 10cm", "大根 8cm"]);
+    expect(labels(build(dinners, [], 8))).toEqual(["大根 約2本（必要量約1.87本・1本約30cm）"]);
+    expect(labels(build([...dinners].reverse()))).toEqual(labels(result));
+  });
+  it("換算前に保存した大根の購入履歴を維持し、未購入の本数だけを残す", () => {
+    const dinners = [{ ...dinner("hamburg"), recipe: { ...recipe("hamburg"), isCustom: true,
+      servingsBase: 4, ingredientsText: "大根 30cm\n大根 1/3本" } }];
+    const oldBase = JSON.stringify(["2026-09-19", recipe("hamburg").name, "大根 30cm", "大根", 30, "cm", "", 1, false]);
+    const oldKey = JSON.stringify([oldBase, 0]);
+    const before = build(dinners);
+    expect(labels(before)).toEqual(["大根 約2本（必要量約1.34本・1本約30cm）"]);
+    expect(before.groups[0].items[0].contributions[0].key).toBe(oldKey);
+    const result = buildPlannedShopping({ start: "2026-09-19", dinners, breakfastVersions: [], servings: 4,
+      purchasedContributionKeys: [oldKey] });
+    expect(labels(result)).toEqual(["大根 0.34本"]);
+    expect(labels(buildPlannedShopping({ start: "2026-09-19", dinners, breakfastVersions: [], servings: 4,
+      purchasedContributionKeys: before.groups[0].items[0].contributions.map((item) => item.key) }))).toEqual([]);
+  });
+  it("大根の重量や不明量を推測で本数に足さず、他の野菜に長さ換算を適用しない", () => {
+    const ingredientsText = "大根 1本\n大根 300g\n大根 適量\nにんじん 10cm\nにんじん 1本";
+    const result = build([{ ...dinner("hamburg"), recipe: { ...recipe("hamburg"), isCustom: true, servingsBase: 4, ingredientsText } }]);
+    expect(labels(result)).toEqual(["大根 1本", "大根 300g", "大根 1回分・数量確認 適量", "にんじん 10cm", "にんじん 1本"]);
+  });
+
   it("調理用の水と氷を除外し、水菜・水煮缶・飲料は残す", () => {
     const result = build([{ ...dinner("hamburg"), recipe: { ...recipe("hamburg"), isCustom: true,
       ingredientsText: "水 800ml\n氷 適量\n水（調理用） 大さじ4\n水菜 1束\n大豆水煮缶 1缶\nミネラルウォーター 1本" } }], [breakfast(["水 100ml", "氷 少々"])]);
@@ -185,7 +221,7 @@ describe("献立からの材料集計", () => {
   it("同じ食材を主菜・汁物・別日で合計し、人数に合わせる", () => {
     const result = labels(build([dinner("salmon"), dinner("salmon", "2026-09-20")], [], 2));
     expect(result).toContain("生鮭 4切れ");
-    expect(result).toContain("大根 13cm");
+    expect(result).toContain("大根 約1本（必要量約0.44本・1本約30cm）");
     expect(result).toContain("にんじん 0.5本");
   });
   it("朝食の1回分を出現回数で合計し、夕食の同じ材料とも合算する", () => {
