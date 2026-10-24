@@ -16,7 +16,7 @@ export function buildPlannedShopping({ start, end, dinners, breakfastVersions, s
 }) {
   const dates = shoppingDates(start, end);
   const byDate = new Map(dinners.map((day) => [day.date, day]));
-  const entries = new Map<string, { name: string; unit: string; note: string; amount: number | null; contributions: ShoppingContribution[]; unscaled: boolean }>();
+  const entries = new Map<string, { name: string; unit: string; note: string; amount: number | null; contributions: ShoppingContribution[]; unscaled: boolean; estimated: boolean }>();
   const purchasedKeys = new Set(purchasedContributionKeys ?? []);
   const contributionOccurrences = new Map<string, number>();
   const warnings: string[] = [];
@@ -24,18 +24,22 @@ export function buildPlannedShopping({ start, end, dinners, breakfastVersions, s
   function add(line: string, date: string, meal: string, scale: number, unscaled = false, menuName = meal) {
     for (const ingredient of parseIngredientLine(line)) {
       if (isCookingWaterOrIce(ingredient.name)) continue;
-      const [amount, unit] = ingredient.amount === null ? [null, ""] : normalizedQuantity(ingredient.amount * scale, ingredient.unit);
+      let [amount, unit] = ingredient.amount === null ? [null, ""] : normalizedQuantity(ingredient.amount * scale, ingredient.unit);
       const contributionBase = JSON.stringify([date, meal, ingredient.original, ingredient.name, amount, unit, ingredient.note, scale, unscaled]);
       const occurrence = contributionOccurrences.get(contributionBase) ?? 0;
       contributionOccurrences.set(contributionBase, occurrence + 1);
       const contribution = { key: JSON.stringify([contributionBase, occurrence]), date, meal, menuName, original: ingredient.original, scale };
       if (purchasedKeys.has(contribution.key)) continue;
+      // 購入履歴の識別子は元の単位で維持し、集計時だけ1本約30cmの目安に換算する。
+      const estimated = ingredient.name === "大根" && unit === "cm" && amount !== null;
+      if (estimated) { amount = amount! / 30; unit = "本"; }
       const key = JSON.stringify([ingredient.name, unit, ingredient.note, unscaled]);
       const existing = entries.get(key);
       if (existing) {
         if (amount !== null && existing.amount !== null) existing.amount += amount;
         existing.contributions.push(contribution);
-      } else entries.set(key, { name: ingredient.name, unit, note: ingredient.note, amount, contributions: [contribution], unscaled });
+        existing.estimated ||= estimated;
+      } else entries.set(key, { name: ingredient.name, unit, note: ingredient.note, amount, contributions: [contribution], unscaled, estimated });
     }
   }
   for (const date of dates) {
@@ -98,7 +102,9 @@ export function buildPlannedShopping({ start, end, dinners, breakfastVersions, s
     const storedQuantity = entry.amount === null ? `${count}回分・数量確認` : `${formatIngredientAmount(entry.amount, entry.unit)}${entry.unscaled ? "・人数分を確認" : ""}`;
     // 鶏もも・むねは合計後に購入枚数へ切り上げる。重量は必要量の目安として残す。
     const chickenSheets = entry.amount !== null && entry.unit === "g" && /^(鶏もも肉|鶏むね肉)$/.test(entry.name);
-    const amountLabel = chickenSheets
+    const amountLabel = entry.estimated
+      ? `約${Math.ceil(entry.amount! - 1e-9)}本（必要量約${formatIngredientAmount(entry.amount!, entry.unit)}・1本約30cm）`
+      : chickenSheets
       ? `約${Math.ceil((entry.amount! - 1e-9) / 300)}枚（必要量${formatIngredientAmount(entry.amount!, entry.unit)}・1枚約300g）`
       : entry.amount === null ? `${count}回分・数量確認` : formatIngredientAmount(entry.amount, entry.unit);
     const quantity = `${amountLabel}${entry.amount !== null && entry.unscaled ? "・人数分を確認" : ""}`;

@@ -94,5 +94,8 @@ export function ingredientCategory(name: string) {
 
 // 調理用の水・氷だけを除外し、水菜や水煮の商品は残す。
 export function isCookingWaterOrIce(name: string) {
-  return /^(?:水|氷)(?:\s*\([^)]*\))?$/.test(name.normalize("NFKC").trim());
+  const plainName = name.normalize("NFKC").replace(/\([^)]*\)/g, "").trim();
+  return /^(水|氷)$/.test(plainName)
+    || /^水\s*\d+(?:\.\d+)?\s*cc$/i.test(plainName)
+    || /^水\s*(?:ひたひた|かぶるくらい|かぶる程度|適量|少々)$/.test(plainName);
 }
