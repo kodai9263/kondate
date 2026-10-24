@@ -1,7 +1,7 @@
 import { build } from "esbuild";
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
-const bundle = await build({ entryPoints: ["tests/ui/mobile-settings-preview.tsx"], bundle: true, write: false, format: "esm", jsx: "automatic" });
+const bundle = await build({ entryPoints: ["mobile/src/settings-preview.tsx"], bundle: true, write: false, format: "esm", jsx: "automatic" });
 const css = readFileSync("mobile/src/style.css");
 createServer((req, res) => {
  if (req.url === "/app.js") { res.setHeader("Content-Type", "text/javascript"); res.end(bundle.outputFiles[0].contents); }

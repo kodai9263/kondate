@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { TodaySteps, ReminderEditor } from "../../mobile/src/ContentSections";
+import { TodaySteps, ReminderEditor } from "./ContentSections";
 function Preview() {
  const [value, setValue] = useState({ enabled: true, weekday: 6, time: "07:20" });
  return <div className="app-shell"><main><header className="page-heading"><span className="section-tag">表示検証用・サンプルデータ</span><h1>お知らせ</h1></header>
