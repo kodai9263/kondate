@@ -1,6 +1,8 @@
 :root { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif; color: #2b2724; background: #fffaf0; font-synthesis: none; -webkit-text-size-adjust: 100%; }
 * { box-sizing: border-box; }
 html, body, #root { width: 100%; min-width: 0; }
+html { scroll-padding-top: env(safe-area-inset-top); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top); background: #fffaf0; z-index: 10; pointer-events: none; }
 body { margin: 0; }
 button, input { font: inherit; }
 button { cursor: pointer; }
@@ -94,10 +96,32 @@ h1 { margin: 7px 0 4px; font-family: "Noto Serif JP", serif; font-size: 29px; li
 .reminder-toggle strong { font-size: 15px; }
 .reminder-toggle small { color: #7b6a60; font-size: 12px; }
 .reminder-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
-.reminder-fields label { display: grid; gap: 6px; color: #594c43; font-size: 12px; font-weight: 700; }
+.reminder-fields label { min-width: 0; display: grid; gap: 6px; color: #594c43; font-size: 12px; font-weight: 700; }
 .reminder-fields select, .reminder-fields input { width: 100%; min-width: 0; min-height: 44px; border: 1px solid #d9c9ba; border-radius: 9px; padding: 8px; background: #fffefa; color: #2b2724; font-size: 16px; }
+.account-card { margin-top: 32px; border: 1px solid #ecdfd3; border-radius: 14px; padding: 18px; background: white; }
+.account-card h2 { margin: 0 0 12px; font-size: 17px; }
+.account-card p { margin: 8px 0; font-size: 13px; line-height: 1.6; }
+.family-size-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+.family-size-fields label { min-width: 0; display: grid; gap: 6px; color: #594c43; font-size: 13px; font-weight: 700; }
+.family-size-fields input { width: 100%; min-width: 0; min-height: 44px; border: 1px solid #d9c9ba; border-radius: 9px; padding: 8px; background: #fffefa; color: #2b2724; font-size: 16px; }
+.invite-entry { margin-top: 16px; padding-top: 12px; border-top: 1px solid #ecdfd3; }
+.invite-entry input { display: block; width: 100%; min-width: 0; margin: 8px 0; }
+.invite-entry button { min-height: 40px; }
+.deletion-confirmation { display: grid; gap: 8px; margin-top: 16px; color: #594c43; font-size: 13px; font-weight: 700; }
+.deletion-confirmation input { width: 100%; min-height: 44px; border: 1px solid #d9c9ba; border-radius: 9px; padding: 8px; background: #fffefa; color: #2b2724; font-size: 16px; }
+.danger-button { background: #a72d21; }
 @media (min-width: 640px) { .app-shell { border-left: 1px solid #eaded1; border-right: 1px solid #eaded1; } }
 
 /* 保存待ちでも即時反映したチェックを鮮明に保つ。 */
 .shopping-item-button { touch-action: manipulation; }
 .shopping-item-button:disabled { opacity: 1; }
+
+/* iOSの時刻・日付入力がグリッドの幅を押し広げないようにする。 */
+.reminder-fields input, .custom-period input { max-width: 100%; appearance: none; -webkit-appearance: none; }
+.reminder-fields input::-webkit-date-and-time-value { min-width: 0; text-align: left; }
+.custom-period { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.custom-period label { min-width: 0; }
+.today-card, .account-card, .shopping-item-button { overflow-wrap: anywhere; }
+.today-steps li + li { margin-top: 10px; }
+.recipe-source { color: #ac3825; text-underline-offset: 3px; }
+@media (max-width: 359px) { .reminder-fields { grid-template-columns: minmax(0, 1fr); } }
