@@ -95,7 +95,7 @@ describe("献立からの材料集計", () => {
   it("大根の重量や不明量を推測で本数に足さず、他の野菜に長さ換算を適用しない", () => {
     const ingredientsText = "大根 1本\n大根 300g\n大根 適量\nにんじん 10cm\nにんじん 1本";
     const result = build([{ ...dinner("hamburg"), recipe: { ...recipe("hamburg"), isCustom: true, servingsBase: 4, ingredientsText } }]);
-    expect(labels(result)).toEqual(["大根 1本", "大根 300g", "大根 1回分・数量確認 適量", "にんじん 10cm", "にんじん 1本"]);
+    expect(labels(result)).toEqual(["大根 1本 ＋ 300g ＋ 1回分・数量確認 適量", "にんじん 10cm ＋ 1本"]);
   });
 
   it("調理用の水と氷を除外し、水菜・水煮缶・飲料は残す", () => {
@@ -227,9 +227,8 @@ describe("献立からの材料集計", () => {
   it("朝食の1回分を出現回数で合計し、夕食の同じ材料とも合算する", () => {
     const result = labels(build([dinner("hamburg")], [breakfast(["卵 2個", "牛乳 200ml"])]));
     expect(result).toContain("卵 15個");
-    expect(result).toContain("牛乳 1400ml");
-    // mlとさじは密度や換算を決めず、異なる単位のまま残す。
-    expect(result.some((line) => line === "牛乳 大さじ3")).toBe(true);
+    // 大さじ3は45mlとして朝食と合算する。
+    expect(result).toContain("牛乳 1445ml");
   });
   it("購入済みの利用日だけを差し引き、期間を延ばした分は新しく表示する", () => {
     const dinners = ["2026-09-19", "2026-09-20", "2026-09-21", "2026-09-22"].map((date) => ({
@@ -270,7 +269,7 @@ describe("献立からの材料集計", () => {
     const result = build([], [breakfast(["果物", "卵 1〜2個", "牛乳 1本（500ml）"])]);
     for (const item of result.groups.flatMap((group) => group.items)) expect(item.contributions).toHaveLength(7);
     expect(labels(result)).toContain("果物 7回分・数量確認");
-    expect(labels(result)).toContain("卵 1〜2個 7回分・数量確認");
+    expect(labels(result)).toContain("卵 7回分・数量確認 1〜2個");
   });
   it("基準人数がない自作レシピを勝手に人数換算しない", () => {
     const result = build([{ ...dinner("hamburg"), recipe: { ...recipe("hamburg"), servingsBase: undefined, isCustom: true, ingredientsText: "合いびき肉 300g" } }]);
