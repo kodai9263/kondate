@@ -2,6 +2,7 @@ import { breakfastForDate, type BreakfastVersion } from "@/lib/breakfast/setting
 import type { PlannedDinner } from "@/types/nutrition";
 import { isDefaultSideIngredientLine, isSeparateSideIngredient, replaceSideIngredients, resolveDinnerIngredients } from "@/lib/nutrition/sideDish";
 import { formatIngredientAmount, ingredientCategory, isCookingWaterOrIce, normalizedQuantity, parseIngredientLine } from "./ingredients";
+import { purchaseIngredient } from "./purchaseIngredient";
 import { shoppingDates } from "./period";
 
 export type ShoppingContribution = { key: string; date: string; meal: string; menuName?: string; original: string; scale: number };
@@ -16,13 +17,14 @@ export function buildPlannedShopping({ start, end, dinners, breakfastVersions, s
 }) {
   const dates = shoppingDates(start, end);
   const byDate = new Map(dinners.map((day) => [day.date, day]));
-  const entries = new Map<string, { name: string; unit: string; note: string; amount: number | null; contributions: ShoppingContribution[]; unscaled: boolean; estimated: boolean }>();
+  const entries = new Map<string, { name: string; unit: string; note: string; amount: number | null; contributions: ShoppingContribution[]; unscaled: boolean; estimated: boolean; approximate: boolean }>();
   const purchasedKeys = new Set(purchasedContributionKeys ?? []);
   const contributionOccurrences = new Map<string, number>();
   const warnings: string[] = [];
   const meals: Array<{ date: string; dinner: string | null; breakfast: string | null }> = [];
   function add(line: string, date: string, meal: string, scale: number, unscaled = false, menuName = meal) {
-    for (const ingredient of parseIngredientLine(line)) {
+    for (const legacy of parseIngredientLine(line)) {
+      let ingredient = legacy;
       if (isCookingWaterOrIce(ingredient.name)) continue;
       let [amount, unit] = ingredient.amount === null ? [null, ""] : normalizedQuantity(ingredient.amount * scale, ingredient.unit);
       const contributionBase = JSON.stringify([date, meal, ingredient.original, ingredient.name, amount, unit, ingredient.note, scale, unscaled]);
@@ -30,16 +32,21 @@ export function buildPlannedShopping({ start, end, dinners, breakfastVersions, s
       contributionOccurrences.set(contributionBase, occurrence + 1);
       const contribution = { key: JSON.stringify([contributionBase, occurrence]), date, meal, menuName, original: ingredient.original, scale };
       if (purchasedKeys.has(contribution.key)) continue;
+      const purchase = purchaseIngredient(legacy);
+      ingredient = purchase;
+      [amount, unit] = ingredient.amount === null ? [null, ""] : [ingredient.amount * scale, ingredient.unit];
       // 購入履歴の識別子は元の単位で維持し、集計時だけ1本約30cmの目安に換算する。
       const estimated = ingredient.name === "大根" && unit === "cm" && amount !== null;
       if (estimated) { amount = amount! / 30; unit = "本"; }
-      const key = JSON.stringify([ingredient.name, unit, ingredient.note, unscaled]);
+      const key = JSON.stringify([ingredient.name, unit, unscaled, amount === null ? ingredient.note : ""]);
       const existing = entries.get(key);
       if (existing) {
         if (amount !== null && existing.amount !== null) existing.amount += amount;
         existing.contributions.push(contribution);
         existing.estimated ||= estimated;
-      } else entries.set(key, { name: ingredient.name, unit, note: ingredient.note, amount, contributions: [contribution], unscaled, estimated });
+        existing.approximate ||= purchase.approximate;
+        existing.note = [...new Set([existing.note, ingredient.note].flatMap((note) => note.split("・")).filter(Boolean))].join("・");
+      } else entries.set(key, { name: ingredient.name, unit, note: ingredient.note, amount, contributions: [contribution], unscaled, estimated, approximate: purchase.approximate });
     }
   }
   for (const date of dates) {
@@ -79,6 +86,7 @@ export function buildPlannedShopping({ start, end, dinners, breakfastVersions, s
   }
   const groups = new Map<string, PlannedShoppingItem[]>();
   const seasonings = new Map<string, PlannedShoppingItem>();
+  const combined = new Map<string, { item: PlannedShoppingItem; names: string[]; quantities: string[] }>();
   for (const entry of entries.values()) {
     const category = ingredientCategory(entry.name);
     const items = groups.get(category) ?? [];
@@ -106,13 +114,28 @@ export function buildPlannedShopping({ start, end, dinners, breakfastVersions, s
       ? `約${Math.ceil(entry.amount! - 1e-9)}本（必要量約${formatIngredientAmount(entry.amount!, entry.unit)}・1本約30cm）`
       : chickenSheets
       ? `約${Math.ceil((entry.amount! - 1e-9) / 300)}枚（必要量${formatIngredientAmount(entry.amount!, entry.unit)}・1枚約300g）`
-      : entry.amount === null ? `${count}回分・数量確認` : formatIngredientAmount(entry.amount, entry.unit);
+      : entry.amount === null ? `${count}回分・数量確認` : `${entry.approximate ? "約" : ""}${formatIngredientAmount(entry.amount, entry.unit)}`;
     const quantity = `${amountLabel}${entry.amount !== null && entry.unscaled ? "・人数分を確認" : ""}`;
 
     const label = `${entry.name} ${quantity}${entry.note ? ` ${entry.note}` : ""}`;
     // nameはDBの識別にも使う。長文も省略せず、保存キーはサーバー側で付ける。
-    items.push({ category, name: `${entry.name} ${storedQuantity}${entry.note ? ` ${entry.note}` : ""}`, label, position: items.length, needsReview: review, contributions: entry.contributions });
-    groups.set(category, items);
+    const storedName = `${entry.name} ${storedQuantity}${entry.note ? ` ${entry.note}` : ""}`;
+    const detail = label.slice(entry.name.length + 1);
+    const existing = combined.get(entry.name);
+    if (existing) {
+      existing.names.push(storedName);
+      existing.quantities.push(detail);
+      existing.item.label = `${entry.name} ${existing.quantities.join(" ＋ ")}`;
+      // 内訳を識別子に含め、同じ食材でも必要量が変われば古いチェックを適用しない。
+      existing.item.name = JSON.stringify(["combined", entry.name, [...existing.names].sort()]);
+      existing.item.needsReview ||= review;
+      existing.item.contributions.push(...entry.contributions);
+    } else {
+      const item = { category, name: storedName, label, position: items.length, needsReview: review, contributions: [...entry.contributions] };
+      combined.set(entry.name, { item, names: [storedName], quantities: [detail] });
+      items.push(item);
+      groups.set(category, items);
+    }
   }
   return { groups: categoryOrder.filter((category) => groups.has(category)).map((category) => ({ category, items: groups.get(category)! })), warnings, meals };
 }
