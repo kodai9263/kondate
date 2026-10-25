@@ -240,6 +240,8 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      household_recipe_editor: { Args: { target_id: string }; Returns: Json };
+      save_household_recipe_editor: { Args: { target_id: string; request_id: string; expected_revision: string | null; fields: Json }; Returns: string };
       accept_household_invite: {
         Args: {
           invite_token_input: string;

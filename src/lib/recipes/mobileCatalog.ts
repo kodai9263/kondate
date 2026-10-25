@@ -10,7 +10,7 @@ export function menuEntries(rows: MenuRow[], excluded: string[], householdId: st
   const customizations = own.filter((row) => recipeMeta(row.meta).step_customization === true);
   const sourceIds = new Set(customizations.map((row) => recipeMeta(row.meta).source_recipe_id));
   const officialKeys = new Set(customizations.map((row) => recipeMeta(row.meta).nutrition_catalog_id));
-  const result: MenuItem[] = own.filter((row) => row.category !== "breakfast" && recipeMeta(row.meta).step_customization !== true && isDinnerCandidate(databaseRecipeTime(row)))
+  const result: MenuItem[] = own.filter((row) => row.category !== "breakfast" && recipeMeta(row.meta).step_customization !== true)
     .map((row) => ({ id: row.id, name: row.name, minutes: databaseRecipeTime(row).totalMinutes ?? row.cook_minutes, kind: "custom", customized: false }));
   for (const row of rows) {
     const meta = recipeMeta(row.meta);

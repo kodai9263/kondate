@@ -667,7 +667,7 @@ export function App() {
           <button type="button" aria-current={activeTab === "menu" ? "page" : undefined} onClick={() => setActiveTab("menu")}>メニュー</button>
           <button type="button" aria-current={activeTab === "settings" ? "page" : undefined} onClick={() => setActiveTab("settings")}>設定</button>
         </nav>
-        {activeTab === "menu" && accessToken ? <Menu key={userId} accessToken={accessToken} online={online} /> : activeTab === "planner" && accessToken ? <Planner key={userId} accessToken={accessToken} online={online} onSaved={() => setRefreshEpoch((value) => value + 1)} /> : activeTab === "settings" ? <section className="settings-page">
+        {activeTab === "menu" && accessToken ? <Menu key={userId} accessToken={accessToken} online={online} onSaved={() => setRefreshEpoch(value=>value+1)} /> : activeTab === "planner" && accessToken ? <Planner key={userId} accessToken={accessToken} online={online} onSaved={() => setRefreshEpoch((value) => value + 1)} /> : activeTab === "settings" ? <section className="settings-page">
           <div className="page-heading"><span className="section-tag">SETTINGS</span><h1>お知らせ</h1>
             <p>必要な通知だけを、この端末で受け取れます。初期設定はOFFです。</p></div>
           {remindersAvailable() ? <>

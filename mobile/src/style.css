@@ -173,3 +173,12 @@ h1 { margin: 7px 0 4px; font-family: "Noto Serif JP", serif; font-size: 29px; li
 .mobile-tabs button { white-space: nowrap; padding: 8px 2px; font-size: 12px; }
 .menu-page .secondary-button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 12px; border: 1px solid #d9b4a6; border-radius: 10px; background: white; color: #963824; font: inherit; font-size: 13px; text-decoration: none; }
 .menu-page .menu-filters [aria-pressed="true"] { background: #fae9e3; border-color: #c94028; }
+
+.menu-editor { display:grid; gap:24px; }
+.menu-editor fieldset { border:0; padding:0; min-width:0; display:grid; gap:16px; }
+.menu-editor legend { font-weight:700; margin-bottom:16px; }
+.menu-editor label { display:grid; gap:8px; font-size:14px; font-weight:600; min-width:0; }
+.menu-editor input,.menu-editor textarea,.menu-editor select { box-sizing:border-box; min-width:0; width:100%; min-height:46px; padding:12px; font:inherit; font-size:16px; border:1px solid #d8cfc6; border-radius:10px; background:white; color:#342f29; }
+.menu-editor textarea { resize:vertical; line-height:1.6; }
+.menu-editor small { font-weight:400; color:#716357; }
+.menu-nutrition { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
