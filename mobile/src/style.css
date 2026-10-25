@@ -16,7 +16,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .signout { white-space: nowrap; }
 .text-button { border: 0; background: transparent; color: #b84431; text-decoration: underline; text-underline-offset: 3px; font-size: 12px; }
 main { width: 100%; min-width: 0; padding: 0 20px; }
-.mobile-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 20px 0 2px; }
+.mobile-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin: 20px 0 2px; }
 .mobile-tabs button { min-width: 0; min-height: 45px; border: 1px solid #e3cdbb; border-radius: 11px; background: white; color: #6b5b50; font-size: 14px; font-weight: 700; }
 .mobile-tabs button[aria-current="page"] { border-color: #c94028; background: #c94028; color: white; }
 .today-page { padding-bottom: 20px; }
@@ -155,3 +155,21 @@ h1 { margin: 7px 0 4px; font-family: "Noto Serif JP", serif; font-size: 29px; li
 .planner-calendar button[aria-pressed="true"] { border: 2px solid #c94028; background: #fff0e8; }
 .planner-calendar button[aria-current="date"] strong { color: #b73c25; }
 .planner-calendar button span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; overflow-wrap: anywhere; font-size: 10px; line-height: 1.5; }
+
+.menu-page { min-width: 0; }
+.menu-search { display: grid; gap: 8px; margin: 24px 0 16px; font-weight: 700; }
+.menu-search input { width: 100%; min-width: 0; min-height: 48px; padding: 12px; border: 1px solid #d8cfc6; border-radius: 10px; background: white; font-size: 16px; }
+.menu-filters { display: flex; gap: 8px; }
+.menu-filters [aria-pressed="true"] { background: #fae9e3; border-color: #c94028; color: #b63822; }
+.menu-list { display: grid; gap: 10px; }
+.menu-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 76px; padding: 16px; text-align: left; color: inherit; background: white; border: 1px solid #e3d9ce; border-radius: 14px; }
+.menu-card strong { display: block; font-size: 17px; overflow-wrap: anywhere; }
+.menu-card small { display: block; margin-top: 6px; color: #716357; }
+.menu-detail { margin: 20px 0; padding: 20px; background: white; border: 1px solid #e3d9ce; border-radius: 16px; overflow-wrap: anywhere; }
+.menu-detail h2 { margin-top: 0; font-size: 21px; }
+.menu-detail ul, .menu-detail ol { padding-left: 24px; }
+.menu-detail li { margin: 12px 0; line-height: 1.8; }
+@media (max-width: 360px) { .mobile-tabs { gap: 3px; } .mobile-tabs button { font-size: 12px; padding: 8px 2px; } }
+.mobile-tabs button { white-space: nowrap; padding: 8px 2px; font-size: 12px; }
+.menu-page .secondary-button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 12px; border: 1px solid #d9b4a6; border-radius: 10px; background: white; color: #963824; font: inherit; font-size: 13px; text-decoration: none; }
+.menu-page .menu-filters [aria-pressed="true"] { background: #fae9e3; border-color: #c94028; }
