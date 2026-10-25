@@ -1,3 +1,4 @@
+import { Planner } from "./MobilePlanner";
 import { TodaySteps, ReminderEditor } from "./ContentSections";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Capacitor, type PluginListenerHandle } from "@capacitor/core";
@@ -37,7 +38,7 @@ export function App() {
   const [snapshot, setSnapshot] = useState<ShoppingSnapshot | null>(null);
   const [todaySnapshot, setTodaySnapshot] = useState<TodaySnapshot | null>(null);
   const [todayError, setTodayError] = useState("");
-  const [activeTab, setActiveTab] = useState<"today" | "shopping" | "settings">("today");
+  const [activeTab, setActiveTab] = useState<"today" | "planner" | "shopping" | "settings">("today");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -660,10 +661,11 @@ export function App() {
       </section> : <>
         <nav className="mobile-tabs" aria-label="主な画面">
           <button type="button" aria-current={activeTab === "today" ? "page" : undefined} onClick={() => setActiveTab("today")}>今日</button>
+          <button type="button" aria-current={activeTab === "planner" ? "page" : undefined} onClick={() => setActiveTab("planner")}>献立</button>
           <button type="button" aria-current={activeTab === "shopping" ? "page" : undefined} onClick={() => setActiveTab("shopping")}>買い物</button>
           <button type="button" aria-current={activeTab === "settings" ? "page" : undefined} onClick={() => setActiveTab("settings")}>設定</button>
         </nav>
-        {activeTab === "settings" ? <section className="settings-page">
+        {activeTab === "planner" && accessToken ? <Planner key={userId} accessToken={accessToken} online={online} onSaved={() => setRefreshEpoch((value) => value + 1)} /> : activeTab === "settings" ? <section className="settings-page">
           <div className="page-heading"><span className="section-tag">SETTINGS</span><h1>お知らせ</h1>
             <p>必要な通知だけを、この端末で受け取れます。初期設定はOFFです。</p></div>
           {remindersAvailable() ? <>

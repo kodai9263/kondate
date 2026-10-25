@@ -16,7 +16,7 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .signout { white-space: nowrap; }
 .text-button { border: 0; background: transparent; color: #b84431; text-decoration: underline; text-underline-offset: 3px; font-size: 12px; }
 main { width: 100%; min-width: 0; padding: 0 20px; }
-.mobile-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 20px 0 2px; }
+.mobile-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 20px 0 2px; }
 .mobile-tabs button { min-width: 0; min-height: 45px; border: 1px solid #e3cdbb; border-radius: 11px; background: white; color: #6b5b50; font-size: 14px; font-weight: 700; }
 .mobile-tabs button[aria-current="page"] { border-color: #c94028; background: #c94028; color: white; }
 .today-page { padding-bottom: 20px; }
@@ -125,3 +125,33 @@ h1 { margin: 7px 0 4px; font-family: "Noto Serif JP", serif; font-size: 29px; li
 .today-steps li + li { margin-top: 10px; }
 .recipe-source { color: #ac3825; text-underline-offset: 3px; }
 @media (max-width: 359px) { .reminder-fields { grid-template-columns: minmax(0, 1fr); } }
+
+.planner-view, .planner-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.planner-view button, .planner-actions button, .planner-navigation button, .planner-picker header button { min-height: 44px; border: 1px solid #d9b4a6; border-radius: 9px; padding: 8px 12px; background: white; color: #963824; font-size: 13px; }
+.planner-view button[aria-pressed="true"], .planner-actions button[aria-pressed="true"] { background: #fbe9e1; border-color: #c94028; }
+.planner-navigation { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin: 20px 0; }
+.planner-navigation strong { flex: 1 1 100%; order: -1; text-align: center; font-size: 16px; }
+.planner-date { font-weight: 700; color: #a5412b; font-size: 14px; }
+.planner-day h2 { font-size: 20px; }
+.planner-day > p { font-size: 13px; line-height: 1.7; }
+.planner-actions { margin-top: 18px; }
+.skipped-day { background: #f5f1ea; }
+.planner-picker { width: calc(100% - 32px); max-width: 540px; max-height: calc(100dvh - 64px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); border: 1px solid #e5d5c7; border-radius: 16px; padding: 20px; color: #2b2724; background: #fffaf0; overflow-wrap: anywhere; }
+.planner-picker::backdrop { background: #241b15aa; }
+.planner-picker header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.planner-picker h2 { font-size: 18px; }
+.planner-picker header button { flex-shrink: 0; }
+.planner-picker p { font-size: 13px; line-height: 1.6; }
+.planner-search { display: grid; gap: 8px; font-size: 14px; }
+.planner-search input { min-width: 0; width: 100%; min-height: 44px; border: 1px solid #d9c9ba; border-radius: 9px; padding: 8px; font-size: 16px; }
+.planner-picker ul { padding: 0; list-style: none; }
+.planner-picker li + li { margin-top: 10px; }
+.planner-picker li button { display: grid; gap: 6px; width: 100%; min-height: 52px; text-align: left; padding: 14px; border: 1px solid #e5d5c7; border-radius: 12px; background: white; color: #493d34; }
+.planner-picker li span { font-size: 12px; line-height: 1.6; }
+
+.planner-calendar { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; margin-bottom: 20px; }
+.calendar-weekday { text-align: center; color: #75665e; font-size: 12px; padding: 7px 0; }
+.planner-calendar button { min-width: 0; min-height: 90px; padding: 6px 3px; display: flex; flex-direction: column; gap: 5px; align-items: start; text-align: left; border: 1px solid #e5d5c7; border-radius: 7px; background: white; color: #493d34; }
+.planner-calendar button[aria-pressed="true"] { border: 2px solid #c94028; background: #fff0e8; }
+.planner-calendar button[aria-current="date"] strong { color: #b73c25; }
+.planner-calendar button span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; overflow-wrap: anywhere; font-size: 10px; line-height: 1.5; }
