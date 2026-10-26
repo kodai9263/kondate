@@ -3,6 +3,12 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      recipes: {
+        Row: { id:string; household_id:string|null; name:string; category:string; servings_base:number; prep_minutes:number; cook_minutes:number; freezable:boolean; bento_ok:boolean; storage_note:string|null; tags:string[]; seasons:string[]; meta:Json; created_at:string; archived_at:string|null; image_url:string|null; protein_source:string|null };
+        Insert: { name:string; id?:string; household_id?:string|null; category?:string; meta?:Json };
+        Update: { archived_at?:string|null };
+        Relationships: [];
+      };
       households: {
         Row: {
           id: string;

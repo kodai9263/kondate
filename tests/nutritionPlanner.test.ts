@@ -94,3 +94,5 @@ describe("generateMonthlyDinnerPlan", () => {
 });
 
 it('栄養不明をゼロとして平均に含めない',()=>{const known={date:'2026-10-26',recipe:officialNutritionRecipes[0],locked:false};const unknown={...known,date:'2026-10-27',recipe:{...known.recipe,nutrition:null}};expect(summarizeNutrition([known,unknown]).average).toEqual(summarizeNutrition([known]).average);expect(summarizeNutrition([known,unknown]).message).toContain('1日分のみ');expect(summarizeNutrition([unknown]).average).toBeNull();expect(summarizeNutrition([unknown]).score).toBeNull();});
+
+it('非表示の料理は保存済み献立に残せるが新規候補に選ばない',()=>{const archived={...officialNutritionRecipes[0],id:'archived',archived:true};const plan=generateMonthlyDinnerPlan({year:2026,month:10,recipes:[archived,officialNutritionRecipes[1]],lockedRecipeIds:{'2026-10-01':archived.id}});expect(plan[0].recipe.id).toBe('archived');expect(plan.slice(1).every(day=>day.recipe.id!=='archived')).toBe(true);});

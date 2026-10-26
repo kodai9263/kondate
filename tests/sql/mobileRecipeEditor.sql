@@ -39,6 +39,18 @@ begin
  perform public.save_household_recipe_editor(id,gen_random_uuid(),rev,jsonb_set(f,'{name}','"栄養なし編集"'));
  if public.household_recipe_editor(id)->'fields'->>'name' <> '栄養なし編集' then raise exception 'unknown edit failed'; end if;
 end $$;
+reset role;
+update public.household_subscriptions set status='active',current_period_end=now()+interval '1 day' where household_id=(select household_id from public.profiles where id='10000000-0000-4000-8000-000000000031');
+set role authenticated;
+do $$
+declare rid uuid := '20000000-0000-4000-8000-000000000035'; h uuid := public.current_household_id();
+begin
+ insert into public.plan_entries(household_id,date,meal_type,recipe_id,servings) values(h,'2026-10-01','dinner',rid,4);
+ update public.recipes set archived_at=now() where id=rid and household_id=h;
+ if not exists(select 1 from public.plan_entries where recipe_id=rid) then raise exception 'saved plan lost'; end if;
+ if not exists(select 1 from public.recipe_steps where recipe_id=rid) then raise exception 'recipe detail lost'; end if;
+ if exists(select 1 from public.recipes where id=rid and archived_at is null) then raise exception 'still active'; end if;
+end $$;
 select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000032',false);
 do $$ begin
  begin perform public.household_recipe_editor('20000000-0000-4000-8000-000000000031');raise exception 'other household read';exception when others then if sqlerrm <> 'recipe_not_found' then raise;end if;end;
@@ -46,6 +58,7 @@ do $$ begin
 end $$;
 reset role;
 select '登録、再試行、編集、古い画面の拒否、不正入力のロールバック、別家族の拒否: 成功' as result;
+update public.household_subscriptions set status='free',current_period_end=null;
 -- 同じ家族でも利用権限のない追加メンバーは関数を直接呼べない。
 select set_config('app.allow_household_transfer','on',false);
 update public.profiles set household_id=(select household_id from public.profiles where id='10000000-0000-4000-8000-000000000031'),created_at=now()+interval '1 minute' where id='10000000-0000-4000-8000-000000000032';

@@ -1,10 +1,10 @@
 export const MAX_DINNER_MINUTES = 40;
 
-type RecipeTime = { cookMinutes: number; totalMinutes?: number; timeUnconfirmed?: boolean };
+type RecipeTime = { cookMinutes: number; totalMinutes?: number; timeUnconfirmed?: boolean; archived?: boolean };
 
 export function isDinnerCandidate(recipe: RecipeTime, maxMinutes = MAX_DINNER_MINUTES) {
   const minutes = recipe.totalMinutes ?? recipe.cookMinutes;
-  return !recipe.timeUnconfirmed && Number.isFinite(minutes) && minutes > 0
+  return !recipe.archived && !recipe.timeUnconfirmed && Number.isFinite(minutes) && minutes > 0
     && minutes <= Math.min(maxMinutes, MAX_DINNER_MINUTES);
 }
 
