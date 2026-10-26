@@ -8,6 +8,7 @@ createServer(async(req,res)=>{
  const url=new URL(req.url,'http://127.0.0.1:4330');
  const json=(value,status=200)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(value));};
  if(url.pathname==='/api/mobile/v1/recipes/editor'){
+  if(req.method==='DELETE'){let raw='';for await(const chunk of req)raw+=chunk;const {id}=JSON.parse(raw);entries.delete(id);return json({version:1,id});}
   if(req.method==='GET'){const fields=entries.get(url.searchParams.get('id'));return fields?json({version:1,fields,revision:revision(fields)}):json({},404);}
   let raw='';for await(const chunk of req)raw+=chunk;const body=JSON.parse(raw);const old=entries.get(body.id);
   if(!requests.has(body.requestId)){if(old&&revision(old)!==body.revision)return json({},409);entries.set(body.id,body.fields);requests.add(body.requestId);}

@@ -43,7 +43,7 @@ export async function saveMonthlyDinnerPlanForClient(input: unknown, client?: Aw
   const sideDishIds = [...new Set(parsed.data.entries.flatMap((entry) => entry.sideDishId ? [entry.sideDishId] : []))];
   const { firstDate, lastDate } = getMonthDateRange(parsed.data.year, parsed.data.month);
   const [{ data: recipes, error: recipeError }, { data: saved, error: savedError }, { data: sideDishes, error: sideDishError }] = await Promise.all([
-    supabase.from("recipes").select("id,name,cook_minutes,meta,category,household_id").in("id", recipeIds).is("archived_at", null),
+    supabase.from("recipes").select("id,name,cook_minutes,meta,category,household_id,archived_at").in("id", recipeIds),
     supabase.from("plan_entries").select("date,recipe_id").eq("household_id", profile.household_id).eq("meal_type", "dinner").gte("date", firstDate).lte("date", lastDate),
     sideDishIds.length > 0
       ? supabase.from("side_dishes").select("id").eq("household_id", profile.household_id).in("id", sideDishIds).is("archived_at", null)
@@ -54,7 +54,7 @@ export async function saveMonthlyDinnerPlanForClient(input: unknown, client?: Aw
   }
 
   const candidateIds = new Set(recipes.filter((recipe) => {
-    if (recipe.category === "breakfast") return false;
+    if (recipe.category === "breakfast" || recipe.archived_at) return false;
     const meta = recipe.meta && typeof recipe.meta === "object" ? recipe.meta as Record<string, unknown> : {};
     const catalog = recipe.household_id === null && meta.visibility !== "community"
       ? officialNutritionRecipes.find((item) => item.id === meta.nutrition_catalog_id || item.name === recipe.name)

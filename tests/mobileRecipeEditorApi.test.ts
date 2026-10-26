@@ -2,7 +2,7 @@ import {beforeEach,describe,it,expect,vi} from "vitest";
 const mocks=vi.hoisted(()=>({auth:vi.fn(),rpc:vi.fn(),revalidate:vi.fn()}));
 vi.mock("next/cache",()=>({revalidatePath:mocks.revalidate}));
 vi.mock("@/lib/mobile/request",async original=>({...await original<typeof import("@/lib/mobile/request")>(),authorizeMobileRequest:mocks.auth}));
-import {GET,POST,OPTIONS} from "@/app/api/mobile/v1/recipes/editor/route";
+import {GET,POST,DELETE,OPTIONS} from "@/app/api/mobile/v1/recipes/editor/route";
 const id="20000000-0000-4000-8000-000000000031";
 const fields={name:"カレー",side:"サラダ",cookMinutes:30,servings:4,proteinSource:"meat",ingredients:"玉ねぎ 1個",morning:"",steps:"煮る",energyKcal:500,proteinG:20,fatG:15,carbsG:60,fiberG:4,saltG:2,vegetablesG:120};
 const payload={id,requestId:"30000000-0000-4000-8000-000000000031",revision:null,fields};
@@ -19,3 +19,17 @@ describe('メニュー登録・編集API',()=>{
 });
 
 it('栄養入力なしの登録を0で補完せず渡す',async()=>{const basic={name:'料理',side:'',cookMinutes:20,servings:2,proteinSource:'meat',ingredients:'玉ねぎ 1個',morning:'',steps:'炒める'};expect((await POST(request({...payload,fields:basic}))).status).toBe(200);expect(mocks.rpc.mock.calls[0][1].fields).toEqual(basic);});
+
+describe('メニュー削除API',()=>{
+ it('認証なしを拒否',async()=>{mocks.auth.mockResolvedValue(new Response(null,{status:401}));expect((await DELETE(request({id}))).status).toBe(401);});
+ it('不正IDを拒否',async()=>{expect((await DELETE(request({id:'invalid'}))).status).toBe(400);});
+ it('家族IDと料理種別を指定して非表示にし、物理削除しない',async()=>{
+  const q={update:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),neq:vi.fn().mockReturnThis(),or:vi.fn().mockReturnThis(),select:vi.fn().mockReturnThis(),maybeSingle:vi.fn().mockResolvedValue({data:{id},error:null})};
+  mocks.auth.mockResolvedValue({householdId:'household',supabase:{from:vi.fn(()=>q)}});
+  expect((await DELETE(request({id}))).status).toBe(200);
+  expect(q.eq).toHaveBeenCalledWith('household_id','household');expect(q.eq).toHaveBeenCalledWith('id',id);
+  expect(q.update).toHaveBeenCalledWith({archived_at:expect.any(String)});expect(q.neq).toHaveBeenCalledWith('category','breakfast');
+  q.maybeSingle.mockResolvedValue({data:null,error:null});expect((await DELETE(request({id}))).status).toBe(404);
+  q.maybeSingle.mockResolvedValue({data:null,error:{message:'failed'}});expect((await DELETE(request({id}))).status).toBe(503);
+ });
+});

@@ -24,6 +24,14 @@ export async function getHouseholdPlannerContext(year: number, month: number, st
   if (strict && results.some((result) => result.error)) throw new Error("shopping_plan_unavailable");
   const [{ data: rows }, { data: officialRows }, { data: feedbackRows }, { data: savedRows }, { data: exclusions }, { data: sideDishRows }] = results;
 
+  // 非表示にした自作料理は保存済み献立の表示にだけ使い、新しい候補から除く。
+  const savedIds = [...new Set((savedRows ?? []).map(row => row.recipe_id))];
+  const archivedResult = savedIds.length ? await supabase.from("recipes")
+    .select("id,name,cook_minutes,servings_base,image_url,protein_source,meta,recipe_nutrition(energy_kcal,protein_g,fat_g,carbs_g,fiber_g,salt_g,vegetables_g)")
+    .in("id",savedIds).not("household_id","is",null).not("archived_at","is",null).neq("category","breakfast") : {data:[],error:null};
+  if (strict && archivedResult.error) throw new Error("shopping_plan_unavailable");
+  const archived = (archivedResult.data ?? []).flatMap(row => mapCustomRecipe(row as Record<string,unknown>)).map(recipe => ({...recipe,archived:true}));
+
   const stepCustomizationIds = new Map<string, string>();
   const customizationRows = new Map<string, Record<string, unknown>>();
   const custom: NutritionRecipe[] = [];
@@ -78,7 +86,7 @@ export async function getHouseholdPlannerContext(year: number, month: number, st
   }
 
   const preferenceAllowed = filtered.allowed.filter((recipe) => latestRatings.get(recipe.name) !== "avoid");
-  const recipes = preferenceAllowed.length > 0 ? preferenceAllowed : filtered.allowed;
+  const recipes = [...(preferenceAllowed.length > 0 ? preferenceAllowed : filtered.allowed), ...archived];
   const preferredRecipeIds = recipes.filter((recipe) => latestRatings.get(recipe.name) === "love").map((recipe) => recipe.id);
   const availableRecipeIds = new Set(recipes.map((recipe) => recipe.id));
   const initialSkippedDates = (savedRows ?? []).filter((row) => row.status === "skipped").map((row) => row.date);

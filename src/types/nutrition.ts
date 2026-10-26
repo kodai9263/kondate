@@ -26,6 +26,7 @@ export type NutritionRecipe = {
   ingredientsText?: string;
   eveningSteps?: string[];
   seasonMonths?: number[];
+  archived?: boolean;
   isCustom?: boolean;
   isCommunity?: boolean;
 };
