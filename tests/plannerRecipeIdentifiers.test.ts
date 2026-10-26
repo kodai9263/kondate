@@ -46,3 +46,9 @@ describe("献立の保存用IDと作り方の識別子", () => {
     expect(recipes.find((recipe) => recipe.isCustom)).toMatchObject({ id: "custom-id" });
   });
 });
+
+it("栄養未登録の自作料理も献立に選べる", async () => {
+  mock.rows = [{ ...row("unknown-nutrition", "わが家の炒め物"), recipe_nutrition: [] }];
+  const { recipes } = await getHouseholdPlannerContext(2026, 10);
+  expect(recipes.find(recipe => recipe.id === "unknown-nutrition")).toMatchObject({ nutrition: null, isCustom: true });
+});

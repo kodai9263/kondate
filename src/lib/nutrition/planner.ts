@@ -147,19 +147,21 @@ export function rankAlternativeRecipes({
     if (recipe.proteinSource === currentRecipe.proteinSource) score += 8;
     if (nearby.has(recipe.id)) score += 120;
     if (preferred.has(recipe.id)) score -= 16;
-    if (recipe.nutrition.saltG > dinnerNutritionTarget.saltG * 1.2) score += 12;
+    if (recipe.nutrition && recipe.nutrition.saltG > dinnerNutritionTarget.saltG * 1.2) score += 12;
     return score;
   }
 }
 
 export function summarizeNutrition(plan: PlannedDinner[]): NutritionSummary {
   if (plan.length === 0) return { average: zeroNutrition(), score: 0, message: "献立を作成すると栄養バランスを確認できます" };
-  const total = plan.reduce((sum, day) => addNutrition(sum, day.recipe.nutrition), zeroNutrition());
-  const average = mapNutrition(total, (value) => value / plan.length);
+  const known = plan.flatMap(day => !day.skipped && day.recipe.nutrition ? [day.recipe.nutrition] : []);
+  if (!known.length) return { average: null, score: null, message: "栄養データがないため集計できません" };
+  const total = known.reduce(addNutrition, zeroNutrition());
+  const average = mapNutrition(total, (value) => value / known.length);
   const deviation = nutritionDeviation(average);
   const score = Math.max(0, Math.round(100 - deviation * 42));
   const message = score >= 85 ? "主菜と野菜のバランスが整っています" : score >= 70 ? "おおむね良好です。野菜量と塩分を確認しましょう" : "偏りがあります。献立を再生成して調整できます";
-  return { average: roundNutrition(average), score, message };
+  return { average: roundNutrition(average), score, message: known.length < plan.filter(day => !day.skipped).length ? `栄養データのある${known.length}日分のみ集計しています。${message}` : message };
 }
 
 function candidateScore(recipe: NutritionRecipe, recent: PlannedDinner[], week: PlannedDinner[], month: number, preferred: Set<string>) {
@@ -174,11 +176,12 @@ function candidateScore(recipe: NutritionRecipe, recent: PlannedDinner[], week: 
   const sourceCounts = countSources(week);
   if (recipe.proteinSource === "fish" && (sourceCounts.fish ?? 0) < 2) score -= 7;
   if (recipe.proteinSource === "soy" && (sourceCounts.soy ?? 0) < 1) score -= 5;
-  if (recipe.nutrition.saltG > dinnerNutritionTarget.saltG * 1.2) score += 12;
+  if (recipe.nutrition && recipe.nutrition.saltG > dinnerNutritionTarget.saltG * 1.2) score += 12;
   return score;
 }
 
-function nutritionDeviation(nutrition: Nutrition) {
+function nutritionDeviation(nutrition: Nutrition | null) {
+  if (!nutrition) return 0;
   const ratios = [
     Math.abs(nutrition.energyKcal - dinnerNutritionTarget.energyKcal) / dinnerNutritionTarget.energyKcal,
     Math.abs(nutrition.proteinG - dinnerNutritionTarget.proteinG) / dinnerNutritionTarget.proteinG,

@@ -120,7 +120,6 @@ function mapCustomRecipe(row: Record<string, unknown>): NutritionRecipe[] {
 
 function mapDatabaseRecipe(row: Record<string, unknown>, origin: "custom" | "community"): NutritionRecipe[] {
   const nutritionValue = Array.isArray(row.recipe_nutrition) ? row.recipe_nutrition[0] : row.recipe_nutrition;
-  if (!nutritionValue || typeof nutritionValue !== "object") return [];
   const nutrition = nutritionValue as Record<string, number>;
   const meta = row.meta && typeof row.meta === "object" ? row.meta as Record<string, unknown> : {};
   return [{
@@ -130,7 +129,7 @@ function mapDatabaseRecipe(row: Record<string, unknown>, origin: "custom" | "com
     ...databaseRecipeTime({ cook_minutes: Number(row.cook_minutes ?? 0), meta }),
     proteinSource: String(row.protein_source ?? "meat") as ProteinSource,
     imageUrl: typeof row.image_url === "string" ? row.image_url : "/images/family-dinner.png",
-    nutrition: {
+    nutrition: nutritionValue ? {
       energyKcal: Number(nutrition.energy_kcal),
       proteinG: Number(nutrition.protein_g),
       fatG: Number(nutrition.fat_g),
@@ -138,7 +137,7 @@ function mapDatabaseRecipe(row: Record<string, unknown>, origin: "custom" | "com
       fiberG: Number(nutrition.fiber_g),
       saltG: Number(nutrition.salt_g),
       vegetablesG: Number(nutrition.vegetables_g),
-    },
+    } : null,
     ingredientsText: typeof meta.ingredients_text === "string" ? meta.ingredients_text : undefined,
     servingsBase: typeof row.servings_base === "number" && row.servings_base > 0 ? row.servings_base
       : typeof meta.servings_base === "number" && meta.servings_base > 0 ? meta.servings_base : undefined,

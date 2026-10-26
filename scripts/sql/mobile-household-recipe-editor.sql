@@ -48,7 +48,7 @@ begin
   then raise exception 'invalid_recipe'; end if;
   foreach k in array array['energyKcal','proteinG','fatG','carbsG','fiberG','saltG','vegetablesG'] loop
     lim := case k when 'energyKcal' then 5000 when 'carbsG' then 1000 when 'fiberG' then 200 when 'saltG' then 100 when 'vegetablesG' then 2000 else 500 end;
-    if coalesce((fields->>k)::numeric,-1) not between 0 and lim then raise exception 'invalid_recipe'; end if;
+    if fields ? k and (jsonb_typeof(fields->k) is distinct from 'number' or (fields->>k)::numeric not between 0 and lim) then raise exception 'invalid_recipe'; end if;
   end loop;
   if r.id is null then
     insert into public.recipes(id,household_id,name,category,servings_base,cook_minutes,protein_source,meta)
@@ -57,9 +57,15 @@ begin
   update public.recipes set name=trim(fields->>'name'),servings_base=(fields->>'servings')::int,cook_minutes=(fields->>'cookMinutes')::int,protein_source=fields->>'proteinSource',
     meta=(meta - 'recipe_detail_version') || jsonb_build_object('side',fields->>'side','ingredients_text',fields->>'ingredients','steps_text',fields->>'steps','total_minutes',(fields->>'cookMinutes')::int,'editor_request_id',request_id::text)
   where id=target_id and household_id=household;
+  -- 栄養入力のない保存では既存値を保持し、新規料理は未登録のままにする。旧版の栄養付き保存も受け付ける。
+  if fields ? 'energyKcal' then
+    if not fields ?& array['proteinG','fatG','carbsG','fiberG','saltG','vegetablesG'] then raise exception 'invalid_recipe'; end if;
   insert into public.recipe_nutrition(recipe_id,energy_kcal,protein_g,fat_g,carbs_g,fiber_g,salt_g,vegetables_g,source)
   values(target_id,(fields->>'energyKcal')::numeric,(fields->>'proteinG')::numeric,(fields->>'fatG')::numeric,(fields->>'carbsG')::numeric,(fields->>'fiberG')::numeric,(fields->>'saltG')::numeric,(fields->>'vegetablesG')::numeric,'user_estimate')
   on conflict(recipe_id) do update set energy_kcal=excluded.energy_kcal,protein_g=excluded.protein_g,fat_g=excluded.fat_g,carbs_g=excluded.carbs_g,fiber_g=excluded.fiber_g,salt_g=excluded.salt_g,vegetables_g=excluded.vegetables_g,source=excluded.source;
+  elsif fields ?| array['proteinG','fatG','carbsG','fiberG','saltG','vegetablesG'] then
+    raise exception 'invalid_recipe';
+  end if;
   -- 材料・工程はまとめて置換する。工程に紐づくチェックはFKで解除される。
   delete from public.recipe_steps where recipe_id=target_id;
   delete from public.recipe_ingredients where recipe_id=target_id;

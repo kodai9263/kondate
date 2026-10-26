@@ -17,3 +17,5 @@ describe('メニュー登録・編集API',()=>{
  it('編集対象の不正IDを拒否',async()=>{expect((await GET(new Request('https://app.test/api/mobile/v1/recipes/editor?id=invalid'))).status).toBe(400);expect(mocks.rpc).not.toHaveBeenCalled();});
  it('不許可originを拒否',()=>{expect(OPTIONS(new Request('https://app.test',{headers:{Origin:'https://other.test'}})).status).toBe(403);});
 });
+
+it('栄養入力なしの登録を0で補完せず渡す',async()=>{const basic={name:'料理',side:'',cookMinutes:20,servings:2,proteinSource:'meat',ingredients:'玉ねぎ 1個',morning:'',steps:'炒める'};expect((await POST(request({...payload,fields:basic}))).status).toBe(200);expect(mocks.rpc.mock.calls[0][1].fields).toEqual(basic);});
