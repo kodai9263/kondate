@@ -92,3 +92,5 @@ describe("generateMonthlyDinnerPlan", () => {
     expect(alternatives[0].id).toBe(preferred.id);
   });
 });
+
+it('栄養不明をゼロとして平均に含めない',()=>{const known={date:'2026-10-26',recipe:officialNutritionRecipes[0],locked:false};const unknown={...known,date:'2026-10-27',recipe:{...known.recipe,nutrition:null}};expect(summarizeNutrition([known,unknown]).average).toEqual(summarizeNutrition([known]).average);expect(summarizeNutrition([known,unknown]).message).toContain('1日分のみ');expect(summarizeNutrition([unknown]).average).toBeNull();expect(summarizeNutrition([unknown]).score).toBeNull();});

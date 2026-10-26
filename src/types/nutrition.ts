@@ -22,7 +22,7 @@ export type NutritionRecipe = {
   servingsBase?: number;
   proteinSource: ProteinSource;
   imageUrl: string;
-  nutrition: Nutrition;
+  nutrition: Nutrition | null;
   ingredientsText?: string;
   eveningSteps?: string[];
   seasonMonths?: number[];
@@ -56,7 +56,7 @@ export type PlannedDinner = {
 };
 
 export type NutritionSummary = {
-  average: Nutrition;
-  score: number;
+  average: Nutrition | null;
+  score: number | null;
   message: string;
 };

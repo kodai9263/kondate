@@ -21,4 +21,4 @@ createServer(async(req,res)=>{
  if(url.pathname==='/app.js'){res.setHeader('Content-Type','text/javascript');return res.end(bundle.outputFiles[0].contents);}
  if(url.pathname==='/app.css'){res.setHeader('Content-Type','text/css');return res.end(readFileSync('mobile/src/style.css'));}
  res.setHeader('Content-Type','text/html; charset=utf-8');res.end('<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>メニュー登録・編集の動作確認</title><link rel="stylesheet" href="/app.css"><div id="root"></div><script type="module" src="/app.js"></script></html>');
-}).listen(4330,'127.0.0.1',()=>console.log('http://127.0.0.1:4330'));
+}).listen(Number(process.env.PORT ?? 4330),'127.0.0.1',()=>console.log(`http://127.0.0.1:${process.env.PORT ?? 4330}`));

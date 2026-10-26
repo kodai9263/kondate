@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-export type RecipeFields = { name:string;side:string;cookMinutes:number;servings:number;proteinSource:string;ingredients:string;morning:string;steps:string;energyKcal:number;proteinG:number;fatG:number;carbsG:number;fiberG:number;saltG:number;vegetablesG:number };
+export type RecipeFields = { name:string;side:string;cookMinutes:number;servings:number;proteinSource:string;ingredients:string;morning:string;steps:string;energyKcal?:number|null;proteinG?:number|null;fatG?:number|null;carbsG?:number|null;fiberG?:number|null;saltG?:number|null;vegetablesG?:number|null };
 type EditorData={version:1;fields:RecipeFields;revision:string};
 type SaveRequest={id:string;requestId:string;revision:string|null;fields:RecipeFields};
 const endpoint=()=>`${import.meta.env.VITE_API_BASE_URL?.replace(/\/$/,"")??""}/api/mobile/v1/recipes/editor`;
@@ -11,7 +11,7 @@ async function checked(response:Response){
   if(response.status===400) throw new Error("入力内容を確認できませんでした。一覧へ戻ってやり直してください。");
   throw new Error("保存結果を確認できません。同じ内容で再確認するには、もう一度保存を押してください。");
 }
-const numbers=[['cookMinutes','完成までの時間（分）',240,1],['servings','何人分の材料ですか',20,1],['energyKcal','エネルギー（kcal）',5000,0],['proteinG','たんぱく質（g）',500,0],['fatG','脂質（g）',500,0],['carbsG','炭水化物（g）',1000,0],['fiberG','食物繊維（g）',200,0],['saltG','塩分（g）',100,0],['vegetablesG','野菜量（g）',2000,0]] as const;
+const numbers=[['cookMinutes','完成までの時間（分）',240,1],['servings','何人分の材料ですか',20,1]] as const;
 export function MenuEditor({id,accessToken,online,onClose,onSaved}:{id:string|null;accessToken:string;online:boolean;onClose:()=>void;onSaved:()=>void}){
   const [loaded,setLoaded]=useState<{key:string;data?:EditorData;error?:string}|null>(null);
   const [busy,setBusy]=useState(false);const [error,setError]=useState("");
@@ -31,7 +31,7 @@ export function MenuEditor({id,accessToken,online,onClose,onSaved}:{id:string|nu
     finally{saving.current=false;setBusy(false);}
   }
   const ready=!id||Boolean(data);const defaults=data?.fields;
-  return <section className="menu-page"><button type="button" className="secondary-button" disabled={busy} onClick={()=>{if((pending||form.current?.dataset.dirty==='true')&&!window.confirm('保存前の入力、または未確認の保存結果があります。一覧に戻りますか？'))return;onClose();}}>一覧に戻る</button><div className="page-heading"><h1>{id?'メニューを編集':'メニューを登録'}</h1><p>家族だけで共有する料理です。材料は指定した人数分、栄養は1人分の目安を入力してください。</p></div>
+  return <section className="menu-page"><button type="button" className="secondary-button" disabled={busy} onClick={()=>{if((pending||form.current?.dataset.dirty==='true')&&!window.confirm('保存前の入力、または未確認の保存結果があります。一覧に戻りますか？'))return;onClose();}}>一覧に戻る</button><div className="page-heading"><h1>{id?'メニューを編集':'メニューを登録'}</h1><p>家族だけで共有する料理です。材料は指定した人数分を入力してください。</p></div>
     {!online&&<p role="status">通信を戻してから保存してください。</p>}{id&&!data&&!loaded?.error&&<p role="status">編集内容を読み込んでいます…</p>}{loaded?.key===key&&loaded.error&&<p role="alert">{loaded.error}</p>}
     {ready&&<form ref={form} key={data?.revision??'new'} className="menu-editor" onSubmit={event=>void save(event)} onChange={()=>{if(form.current)form.current.dataset.dirty='true';}}>
       <fieldset disabled={busy||Boolean(pending)}><legend>料理の基本</legend>
@@ -41,7 +41,7 @@ export function MenuEditor({id,accessToken,online,onClose,onSaved}:{id:string|nu
         <p className="read-only-note">40分を超える料理は保存できますが、新しい献立の候補には入りません。</p>
         <label>主なたんぱく源<select name="proteinSource" defaultValue={defaults?.proteinSource??'meat'}><option value="meat">肉</option><option value="fish">魚</option><option value="soy">大豆・豆腐</option><option value="egg">卵</option><option value="noodle">麺・その他</option></select></label>
         {([['ingredients','材料',true],['morning','朝の仕込み（任意）',false],['steps','作り方',true]] as const).map(([name,label,required])=><label key={name}>{label}<textarea name={name} required={required} maxLength={4000} rows={5} defaultValue={defaults?.[name]??''}/><small>1行に1つずつ入力してください。</small></label>)}
-      </fieldset><fieldset disabled={busy||Boolean(pending)}><legend>1人分の栄養目安</legend><p className="read-only-note">元レシピや商品表示などを参考に入力してください。</p><div className="menu-nutrition">{numbers.slice(2).map(([name,label,max,min])=><label key={name}>{label}<input name={name} required type="number" min={min} max={max} step="any" defaultValue={defaults?.[name]??''}/></label>)}</div></fieldset>
+      </fieldset>
       {id&&<p className="read-only-note">保存するとWeb版と、この料理を使う献立にも反映されます。材料・工程のチェックは解除されます。</p>}
       {error&&<p className="error-message" role="alert">{error}</p>}<button className="primary-button" type="submit" disabled={busy||!online}>{busy?'保存中…':pending?'同じ内容で保存を確認':'メニューを保存'}</button>
     </form>}

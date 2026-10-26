@@ -25,6 +25,20 @@ begin
  exception when others then if sqlerrm <> 'invalid_recipe' then raise; end if; end;
  if public.household_recipe_editor(id)->'fields'->>'steps' <> E'炒める\n煮る' then raise exception 'rollback failed'; end if;
 end $$;
+do $$
+declare id uuid := '20000000-0000-4000-8000-000000000031'; f jsonb; rev text;
+begin
+ f := (public.household_recipe_editor(id)->'fields') - array['energyKcal','proteinG','fatG','carbsG','fiberG','saltG','vegetablesG'];
+ rev := public.household_recipe_editor(id)->>'revision';
+ perform public.save_household_recipe_editor(id,gen_random_uuid(),rev,f);
+ if (select energy_kcal from public.recipe_nutrition where recipe_id=id) <> 500 then raise exception 'existing nutrition lost'; end if;
+ id := '20000000-0000-4000-8000-000000000035';
+ perform public.save_household_recipe_editor(id,gen_random_uuid(),null,f);
+ if exists(select 1 from public.recipe_nutrition where recipe_id=id) then raise exception 'unknown nutrition fabricated'; end if;
+ rev := public.household_recipe_editor(id)->>'revision';
+ perform public.save_household_recipe_editor(id,gen_random_uuid(),rev,jsonb_set(f,'{name}','"栄養なし編集"'));
+ if public.household_recipe_editor(id)->'fields'->>'name' <> '栄養なし編集' then raise exception 'unknown edit failed'; end if;
+end $$;
 select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000032',false);
 do $$ begin
  begin perform public.household_recipe_editor('20000000-0000-4000-8000-000000000031');raise exception 'other household read';exception when others then if sqlerrm <> 'recipe_not_found' then raise;end if;end;
