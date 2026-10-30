@@ -4,7 +4,7 @@ import { getFirstWeekAccess } from "@/lib/billing/firstWeek.server";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { getMonthDateRange, isCompleteMonthPlan } from "./month";
 import { officialNutritionRecipes } from "./catalog";
-import { databaseRecipeTime, isDinnerCandidate } from "./cookingTime";
+import { databaseRecipeTime, isManualDinnerCandidate } from "./cookingTime";
 
 export const monthlyPlanSchema = z.object({
   year: z.number().int().min(2020).max(2100),
@@ -59,11 +59,11 @@ export async function saveMonthlyDinnerPlanForClient(input: unknown, client?: Aw
     const catalog = recipe.household_id === null && meta.visibility !== "community"
       ? officialNutritionRecipes.find((item) => item.id === meta.nutrition_catalog_id || item.name === recipe.name)
       : undefined;
-    return isDinnerCandidate(catalog ?? databaseRecipeTime(recipe));
+    return isManualDinnerCandidate(catalog ?? databaseRecipeTime(recipe));
   }).map((recipe) => recipe.id));
   const savedByDate = new Map((saved ?? []).map((entry) => [entry.date, entry.recipe_id]));
   if (parsed.data.entries.some((entry) => !candidateIds.has(entry.recipeId) && savedByDate.get(entry.date) !== entry.recipeId)) {
-    return { ok: false, message: "新しい献立には、完成まで40分以内の料理を選んでください。" };
+    return { ok: false, message: "選択できない料理が含まれています。最新の献立を確認してください。" };
   }
 
   const rows = parsed.data.entries.map((entry) => ({

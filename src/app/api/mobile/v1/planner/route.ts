@@ -8,7 +8,7 @@ import { resolveMonthlyDinnerPlan, plannedSideName, rankAlternativeRecipes } fro
 import { plannerDates, plannerMonths, plannerLabel, movePlannerDate, parsePlannerPeriod } from "@/lib/nutrition/period";
 import { updatePlannerDay } from "@/lib/nutrition/periodPlan";
 import { toSavedDinnerEntries } from "@/lib/nutrition/month";
-import { isDinnerCandidate } from "@/lib/nutrition/cookingTime";
+import { isManualDinnerCandidate } from "@/lib/nutrition/cookingTime";
 import { saveMonthlyDinnerPlanForClient } from "@/lib/nutrition/savePlan.server";
 
 const dateSchema = z.string().date().refine((date) => Number(date.slice(0, 4)) >= 2020 && Number(date.slice(0, 4)) <= 2100);
@@ -61,7 +61,7 @@ export async function GET(request: Request) {
         minutes: day.recipe.totalMinutes ?? day.recipe.cookMinutes, skipped: Boolean(day.skipped), locked: day.locked,
         sideMode: day.sideMode ?? "default", sideDishId: day.sideDish?.id ?? null,
         alternatives: rankAlternativeRecipes({ currentRecipe: day.recipe, recipes: context.recipes,
-          month: item.month, preferredRecipeIds: context.preferredRecipeIds,
+          month: item.month, manualSelection: true, preferredRecipeIds: context.preferredRecipeIds,
           nearbyRecipeIds: plan.slice(Math.max(0, dayIndex - 2), dayIndex + 3).map((entry) => entry.recipe.id),
         }).map((recipe) => ({ id: recipe.id, name: recipe.name, side: recipe.side, minutes: recipe.totalMinutes ?? recipe.cookMinutes })),
       }] : []);
@@ -94,7 +94,7 @@ export async function PATCH(request: Request) {
     if (!day) return mobileJsonError("day_unavailable", 422, origin);
     let patch: Parameters<typeof updatePlannerDay>[2];
     if (change.kind === "recipe") {
-      const recipe = context.recipes.find((entry) => entry.id === change.recipeId && isDinnerCandidate(entry));
+      const recipe = context.recipes.find((entry) => entry.id === change.recipeId && isManualDinnerCandidate(entry));
       if (!recipe || day.skipped) return mobileJsonError("recipe_unavailable", 422, origin);
       patch = { recipe };
     } else if (change.kind === "skip") patch = { skipped: change.skipped };

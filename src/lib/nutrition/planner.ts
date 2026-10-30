@@ -1,5 +1,5 @@
 import type { Nutrition, NutritionRecipe, NutritionSummary, PlannedDinner, ProteinSource, SideDish, SideSelection } from "@/types/nutrition";
-import { isDinnerCandidate } from "@/lib/nutrition/cookingTime";
+import { isDinnerCandidate, isManualDinnerCandidate } from "@/lib/nutrition/cookingTime";
 
 export const dinnerNutritionTarget: Nutrition = {
   energyKcal: 650,
@@ -124,6 +124,7 @@ export function rankAlternativeRecipes({
   recipes,
   month,
   maxCookMinutes,
+  manualSelection = false,
   nearbyRecipeIds = [],
   preferredRecipeIds = [],
 }: {
@@ -131,12 +132,13 @@ export function rankAlternativeRecipes({
   recipes: NutritionRecipe[];
   month: number;
   maxCookMinutes?: number;
+  manualSelection?: boolean;
   nearbyRecipeIds?: string[];
   preferredRecipeIds?: string[];
 }) {
   const nearby = new Set(nearbyRecipeIds);
   const preferred = new Set(preferredRecipeIds);
-  const candidates = recipes.filter((recipe) => isDinnerCandidate(recipe, maxCookMinutes) && recipe.id !== currentRecipe.id);
+  const candidates = recipes.filter((recipe) => (manualSelection ? isManualDinnerCandidate(recipe) : isDinnerCandidate(recipe, maxCookMinutes)) && recipe.id !== currentRecipe.id);
 
   return [...candidates].sort((a, b) => alternativeScore(a) - alternativeScore(b));
 

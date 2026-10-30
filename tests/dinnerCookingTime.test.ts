@@ -63,3 +63,9 @@ describe("アプリ共通の40分条件", () => {
     ]);
   });
 });
+
+it("手動候補は90分を含み、非表示・時間未確認・不正値は除外する", () => {
+  const slow = { ...long, totalMinutes: 90 };
+  const candidates = [short, slow, { ...slow, id: "archived", archived: true }, { ...slow, id: "unknown", timeUnconfirmed: true }, { ...slow, id: "invalid", totalMinutes: 0 }];
+  expect(rankAlternativeRecipes({ currentRecipe: short, recipes: candidates, month: 9, manualSelection: true }).map(recipe => recipe.id)).toEqual([slow.id]);
+});
