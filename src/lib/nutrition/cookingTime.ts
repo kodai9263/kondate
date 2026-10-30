@@ -17,3 +17,9 @@ export function databaseRecipeTime(recipe: { cook_minutes: number; meta: unknown
     timeUnconfirmed: meta.step_customization === true,
   };
 }
+
+// 手動選択では所要時間の上限だけを外し、非表示・時間未確認は除外する。
+export function isManualDinnerCandidate(recipe: RecipeTime) {
+  const minutes = recipe.totalMinutes ?? recipe.cookMinutes;
+  return !recipe.archived && !recipe.timeUnconfirmed && Number.isFinite(minutes) && minutes > 0;
+}

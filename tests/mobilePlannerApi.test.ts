@@ -101,3 +101,14 @@ describe("アプリの献立調整", () => {
     expect((await PATCH(request("PATCH", { date: day.date, revision: day.revision, change: { kind: "skip", skipped: true } }))).status).toBe(422);
   });
 });
+
+it("90分の料理を手動で選択・保存・再読込でき、自動提案には含めない", async () => {
+  const long = { ...recipes[0], id: "10000000-0000-4000-8000-000000000099", name: "至高の鶏チャーシュー", cookMinutes: 90, totalMinutes: 90 };
+  context.recipes = [...recipes, long];
+  const day = (await snapshot()).days[0];
+  expect(day.recipeId).not.toBe(long.id);
+  expect(day.alternatives).toEqual(expect.arrayContaining([expect.objectContaining({ id: long.id, minutes: 90 })]));
+  expect(resolveMonthlyDinnerPlan(2026, 10, context).every(day => day.recipe.id !== long.id)).toBe(true);
+  expect((await PATCH(request("PATCH", { date: day.date, revision: day.revision, change: { kind: "recipe", recipeId: long.id } }))).status).toBe(200);
+  expect((await snapshot()).days[0]).toMatchObject({ recipeId: long.id, minutes: 90 });
+});

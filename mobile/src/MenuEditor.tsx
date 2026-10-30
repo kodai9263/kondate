@@ -38,7 +38,7 @@ export function MenuEditor({id,accessToken,online,onClose,onSaved}:{id:string|nu
         <label>料理名<input name="name" required maxLength={80} defaultValue={defaults?.name??''}/></label>
         <label>副菜・汁物<input name="side" maxLength={120} defaultValue={defaults?.side??''}/></label>
         {numbers.slice(0,2).map(([name,label,max,min])=><label key={name}>{label}<input name={name} required type="number" min={min} max={max} step="1" defaultValue={defaults?.[name]??(name==='servings'?4:30)}/></label>)}
-        <p className="read-only-note">40分を超える料理は保存できますが、新しい献立の候補には入りません。</p>
+        <p className="read-only-note">40分を超える料理も献立の変更で選べます。自動提案は40分以内の料理が対象です。</p>
         <label>主なたんぱく源<select name="proteinSource" defaultValue={defaults?.proteinSource??'meat'}><option value="meat">肉</option><option value="fish">魚</option><option value="soy">大豆・豆腐</option><option value="egg">卵</option><option value="noodle">麺・その他</option></select></label>
         {([['ingredients','材料',true],['morning','朝の仕込み（任意）',false],['steps','作り方',true]] as const).map(([name,label,required])=><label key={name}>{label}<textarea name={name} required={required} maxLength={4000} rows={5} defaultValue={defaults?.[name]??''}/><small>1行に1つずつ入力してください。</small></label>)}
       </fieldset>
