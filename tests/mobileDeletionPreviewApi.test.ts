@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ createClient: vi.fn() }));
 vi.mock("@/lib/supabase/mobile", () => ({ createMobileRequestClient: mocks.createClient }));
@@ -38,6 +38,8 @@ beforeEach(() => {
   mocks.createClient.mockReturnValue(fakeClient());
 });
 
+afterEach(() => { delete process.env.ACCOUNT_DELETION_TEST_USER_IDS; });
+
 describe("スマホ向け退会前の確認API", () => {
   it("未認証・許可外の出所には家族情報を返さない", async () => {
     expect((await GET(request())).status).toBe(401);
@@ -73,4 +75,10 @@ describe("スマホ向け退会前の確認API", () => {
     mocks.createClient.mockReturnValue(fakeClient({ members: ["user-2"] }));
     expect((await GET(request("capacitor://localhost", `Bearer ${token}`))).status).toBe(503);
   });
+  it("許可IDと一致しない利用者にはテスト受付を表示しない", async () => {
+    process.env.ACCOUNT_DELETION_TEST_USER_IDS = "550e8400-e29b-41d4-a716-446655440000";
+    const response = await GET(request("capacitor://localhost", `Bearer ${token}`));
+    expect(await response.json()).toMatchObject({ deletionAvailable: false });
+  });
+
 });

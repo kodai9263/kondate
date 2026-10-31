@@ -71,12 +71,14 @@ export async function startAccountDeletion(userId: string): Promise<DeletionStat
   }
 }
 
-export async function resumeAccountDeletion(receipt: string): Promise<DeletionStatus | null> {
+export async function resumeAccountDeletion(receipt: string, allowedUserIds?: readonly string[]): Promise<DeletionStatus | null> {
   const admin = getSupabaseAdmin();
   const { data, error } = await admin.from("account_deletion_requests")
     .select("id,user_id,household_id,last_member,status").eq("id", receipt).maybeSingle();
   if (error) throw error;
   if (!data) return null;
+  // 完了済みは読み取りのみ。再試行で許可対象外の退会を進めない。
+  if (allowedUserIds && data.status !== "completed" && !allowedUserIds.includes(data.user_id ?? "")) return null;
   try { return await processDeletion(data as DeletionRow); }
   catch (cause) {
     console.error("Account deletion retry failed", cause);
