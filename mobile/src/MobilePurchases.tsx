@@ -7,6 +7,7 @@ export function useApplePurchases(accessToken: string | null, userId: string | n
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const running = useRef(false);
+  const refreshPricesRef = useRef<() => Promise<void>>(async () => {});
   const session = useRef({ accessToken, userId });
   const changed = useRef(onChanged);
   useLayoutEffect(() => { session.current = { accessToken, userId }; changed.current = onChanged; });
@@ -29,14 +30,31 @@ export function useApplePurchases(accessToken: string | null, userId: string | n
         if (current()) setError(cause instanceof Error ? cause.message : "購入の確認を再試行してください。");
       } finally { running.current = false; }
     };
-    void FamilyStore.products().then(value => { if (current()) setProducts(value.products); }).catch(() => {
-      if (current()) setError("購入プランを取得できませんでした。通信を確認して、アプリを開き直してください。");
-    });
+    let priceRequest = 0;
+    const refreshPrices = async () => {
+      const request = ++priceRequest;
+      setProducts([]);
+      try {
+        const value = await FamilyStore.products();
+        if (current() && request === priceRequest) setProducts(value.products);
+      } catch {
+        if (current() && request === priceRequest) setError("購入プランを取得できませんでした。通信を確認して、アプリを開き直してください。");
+      }
+    };
+    refreshPricesRef.current = refreshPrices;
+    void refreshPrices();
     const listener = FamilyStore.addListener("transactionUpdated", () => { void sync(); });
+    const storefrontListener = FamilyStore.addListener("storefrontUpdated", () => { void refreshPrices(); });
     void sync();
-    const visible = () => { if (document.visibilityState === "visible") void sync(); };
+    const visible = () => { if (document.visibilityState === "visible") { void refreshPrices(); void sync(); } };
     document.addEventListener("visibilitychange", visible);
-    return () => { cancelled = true; document.removeEventListener("visibilitychange", visible); void listener.then(handle => handle.remove()); };
+    return () => {
+      cancelled = true;
+      refreshPricesRef.current = async () => {};
+      document.removeEventListener("visibilitychange", visible);
+      void listener.then(handle => handle.remove());
+      void storefrontListener.then(handle => handle.remove());
+    };
   }, [accessToken, userId, online]);
 
   async function act(productId?: string) {
@@ -50,7 +68,9 @@ export function useApplePurchases(accessToken: string | null, userId: string | n
       let transactions: StoreTransaction[];
       if (productId) {
         if (context.active) { setMessage("家族プランをすでに利用中です。契約内容は契約元で管理してください。"); changed.current(); return; }
-        const result = await FamilyStore.purchase({ productId, appAccountToken: context.appAccountToken });
+        const displayed = products.find(product => product.id === productId);
+        if (!displayed) { setError("最新の価格を確認してから、もう一度お試しください。"); return; }
+        const result = await FamilyStore.purchase({ productId, appAccountToken: context.appAccountToken, expectedPrice: displayed.price });
         if (!current()) return;
         if (result.status === "cancelled") { setMessage("購入をキャンセルしました。"); return; }
         if (result.status === "pending") { setMessage("購入の承認待ちです。承認後に自動で確認します。"); return; }
@@ -67,7 +87,10 @@ export function useApplePurchases(accessToken: string | null, userId: string | n
         changed.current();
       }
     } catch (cause) { if (current()) setError(cause instanceof Error ? cause.message : "購入・復元を完了できませんでした。"); }
-    finally { running.current = false; setBusy(false); }
+    finally {
+      if (current()) await refreshPricesRef.current();
+      running.current = false; setBusy(false);
+    }
   }
   async function manage() {
     try { await FamilyStore.manage(); } catch { setError("契約管理を開けませんでした。iPhoneの設定からサブスクリプションをご確認ください。"); }
