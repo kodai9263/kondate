@@ -36,8 +36,8 @@ export async function GET(request: Request) {
     }
 
     return Response.json({ version: 1,
-      // 退会処理は別リリースで検証するため、このAPIでは有効化しない。
-      deletionAvailable: false,
+      // 本番での実認証・写真削除検証が完了するまで環境変数はOFFにする。
+      deletionAvailable: process.env.ACCOUNT_DELETION_ENABLED === "true",
       account: { displayName: profile.display_name, isAnonymous: user.is_anonymous ?? false },
       household: { memberCount: members.length, lastMember: members.length === 1 },
       subscription: { active: subscription ? isActiveSubscriptionStatus(subscription.status, subscription.current_period_end) : false,

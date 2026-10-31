@@ -128,6 +128,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       </section>
 
       <section className="mt-8 border-t border-kondate-line pt-5">
+        <Link href="/account/delete" className="mb-5 inline-block text-sm text-kondate-alert underline">アカウントを削除する</Link>
         <form action={signOut}><Button type="submit" variant="secondary" fullWidth><LogOut size={18} aria-hidden="true" />ログアウト</Button></form>
       </section>
     </main>

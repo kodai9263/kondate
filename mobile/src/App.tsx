@@ -739,6 +739,8 @@ export function App() {
             <h2>退会</h2>
             <p>アカウントとあなたのプロフィールを削除します。元に戻せません。</p>
             {accountPreview && <p>{accountPreview.household.lastMember ? "家族の最後の一人のため、共有していた献立と買い物も削除します。" : "ほかの家族の献立と買い物は残し、あなたの操作履歴から名前を外します。"}</p>}
+            {accountPreview?.subscription.provider === "apple" && <><p>退会してもAppleの定期購入は自動解約されません。先にAppleの契約管理で解約してください。退会すると、この購入による家族プランの利用も終了します。</p><button type="button" className="purchase-secondary" onClick={() => void purchase.manage()}>Appleの契約を管理</button></>}
+            <p>あなたが登録した写真は削除します。不正な再利用を防ぐため、個人情報との関連を外した購入識別子を保持します。</p>
             {accountPreview?.subscription.provider === "stripe" && <p>退会しても定期購入は自動解約されません。契約元で別途解約してください。</p>}
             {!accountPreview?.deletionAvailable ? <p className="read-only-note">退会受付は準備中です。</p> : <>
               <label className="deletion-confirmation">確認のため「削除」と入力してください<input type="text" autoComplete="off"

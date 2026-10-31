@@ -49,6 +49,12 @@ async function handleSubscriptionChanged(subscription: Stripe.Subscription) {
   if (!record) return;
 
   const supabase = getSupabaseAdmin();
+  if (process.env.ACCOUNT_DELETION_ENABLED === "true") {
+    const { data: deleted, error: deletionError } = await supabase.from("account_deletion_requests")
+      .select("id").eq("household_id", record.household_id).eq("last_member", true).maybeSingle();
+    if (deletionError) throw deletionError;
+    if (deleted) return;
+  }
   const { error } = await supabase.from("household_subscriptions").upsert(
     record,
     { onConflict: "household_id" },
