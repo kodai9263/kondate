@@ -32,7 +32,7 @@ export async function persistAppleTransaction(transaction: ReturnType<typeof nor
     .eq("token", transaction.app_account_token).single();
   if (error || !owner) throw new Error("purchase_owner_mismatch");
   if (owner.deleted_at) {
-    if (identity) throw new Error("purchase_owner_mismatch");
+    if (identity) throw new Error("purchase_account_deleted");
     return;
   }
   if (identity && (owner.user_id !== identity.userId || owner.household_id !== identity.householdId)) throw new Error("purchase_owner_mismatch");

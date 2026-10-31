@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { deliverPurchase, FamilyStore, loadPurchaseContext, purchasesAvailable, type StoreProduct, type StoreTransaction } from "./purchases";
+import { deliverPurchase, PurchaseError, FamilyStore, loadPurchaseContext, purchasesAvailable, type StoreProduct, type StoreTransaction } from "./purchases";
+import { productPresentation, transactionsForAccount } from "./purchasePresentation";
 
 export function useApplePurchases(accessToken: string | null, userId: string | null, online: boolean, onChanged: () => void) {
   const [products, setProducts] = useState<StoreProduct[]>([]);
@@ -16,14 +17,20 @@ export function useApplePurchases(accessToken: string | null, userId: string | n
     if (!purchasesAvailable() || !accessToken || !userId || !online) return;
     let cancelled = false;
     const current = () => !cancelled && session.current.userId === userId;
+    queueMicrotask(() => { if (current()) { setError(""); setMessage(""); } });
     const sync = async () => {
       if (!current() || running.current) return;
       running.current = true;
       try {
-        const { transactions } = await FamilyStore.transactions();
+        const [context, result] = await Promise.all([loadPurchaseContext(accessToken), FamilyStore.transactions()]);
+        const transactions = transactionsForAccount(result.transactions, context.appAccountToken);
         for (const transaction of transactions) {
           if (!current()) return;
-          await deliverPurchase(accessToken, transaction, current);
+          try { await deliverPurchase(accessToken, transaction, current); }
+          catch (cause) {
+            if (cause instanceof PurchaseError && ["purchase_owner_mismatch", "purchase_account_deleted"].includes(cause.code)) continue;
+            throw cause;
+          }
         }
         if (transactions.length && current()) changed.current();
       } catch (cause) {
@@ -69,7 +76,7 @@ export function useApplePurchases(accessToken: string | null, userId: string | n
       if (productId) {
         if (context.active) { setMessage("家族プランをすでに利用中です。契約内容は契約元で管理してください。"); changed.current(); return; }
         const displayed = products.find(product => product.id === productId);
-        if (!displayed) { setError("最新の価格を確認してから、もう一度お試しください。"); return; }
+        if (!displayed || !productPresentation(displayed).purchasable) { setError("最新の価格を確認してから、もう一度お試しください。"); return; }
         const result = await FamilyStore.purchase({ productId, appAccountToken: context.appAccountToken, expectedPrice: displayed.price });
         if (!current()) return;
         if (result.status === "cancelled") { setMessage("購入をキャンセルしました。"); return; }
@@ -95,7 +102,7 @@ export function useApplePurchases(accessToken: string | null, userId: string | n
   async function manage() {
     try { await FamilyStore.manage(); } catch { setError("契約管理を開けませんでした。iPhoneの設定からサブスクリプションをご確認ください。"); }
   }
-  return { products, busy, message, error, act, manage };
+  return { products, busy, message, error, act, manage, refreshPrices: () => refreshPricesRef.current() };
 }
 
 export function ApplePurchaseCard({ purchase, active, anonymous, online }: {
@@ -107,11 +114,19 @@ export function ApplePurchaseCard({ purchase, active, anonymous, online }: {
     <h2>家族プラン</h2>
     <p>週間・月間の献立と買い物リストを継続利用でき、家族と共有できます。</p>
     {anonymous && <p>購入・復元にはアカウント登録が必要です。</p>}
-    {!active && purchase.products.map(product => <button className="primary-button" style={{ marginTop: 12 }} key={product.id}
-      type="button" disabled={disabled} onClick={() => { void purchase.act(product.id); }}>
-      {product.id.endsWith("monthly") ? `月額 ${product.price}で購入（1か月）` : `年額 ${product.price}で購入（1年間）`}
-    </button>)}
-    {!active && !purchase.products.length && <p>購入プランを取得できるまでお待ちください。</p>}
+    {!active && purchase.products.map(product => {
+      const display = productPresentation(product);
+      const period = product.id.endsWith("monthly") ? "月額" : "年額";
+      return <div key={product.id} style={{ marginTop: 16 }}>
+        {display.reference && <p><strong>{period} {display.price}</strong><br /><small>日本での通常価格（税込）</small></p>}
+        <button className="primary-button" type="button" disabled={disabled || !display.purchasable} onClick={() => { void purchase.act(product.id); }}>
+          {display.reference ? `${period}プランをAppleで確認` : `${period} ${display.price}で購入（${period === "月額" ? "1か月" : "1年間"}）`}
+        </button>
+      </div>;
+    })}
+    {!active && purchase.products.some(product => productPresentation(product).reference) && <p className="read-only-note">Appleの価格情報に通貨の違いがあるため、日本の通常価格を案内しています。購入前にAppleの確認画面で金額をご確認ください。</p>}
+    {!active && !purchase.products.length && <p>Appleの価格を確認しています。表示されない場合は下のボタンで再確認してください。</p>}
+    {!active && <button className="purchase-secondary" type="button" disabled={disabled} onClick={() => { void purchase.refreshPrices(); }}>価格を再確認</button>}
     <p className="read-only-note">自動更新の定期購入です。支払いはApple Accountに請求されます。期間終了の24時間前までに解約しない限り更新されます。購入後の変更・解約はAppleの契約管理から行えます。</p>
     <p><a href="https://kondate-bay.vercel.app/terms" target="_blank" rel="noreferrer">利用規約</a> · <a href="https://kondate-bay.vercel.app/privacy" target="_blank" rel="noreferrer">プライバシーポリシー</a></p>
     <button className="purchase-secondary" type="button" disabled={disabled} onClick={() => { void purchase.act(); }}>購入を復元</button>{" "}

@@ -1,7 +1,7 @@
 import { Capacitor, registerPlugin, type PluginListenerHandle } from "@capacitor/core";
 
-export type StoreTransaction = { id: string; signedTransaction: string };
-export type StoreProduct = { id: string; name: string; price: string };
+export type StoreTransaction = { id: string; signedTransaction: string; appAccountToken?: string };
+export type StoreProduct = { id: string; name: string; price: string; currency?: string; storefront?: string; deviceRegion?: string; testEnvironment?: boolean };
 export interface FamilyStorePlugin {
   products(): Promise<{ products: StoreProduct[] }>;
   purchase(options: { productId: string; appAccountToken: string; expectedPrice: string }): Promise<{ status: "purchased"; transaction: StoreTransaction } | { status: "pending" | "cancelled" }>;
@@ -18,9 +18,13 @@ const messages: Record<string, string> = {
   unauthenticated: "ログインの有効期限が切れました。もう一度ログインしてください。",
   registration_required: "購入・復元にはアカウント登録が必要です。",
   purchase_owner_mismatch: "この購入は別のアカウントまたは家族に登録されています。購入時のアカウントでログインしてください。",
+  purchase_account_deleted: "この購入は退会済みのアカウントで利用していたものです。再登録したアカウントには復元できません。Appleの契約管理で以前の契約をご確認ください。",
   sandbox_not_allowed: "このアカウントではテスト購入がまだ有効になっていません。",
   verification_failed: "Appleの購入情報を確認できませんでした。購入を復元して再度お試しください。",
 };
+export class PurchaseError extends Error {
+  constructor(public readonly code: string) { super(messages[code] ?? "契約を確認できませんでした。通信を戻して購入を復元してください。"); }
+}
 async function api(accessToken: string, signedTransaction?: string) {
   const base = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ?? "";
   const response = await fetch(`${base}/api/mobile/v1/billing/apple`, {
@@ -29,7 +33,7 @@ async function api(accessToken: string, signedTransaction?: string) {
     ...(signedTransaction ? { body: JSON.stringify({ signedTransaction }) } : {}),
   });
   const body = await response.json();
-  if (!response.ok) throw new Error(messages[body.error] ?? "契約を確認できませんでした。通信を戻して購入を復元してください。");
+  if (!response.ok) throw new PurchaseError(body.error);
   return body;
 }
 export async function loadPurchaseContext(accessToken: string): Promise<PurchaseContext> {

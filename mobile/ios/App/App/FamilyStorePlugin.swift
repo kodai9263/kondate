@@ -42,8 +42,19 @@ public class FamilyStorePlugin: CAPPlugin, CAPBridgedPlugin {
     @objc func products(_ call: CAPPluginCall) {
         Task {
             do {
+                let storefront = await Storefront.current
                 let products = try await Product.products(for: ids)
-                call.resolve(["products": products.map { ["id": $0.id, "price": $0.displayPrice, "name": $0.displayName] }])
+                var testEnvironment = false
+                if #available(iOS 16.0, *), let result = try? await AppTransaction.shared,
+                   case .verified(let app) = result {
+                    testEnvironment = app.environment == .sandbox || app.environment == .xcode
+                }
+                let region = Locale.current.regionCode ?? ""
+                call.resolve(["products": products.sorted { $0.price < $1.price }.map { product -> [String: Any] in
+                    ["id": product.id, "price": product.displayPrice, "name": product.displayName,
+                     "currency": product.priceFormatStyle.currencyCode, "storefront": storefront?.countryCode ?? "",
+                     "deviceRegion": region, "testEnvironment": testEnvironment]
+                }])
             } catch { call.reject("購入プランを読み込めませんでした。", "store_unavailable") }
         }
     }
@@ -68,7 +79,7 @@ public class FamilyStorePlugin: CAPPlugin, CAPBridgedPlugin {
                         call.reject("Appleの購入情報を確認できません。", "unverified"); return
                     }
                     // サーバーの保存に成功するまではfinishしない。通信失敗後も再送できる。
-                    call.resolve(["status": "purchased", "transaction": ["id": String(transaction.id), "signedTransaction": result.jwsRepresentation]])
+                    call.resolve(["status": "purchased", "transaction": ["id": String(transaction.id), "signedTransaction": result.jwsRepresentation, "appAccountToken": transaction.appAccountToken?.uuidString ?? ""]])
                 case .pending: call.resolve(["status": "pending"])
                 case .userCancelled: call.resolve(["status": "cancelled"])
                 @unknown default: call.reject("購入結果を確認できません。", "unknown_result")
@@ -81,12 +92,12 @@ public class FamilyStorePlugin: CAPPlugin, CAPBridgedPlugin {
         var values: [UInt64: [String: String]] = [:]
         for await result in Transaction.currentEntitlements {
             if case .verified(let transaction) = result, ids.contains(transaction.productID) {
-                values[transaction.id] = ["id": String(transaction.id), "signedTransaction": result.jwsRepresentation]
+                values[transaction.id] = ["id": String(transaction.id), "signedTransaction": result.jwsRepresentation, "appAccountToken": transaction.appAccountToken?.uuidString ?? ""]
             }
         }
         for await result in Transaction.unfinished {
             if case .verified(let transaction) = result, ids.contains(transaction.productID) {
-                values[transaction.id] = ["id": String(transaction.id), "signedTransaction": result.jwsRepresentation]
+                values[transaction.id] = ["id": String(transaction.id), "signedTransaction": result.jwsRepresentation, "appAccountToken": transaction.appAccountToken?.uuidString ?? ""]
             }
         }
         return Array(values.values)

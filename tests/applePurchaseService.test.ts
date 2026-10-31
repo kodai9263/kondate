@@ -29,7 +29,7 @@ describe("Apple購入の所有者と環境", () => {
   it("退会後の通知は成功扱いで破棄し、別アカウントへの復元も拒否する", async () => {
     mock.owner.deleted_at = new Date().toISOString();
     await expect(persistAppleTransaction(transaction)).resolves.toBeUndefined();
-    await expect(persistAppleTransaction(transaction, { userId: "owner", householdId: "home" })).rejects.toThrow("purchase_owner_mismatch");
+    await expect(persistAppleTransaction(transaction, { userId: "owner", householdId: "home" })).rejects.toThrow("purchase_account_deleted");
     expect(mock.rpc).not.toHaveBeenCalled();
   });
   it("保存失敗を成功と返さない", async () => {
