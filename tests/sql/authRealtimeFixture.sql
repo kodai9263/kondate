@@ -6,7 +6,7 @@ create schema auth;
 create schema realtime;
 create schema storage;
 create table storage.buckets (id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
-create table storage.objects (id uuid primary key, bucket_id text, name text);
+create table storage.objects (id uuid primary key, bucket_id text, name text, owner_id text);
 alter table storage.objects enable row level security;
 create function storage.foldername(text) returns text[] language sql immutable as $$ select string_to_array($1, '/'); $$;
 create table auth.users (

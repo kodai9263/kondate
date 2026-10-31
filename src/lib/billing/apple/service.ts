@@ -28,9 +28,13 @@ export async function purchaseAccount(identity: { userId: string; householdId: s
 
 export async function persistAppleTransaction(transaction: ReturnType<typeof normalizeAppleTransaction>, identity?: { userId: string; householdId: string }) {
   const admin = getSupabaseAdmin();
-  const { data: owner, error } = await admin.from("apple_purchase_accounts").select("user_id,household_id,sandbox_enabled")
+  const { data: owner, error } = await admin.from("apple_purchase_accounts").select("user_id,household_id,sandbox_enabled,deleted_at")
     .eq("token", transaction.app_account_token).single();
   if (error || !owner) throw new Error("purchase_owner_mismatch");
+  if (owner.deleted_at) {
+    if (identity) throw new Error("purchase_owner_mismatch");
+    return;
+  }
   if (identity && (owner.user_id !== identity.userId || owner.household_id !== identity.householdId)) throw new Error("purchase_owner_mismatch");
   if (transaction.environment === "Sandbox" && !owner.sandbox_enabled) throw new Error("sandbox_not_allowed");
   const { error: saveError } = await admin.rpc("record_apple_transaction", { tx: transaction });
