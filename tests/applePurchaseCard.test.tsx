@@ -20,6 +20,11 @@ describe("家族プラン購入画面", () => {
       writeFileSync(`${process.env.PURCHASE_PREVIEW_DIR}/index.html`, `<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>購入画面の表示確認</title><style>${css}</style><body><main style="max-width:390px;margin:auto;padding:20px">${html}</main></body></html>`);
     }
   });
+  it("Appleが返した通貨をそのまま表示し、円に置き換えない", () => {
+    const html = renderToStaticMarkup(<ApplePurchaseCard purchase={{ ...purchase, products: [{ id: "monthly", name: "月額", price: "$2.99" }] }} active={false} anonymous={false} online />);
+    expect(html).toContain("$2.99");
+    expect(html).not.toContain("¥480");
+  });
   it("利用中は購入ボタンを出さず復元を残す", () => {
     const html = renderToStaticMarkup(<ApplePurchaseCard purchase={purchase} active anonymous={false} online />);
     expect(html).not.toContain("で購入"); expect(html).toContain("購入を復元");

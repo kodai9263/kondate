@@ -4,12 +4,12 @@ export type StoreTransaction = { id: string; signedTransaction: string };
 export type StoreProduct = { id: string; name: string; price: string };
 export interface FamilyStorePlugin {
   products(): Promise<{ products: StoreProduct[] }>;
-  purchase(options: { productId: string; appAccountToken: string }): Promise<{ status: "purchased"; transaction: StoreTransaction } | { status: "pending" | "cancelled" }>;
+  purchase(options: { productId: string; appAccountToken: string; expectedPrice: string }): Promise<{ status: "purchased"; transaction: StoreTransaction } | { status: "pending" | "cancelled" }>;
   transactions(): Promise<{ transactions: StoreTransaction[] }>;
   restore(): Promise<{ transactions: StoreTransaction[] }>;
   finish(options: { transactionId: string }): Promise<void>;
   manage(): Promise<void>;
-  addListener(event: "transactionUpdated", listener: () => void): Promise<PluginListenerHandle>;
+  addListener(event: "transactionUpdated" | "storefrontUpdated", listener: () => void): Promise<PluginListenerHandle>;
 }
 export const FamilyStore = registerPlugin<FamilyStorePlugin>("FamilyStore");
 export const purchasesAvailable = () => Capacitor.getPlatform() === "ios";

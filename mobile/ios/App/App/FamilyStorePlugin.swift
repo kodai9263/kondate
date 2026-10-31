@@ -21,8 +21,14 @@ public class FamilyStorePlugin: CAPPlugin, CAPBridgedPlugin {
     ]
     private let ids: Set<String> = ["app.kyounogohan.mobile.family.monthly", "app.kyounogohan.mobile.family.yearly"]
     private var observer: Task<Void, Never>?
+    private var storefrontObserver: Task<Void, Never>?
 
     public override func load() {
+        storefrontObserver = Task { [weak self] in
+            for await _ in Storefront.updates {
+                self?.notifyListeners("storefrontUpdated", data: [:], retainUntilConsumed: true)
+            }
+        }
         observer = Task { [weak self] in
             for await result in Transaction.updates {
                 guard let self, case .verified(let transaction) = result,
@@ -31,7 +37,7 @@ public class FamilyStorePlugin: CAPPlugin, CAPBridgedPlugin {
             }
         }
     }
-    deinit { observer?.cancel() }
+    deinit { observer?.cancel(); storefrontObserver?.cancel() }
 
     @objc func products(_ call: CAPPluginCall) {
         Task {
@@ -51,6 +57,10 @@ public class FamilyStorePlugin: CAPPlugin, CAPBridgedPlugin {
             do {
                 guard let product = try await Product.products(for: [id]).first else {
                     call.reject("このプランは現在購入できません。", "product_unavailable"); return
+                }
+                // 表示後に価格が変わった場合は、更新した価格を確認してから購入してもらう。
+                guard call.getString("expectedPrice") == product.displayPrice else {
+                    call.reject("価格が更新されました。表示された最新の価格をご確認ください。", "price_changed"); return
                 }
                 switch try await product.purchase(options: [.appAccountToken(token)]) {
                 case .success(let result):
