@@ -28,6 +28,8 @@ export function App() {
   const [displayName, setDisplayName] = useState("");
   const [authMode, setAuthMode] = useState<"login" | "signup" | "reset">("login");
   const [authNotice, setAuthNotice] = useState("");
+  const [confirmationNeeded, setConfirmationNeeded] = useState(false);
+  const [resendAfter, setResendAfter] = useState(0);
   const authReady = useRef(false);
   const cacheGeneration = useRef(0);
   const mutationQueue = useRef<ShoppingMutationQueue | null>(null);
@@ -366,7 +368,8 @@ export function App() {
         });
         if (signUpError) { setError("登録できませんでした。入力内容を確認してください。"); return; }
         if (!data.session) {
-          setAuthNotice("確認メールを送信しました。メールのリンクを開いた後、アプリからログインしてください。");
+          setConfirmationNeeded(true);
+          setAuthNotice("確認メールを送りました。メールの案内に沿って確認した後、この画面からログインしてください。もう一度登録する必要はありません。");
           setPassword("");
           setPasswordConfirmation("");
           setAuthMode("login");
@@ -382,7 +385,9 @@ export function App() {
       }
       const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       if (signInError || !data.session) {
-        setError("ログインできませんでした。メールアドレスとパスワードを確認してください。");
+        const unconfirmed = signInError?.code === "email_not_confirmed";
+        setConfirmationNeeded(unconfirmed);
+        setError(unconfirmed ? "メールアドレスの確認が必要です。確認メールを開くか、下のボタンで再送してください。" : "ログインできませんでした。メールアドレスとパスワードを確認してください。");
         return;
       }
       const { error: householdError } = await supabase.rpc("ensure_current_user_household");
@@ -397,6 +402,20 @@ export function App() {
       setBusy(false);
       setPassword("");
     }
+  }
+
+  async function resendConfirmation() {
+    if (!supabase || busy) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError("登録したメールアドレスを入力してください。"); return; }
+    if (Date.now() < resendAfter) { setAuthNotice("少し待ってから再送してください。先ほど届いたメールもご確認ください。"); return; }
+    setBusy(true); setError("");
+    try {
+      const { error } = await supabase.auth.resend({ type: "signup", email: email.trim(), options: { emailRedirectTo: `${import.meta.env.VITE_API_BASE_URL}/auth/callback?next=/app` } });
+      if (error) { setError("確認メールを送信できませんでした。少し待ってから再度お試しください。"); return; }
+      setResendAfter(Date.now() + 60000);
+      setAuthNotice("確認が必要な場合はメールが届きます。最新のメールを開いてください。すでにログインできる場合、再確認は不要です。");
+    } catch { setError("通信を確認して、再送してください。"); }
+    finally { setBusy(false); }
   }
 
   async function refresh() {
@@ -664,6 +683,7 @@ export function App() {
         </form>
         {error && <p className="error-message" role="alert">{error}</p>}
         {authNotice && <p className="notice-message" role="status">{authNotice}</p>}
+        {authMode === "login" && confirmationNeeded && <button type="button" className="purchase-secondary" disabled={busy} onClick={() => void resendConfirmation()}>確認メールを再送</button>}
         <div className="auth-links">
           {authMode !== "login" && <button type="button" onClick={() => { setAuthMode("login"); setError(""); setAuthNotice(""); }}>ログインへ戻る</button>}
           {authMode === "login" && <><button type="button" onClick={() => { setAuthMode("signup"); setError(""); setAuthNotice(""); }}>無料で始める</button>

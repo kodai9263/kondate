@@ -26,7 +26,8 @@ describe("メール確認後のブラウザ", () => {
     expect(response.status).toBe(200);
     expect(mock.client).not.toHaveBeenCalled();
     const html = await response.text();
-    expect(html).toContain("アプリへ戻って");
+    expect(html).toContain("アプリでログインしてください");
+    expect(html).not.toContain("確認リンクを利用できませんでした");
     expect(html).toContain("history.replaceState");
     expect(html).not.toContain("googletagmanager");
     expect(response.headers.get("content-security-policy")).toContain("default-src 'none'");

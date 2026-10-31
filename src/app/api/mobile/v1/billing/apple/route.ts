@@ -12,7 +12,7 @@ export function OPTIONS(request: Request) {
 function failure(error: unknown, origin: string | null) {
   const code = error instanceof Error ? error.message : "billing_unavailable";
   const statuses: Record<string, number> = { unauthenticated: 401, registration_required: 403, household_unavailable: 403,
-    purchase_owner_mismatch: 409, sandbox_not_allowed: 403, verification_failed: 422, invalid_request: 400 };
+    purchase_owner_mismatch: 409, purchase_account_deleted: 409, sandbox_not_allowed: 403, verification_failed: 422, invalid_request: 400 };
   return mobileJsonError(code in statuses ? code : "billing_unavailable", statuses[code] ?? 503, origin);
 }
 export async function GET(request: Request) {

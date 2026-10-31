@@ -8,7 +8,7 @@ import { ApplePurchaseCard } from "../mobile/src/MobilePurchases";
 const purchase = { products: [
   { id: "app.kyounogohan.mobile.family.monthly", name: "家族プラン（月額）", price: "¥480" },
   { id: "app.kyounogohan.mobile.family.yearly", name: "家族プラン（年額）", price: "¥4,800" },
-], busy: false, message: "", error: "", act: vi.fn(), manage: vi.fn() };
+], busy: false, message: "", error: "", act: vi.fn(), manage: vi.fn(), refreshPrices: vi.fn() };
 describe("家族プラン購入画面", () => {
   it("Appleの価格・期間・復元・解約・規約を表示する", () => {
     const html = renderToStaticMarkup(<ApplePurchaseCard purchase={purchase} active={false} anonymous={false} online />);
@@ -31,6 +31,18 @@ describe("家族プラン購入画面", () => {
   });
   it("オフラインでは購入・復元・管理を無効にする", () => {
     const html = renderToStaticMarkup(<ApplePurchaseCard purchase={purchase} active={false} anonymous={false} online={false} />);
-    expect(html.match(/disabled=""/g)).toHaveLength(4);
+    expect(html.match(/disabled=""/g)).toHaveLength(5);
   });
+  it("日本のテスト環境ではドルを請求額に見せず通常価格を案内する", () => {
+    const preview = { ...purchase, products: purchase.products.map((product, index) => ({ ...product, price: index ? "$29.99" : "$2.99", currency: "USD", storefront: "USA", deviceRegion: "JP", testEnvironment: true })) };
+    const html = renderToStaticMarkup(<ApplePurchaseCard purchase={preview} active={false} anonymous={false} online />);
+    expect(html).toContain("月額 480円"); expect(html).toContain("年額 4,800円");
+    expect(html).toContain("日本での通常価格"); expect(html).toContain("Appleで確認");
+    expect(html).not.toContain("$2.99"); expect(html).not.toContain("$29.99");
+    if (process.env.PURCHASE_PREVIEW_DIR) {
+      const css = readFileSync("mobile/src/style.css", "utf8");
+      writeFileSync(`${process.env.PURCHASE_PREVIEW_DIR}/japan-test.html`, `<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>家族プラン</title><style>${css}</style><body><main style="max-width:390px;margin:auto;padding:20px">${html}</main></body></html>`);
+    }
+  });
+
 });
