@@ -68,7 +68,7 @@ export async function createFamilyInvite() {
   if (!profile) redirect("/account?error=profile");
 
   const { data: subscription } = await supabase
-    .from("household_subscriptions")
+    .from("household_billing_access")
     .select("status,current_period_end")
     .eq("household_id", profile.household_id)
     .maybeSingle();

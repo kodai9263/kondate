@@ -30,11 +30,12 @@ export async function POST(request: Request) {
   }
 
   const supabase = getSupabaseAdmin();
-  const { data: existingSubscription } = await supabase
-    .from("household_subscriptions")
+  const { data: existingSubscription, error: subscriptionError } = await supabase
+    .from("household_billing_access")
     .select("stripe_customer_id,status,current_period_end")
     .eq("household_id", context.householdId)
     .maybeSingle();
+  if (subscriptionError) return NextResponse.json({ error: "billing_unavailable" }, { status: 503 });
   if (existingSubscription && isActiveSubscriptionStatus(existingSubscription.status, existingSubscription.current_period_end)) {
     return NextResponse.json({ error: "subscription_already_active" }, { status: 409 });
   }

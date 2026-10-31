@@ -18,10 +18,10 @@ export default async function PricingPage({ searchParams }: { searchParams: Prom
     if (user) {
       const { data: profile } = await supabase.from("profiles").select("household_id").eq("id", user.id).maybeSingle();
       if (profile?.household_id) {
-        const { data: subscription } = await supabase.from("household_subscriptions").select("plan_id,status,current_period_end,stripe_customer_id").eq("household_id", profile.household_id).maybeSingle();
+        const { data: subscription } = await supabase.from("household_billing_access").select("plan_id,status,current_period_end,stripe_customer_id,provider").eq("household_id", profile.household_id).maybeSingle();
         if (subscription && isActiveSubscriptionStatus(subscription.status, subscription.current_period_end)) {
           currentPlanId = subscription.plan_id;
-          canManageSubscription = Boolean(subscription.stripe_customer_id);
+          canManageSubscription = subscription.provider === "stripe" && Boolean(subscription.stripe_customer_id);
         }
       }
     }

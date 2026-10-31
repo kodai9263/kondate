@@ -24,7 +24,7 @@ function fakeClient(input: { members?: string[]; status?: string; stripe?: boole
         maybeSingle: async () => ({ data: table === "profiles"
           ? { household_id: "household-1", display_name: "本人" }
           : { status: input.status ?? "free", current_period_end: null,
-            stripe_customer_id: input.stripe ? "customer-1" : null }, error: null }),
+            provider: input.stripe ? "stripe" : "none", stripe_customer_id: input.stripe ? "customer-1" : null }, error: null }),
         then: (resolve: (value: unknown) => unknown) => Promise.resolve({ data: members.map((id) => ({ id })), error: null }).then(resolve),
       };
       return chain;

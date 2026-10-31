@@ -36,7 +36,7 @@ describe("メニュー工程のアレンジ", () => {
     expect(migrationSource).toContain("set recipe_id = customized_recipe_id");
     expect(plannerServerSource).toContain("stepCustomizationIds.set(sourceRecipeId, row.id)");
     expect(plannerServerSource).toContain("stepCustomizationIds.get(databaseId)");
-    expect(plannerServerSource.indexOf("stepCustomizationIds.set")).toBeLessThan(plannerServerSource.indexOf("mapCustomRecipe(row"));
+    expect(plannerServerSource.indexOf("stepCustomizationIds.set")).toBeLessThan(plannerServerSource.indexOf("custom.push(...mapCustomRecipe(row"));
   });
 
   it("カードから編集画面を開き、公式工程へ戻せる", () => {

@@ -36,7 +36,7 @@ export async function authorizeMobileRequest(request: Request, origin: string | 
   if (profileError || !profile?.household_id) return mobileJsonError("household_unavailable", 403, origin);
 
   const [{ data: subscription, error: subscriptionError }, { data: firstMember, error: firstMemberError }] = await Promise.all([
-    supabase.from("household_subscriptions").select("status,current_period_end")
+    supabase.from("household_billing_access").select("status,current_period_end")
       .eq("household_id", profile.household_id).maybeSingle(),
     supabase.from("profiles").select("id").eq("household_id", profile.household_id)
       .order("created_at", { ascending: true }).limit(1).maybeSingle(),

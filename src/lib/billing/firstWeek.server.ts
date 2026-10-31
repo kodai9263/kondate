@@ -12,7 +12,7 @@ export const getFirstWeekAccess = cache(async (client?: Awaited<ReturnType<typeo
   const { data: profile, error: profileError } = trusted ? { data: { household_id: trusted.householdId }, error: null } : await supabase.from("profiles").select("household_id").eq("id", user.id).single();
   if (profileError || !profile?.household_id) throw new Error("first_week_household_unavailable");
   const [{ data: subscription, error: subscriptionError }, { data: trial, error: trialError }, { data: freeTrial, error: freeTrialError }] = await Promise.all([
-    trusted ? Promise.resolve({ data: trusted.subscription, error: null }) : supabase.from("household_subscriptions").select("status,current_period_end").eq("household_id", profile.household_id).maybeSingle(),
+    trusted ? Promise.resolve({ data: trusted.subscription, error: null }) : supabase.from("household_billing_access").select("status,current_period_end").eq("household_id", profile.household_id).maybeSingle(),
     supabase.from("household_first_weeks").select("selected_start,start_date,allergies_confirmed_at").eq("household_id", profile.household_id).maybeSingle(),
     supabase.from("household_free_trials").select("started_at,expires_at").eq("household_id", profile.household_id).maybeSingle(),
   ]);

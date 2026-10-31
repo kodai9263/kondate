@@ -1,3 +1,4 @@
+import { ApplePurchaseCard, useApplePurchases } from "./MobilePurchases";
 import { Menu } from "./MobileMenu";
 import { Planner } from "./MobilePlanner";
 import { TodaySteps, ReminderEditor } from "./ContentSections";
@@ -51,6 +52,7 @@ export function App() {
   const [error, setError] = useState("");
   const [online, setOnline] = useState(navigator.onLine);
   const [refreshEpoch, setRefreshEpoch] = useState(0);
+  const purchase = useApplePurchases(accessToken, userId, online, () => setRefreshEpoch(value => value + 1));
   const [restoringSession, setRestoringSession] = useState(isConfigured && Capacitor.isNativePlatform());
   const [reminderSettings, setReminderSettings] = useState<ReminderSettings>(defaultReminderSettings);
   const [reminderBusy, setReminderBusy] = useState(false);
@@ -691,6 +693,7 @@ export function App() {
               {accountPreview.subscription.provider === "stripe" && <p className="read-only-note">契約はWeb版から管理できます。</p>}
             </>}
           </section>
+          {accountPreview && <ApplePurchaseCard purchase={purchase} active={accountPreview.subscription.active} anonymous={accountPreview.account.isAnonymous} online={online} />}
           <section className="account-card">
             <h2>家族の人数</h2>
             <p>献立と買い物の分量計算に使います。</p>

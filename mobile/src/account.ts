@@ -3,7 +3,7 @@ export type AccountPreview = {
   deletionAvailable?: boolean;
   account: { displayName: string; isAnonymous: boolean };
   household: { memberCount: number; lastMember: boolean };
-  subscription: { active: boolean; status: string; provider: "stripe" | "none" };
+  subscription: { active: boolean; status: string; provider: "stripe" | "apple" | "none" };
 };
 
 export async function loadAccountPreview(accessToken: string): Promise<AccountPreview> {
@@ -29,5 +29,5 @@ function isAccountPreview(value: unknown): value is AccountPreview {
     && typeof preview.household?.lastMember === "boolean"
     && typeof preview.subscription?.active === "boolean"
     && typeof preview.subscription.status === "string"
-    && (preview.subscription.provider === "stripe" || preview.subscription.provider === "none");
+    && (preview.subscription.provider === "apple" || preview.subscription.provider === "stripe" || preview.subscription.provider === "none");
 }
