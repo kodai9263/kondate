@@ -5,6 +5,6 @@ node_modules
 .env.*.local
 coverage/
 dist/
-tsconfig.tsbuildinfo
+*.tsbuildinfo
 supabase/.branches/
 supabase/.temp/
