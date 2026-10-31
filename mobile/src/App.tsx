@@ -1,4 +1,5 @@
 import { ApplePurchaseCard, useApplePurchases } from "./MobilePurchases";
+import { signupValidationMessage } from "./signupValidation";
 import { Menu } from "./MobileMenu";
 import { Planner } from "./MobilePlanner";
 import { TodaySteps, ReminderEditor } from "./ContentSections";
@@ -23,6 +24,7 @@ const deletionReceiptKey = "kondate-account-deletion-receipt-v1";
 export function App() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [authMode, setAuthMode] = useState<"login" | "signup" | "reset">("login");
   const [authNotice, setAuthNotice] = useState("");
@@ -352,8 +354,9 @@ export function App() {
         return;
       }
       if (authMode === "signup") {
-        if (!displayName.trim() || password.length < 8) {
-          setError("表示名と8文字以上のパスワードを入力してください。");
+        const validationMessage = signupValidationMessage(displayName, password, passwordConfirmation);
+        if (validationMessage) {
+          setError(validationMessage);
           return;
         }
         const { data, error: signUpError } = await supabase.auth.signUp({
@@ -364,6 +367,8 @@ export function App() {
         if (signUpError) { setError("登録できませんでした。入力内容を確認してください。"); return; }
         if (!data.session) {
           setAuthNotice("確認メールを送信しました。メールのリンクを開いた後、アプリからログインしてください。");
+          setPassword("");
+          setPasswordConfirmation("");
           setAuthMode("login");
           return;
         }
@@ -650,6 +655,10 @@ export function App() {
             <input id="password" type="password" autoComplete={authMode === "signup" ? "new-password" : "current-password"}
               minLength={authMode === "signup" ? 8 : undefined} maxLength={128} value={password}
               onChange={(event) => setPassword(event.target.value)} required /></>}
+          {authMode === "signup" && <><label htmlFor="password-confirmation">パスワード（確認）</label>
+            <input id="password-confirmation" type="password" autoComplete="new-password" minLength={8} maxLength={128}
+              value={passwordConfirmation} onChange={(event) => setPasswordConfirmation(event.target.value)} required />
+            <p className="hint">同じパスワードをもう一度入力してください。</p></>}
           <button className="primary-button" type="submit" disabled={busy}>{busy ? "確認中…" :
             authMode === "signup" ? "登録する" : authMode === "reset" ? "再設定メールを送る" : "ログイン"}</button>
         </form>

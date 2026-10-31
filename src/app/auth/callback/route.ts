@@ -2,11 +2,15 @@ import { normalizeMenuNext } from "@/lib/billing/firstWeek";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseServer, isSupabaseConfigured } from "@/lib/supabase/server";
 import { getSafeAuthRedirect } from "@/lib/auth/redirects";
+import { mobileConfirmationResponse } from "@/lib/auth/mobileConfirmation";
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const next = getSafeAuthRedirect(requestUrl.searchParams.get("next"));
+
+  // アプリのメール確認はimplicitフロー。WebのPKCEコード交換とは分ける。
+  if (!code && next === "/app") return mobileConfirmationResponse();
 
   if (code && isSupabaseConfigured()) {
     const supabase = await getSupabaseServer();
