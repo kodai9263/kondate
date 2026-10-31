@@ -28,7 +28,7 @@ export async function GET(request: Request) {
 
     const [{ data: members, error: membersError }, { data: subscription, error: subscriptionError }] = await Promise.all([
       supabase.from("profiles").select("id").eq("household_id", profile.household_id),
-      supabase.from("household_subscriptions").select("status,current_period_end,stripe_customer_id")
+      supabase.from("household_billing_access").select("status,current_period_end,stripe_customer_id,provider")
         .eq("household_id", profile.household_id).maybeSingle(),
     ]);
     if (membersError || subscriptionError || !members?.some((member) => member.id === user.id)) {
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
       account: { displayName: profile.display_name, isAnonymous: user.is_anonymous ?? false },
       household: { memberCount: members.length, lastMember: members.length === 1 },
       subscription: { active: subscription ? isActiveSubscriptionStatus(subscription.status, subscription.current_period_end) : false,
-        status: subscription?.status ?? "free", provider: subscription?.stripe_customer_id ? "stripe" : "none" },
+        status: subscription?.status ?? "free", provider: subscription?.provider ?? "none" },
     }, { headers: mobileResponseHeaders(origin) });
   } catch (error) {
     console.error("Mobile account deletion preview failed", error);

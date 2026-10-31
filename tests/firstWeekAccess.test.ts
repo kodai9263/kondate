@@ -3,7 +3,7 @@ const mock = vi.hoisted(() => ({ anonymous: false, status: "free", subscriptionE
 vi.mock("@/lib/supabase/server", () => ({ getSupabaseServer: async () => ({
   auth: { getUser: async () => ({ data: { user: { id: "user", is_anonymous: mock.anonymous } }, error: null }) },
   from: (table: string) => {
-    const result = () => table === "profiles" ? { data: { household_id: "home" }, error: null } : table === "household_subscriptions" ? { data: { status: mock.status, current_period_end: mock.end }, error: mock.subscriptionError } : table === "household_free_trials" ? { data: mock.freeTrial, error: mock.trialError } : { data: null, error: mock.trialError };
+    const result = () => table === "profiles" ? { data: { household_id: "home" }, error: null } : table === "household_billing_access" ? { data: { status: mock.status, current_period_end: mock.end }, error: mock.subscriptionError } : table === "household_free_trials" ? { data: mock.freeTrial, error: mock.trialError } : { data: null, error: mock.trialError };
     const query = { select: () => query, eq: () => query, single: async () => result(), maybeSingle: async () => result() };
     return query;
   },

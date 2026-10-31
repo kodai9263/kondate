@@ -8,7 +8,7 @@ vi.mock("@/lib/supabase/server", () => ({ getSupabaseServer: async () => ({
   from: (table: string) => {
     let householdRecipes = false;
     const result = () => ({ data: table === "profiles" ? { household_id: "household" }
-      : table === "household_subscriptions" ? null : table === "household_recipe_exclusions" ? mocks.exclusions
+      : table === "household_billing_access" ? null : table === "household_recipe_exclusions" ? mocks.exclusions
       : householdRecipes ? mocks.custom : mocks.community });
     const query = {
       select: () => query, eq: () => query, is: () => query, neq: () => query, contains: () => query,

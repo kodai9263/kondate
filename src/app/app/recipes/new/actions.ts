@@ -40,7 +40,7 @@ export async function importRecipeFromUrl(input: unknown) {
   if (!profile?.household_id) return { ok: false as const, message: "家族情報を確認してください。" };
 
   const { data: subscription } = await supabase
-    .from("household_subscriptions")
+    .from("household_billing_access")
     .select("status,current_period_end")
     .eq("household_id", profile.household_id)
     .maybeSingle();

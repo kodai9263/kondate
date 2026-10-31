@@ -3,6 +3,16 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      household_recipe_exclusions: {
+        Row: { household_id: string; recipe_key: string; created_by: string | null; created_at: string };
+        Insert: { household_id: string; recipe_key: string; created_by?: string | null; created_at?: string };
+        Update: { recipe_key?: string }; Relationships: [];
+      };
+      recipe_steps: {
+        Row: { id: string; recipe_id: string; phase: string; position: number; text: string; minutes: number | null };
+        Insert: { id?: string; recipe_id: string; phase: string; position: number; text: string; minutes?: number | null };
+        Update: { phase?: string; position?: number; text?: string; minutes?: number | null }; Relationships: [];
+      };
       recipes: {
         Row: { id:string; household_id:string|null; name:string; category:string; servings_base:number; prep_minutes:number; cook_minutes:number; freezable:boolean; bento_ok:boolean; storage_note:string|null; tags:string[]; seasons:string[]; meta:Json; created_at:string; archived_at:string|null; image_url:string|null; protein_source:string|null };
         Insert: { name:string; id?:string; household_id?:string|null; category?:string; meta?:Json };
@@ -244,7 +254,22 @@ export type Database = {
         Relationships: [];
       };
     };
-    Views: Record<string, never>;
+    Views: {
+      v_daily_plan: {
+        Row: { plan_entry_id: string; household_id: string; date: string; meal_type: string; recipe_name: string;
+          prep_minutes: number; cook_minutes: number; meta: Json; steps: Json; side_mode: string; side_dish: Json };
+        Relationships: [];
+      };
+      household_billing_access: {
+        Row: {
+          household_id: string; plan_id: string; status: string;
+          stripe_customer_id: string | null; stripe_subscription_id: string | null;
+          current_period_end: string | null; cancel_at_period_end: boolean;
+          monitor_started_at: string | null; provider: "apple" | "stripe" | "none";
+        };
+        Relationships: [];
+      };
+    };
     Functions: {
       household_recipe_editor: { Args: { target_id: string }; Returns: Json };
       save_household_recipe_editor: { Args: { target_id: string; request_id: string; expected_revision: string | null; fields: Json }; Returns: string };

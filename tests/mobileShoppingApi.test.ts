@@ -46,7 +46,7 @@ function postRequest(body: unknown, authorization = `Bearer ${token}`, origin = 
 function fakeClient() {
   const data = {
     profiles: [{ household_id: "household-1" }, { id: "user-1" }],
-    household_subscriptions: [{ status: "active", current_period_end: null }],
+    household_billing_access: [{ status: "active", current_period_end: null }],
   };
   const from = vi.fn((table: keyof typeof data) => {
     const chain = {

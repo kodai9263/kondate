@@ -17,7 +17,7 @@ export default async function ProtectedAppLayout({ children }: { children: React
   if (!profile?.household_id) redirect("/login?error=profile");
 
   const [{ data: subscription }, { data: firstMember }] = await Promise.all([
-    supabase.from("household_subscriptions").select("status,current_period_end").eq("household_id", profile.household_id).maybeSingle(),
+    supabase.from("household_billing_access").select("status,current_period_end").eq("household_id", profile.household_id).maybeSingle(),
     supabase.from("profiles").select("id").eq("household_id", profile.household_id).order("created_at", { ascending: true }).limit(1).maybeSingle(),
   ]);
   if (!canAccessHousehold({ userId: user.id, firstMemberId: firstMember?.id, status: subscription?.status, currentPeriodEnd: subscription?.current_period_end })) {

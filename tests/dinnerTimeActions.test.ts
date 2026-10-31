@@ -55,28 +55,28 @@ describe("献立保存の時間制限", () => {
     expect(await saveMonthlyDinnerPlan(input())).toEqual({ ok: true });
     expect(mocks.upsert).toHaveBeenCalledOnce();
   });
-  it("画面を経由しなくても新しい長時間レシピの指定は拒否する", async () => {
+  it("手動の変更では新しい長時間レシピも保存できる", async () => {
     mocks.recipes = [short, long];
     const value = input(); value.entries[0].recipeId = longId;
-    expect((await saveMonthlyDinnerPlan(value)).ok).toBe(false);
-    expect(mocks.upsert).not.toHaveBeenCalled();
+    expect((await saveMonthlyDinnerPlan(value)).ok).toBe(true);
+    expect(mocks.upsert).toHaveBeenCalledOnce();
   });
-  it("公式メニューは古いDBの夜の時間より完成までの時間を優先する", async () => {
+  it("公式メニューも手動の変更では完成までの時間にかかわらず保存できる", async () => {
     mocks.recipes = [{ ...short, name: "さわらの西京焼き", household_id: null, meta: { nutrition_catalog_id: "sawara-saikyo" }, cook_minutes: 15 }];
-    expect((await saveMonthlyDinnerPlan(input())).ok).toBe(false);
+    expect((await saveMonthlyDinnerPlan(input())).ok).toBe(true);
   });
   it("時間未確認のアレンジは新規保存の候補にしない", async () => {
     mocks.recipes = [{ ...short, meta: { step_customization: true } }];
     expect((await saveMonthlyDinnerPlan(input())).ok).toBe(false);
   });
-  it("同じ日付の保存済み料理は維持できるが別日への追加は拒否する", async () => {
+  it("手動の変更では保存済みの長時間料理を別日にも追加できる", async () => {
     mocks.recipes = [short, long];
     mocks.saved = [{ date: "2026-09-01", recipe_id: longId }];
     const value = input(); value.entries[0].recipeId = longId;
     expect((await saveMonthlyDinnerPlan(value)).ok).toBe(true);
     mocks.upsert.mockClear(); value.entries[1].recipeId = longId;
-    expect((await saveMonthlyDinnerPlan(value)).ok).toBe(false);
-    expect(mocks.upsert).not.toHaveBeenCalled();
+    expect((await saveMonthlyDinnerPlan(value)).ok).toBe(true);
+    expect(mocks.upsert).toHaveBeenCalledOnce();
   });
   it("既存献立の取得に失敗したら変更しない", async () => {
     mocks.savedError = new Error("offline");

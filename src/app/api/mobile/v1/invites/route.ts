@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     const identified = await identify(request, origin);
     if (identified instanceof Response) return identified;
     const { data: subscription, error: subscriptionError } = await identified.supabase
-      .from("household_subscriptions").select("status,current_period_end")
+      .from("household_billing_access").select("status,current_period_end")
       .eq("household_id", identified.householdId).maybeSingle();
     if (subscriptionError) return mobileJsonError("subscription_unavailable", 503, origin);
     if (!subscription || !isActiveSubscriptionStatus(subscription.status, subscription.current_period_end)) {
