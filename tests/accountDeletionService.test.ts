@@ -67,4 +67,16 @@ describe("退会処理", () => {
     expect(await resumeAccountDeletion(receipt)).toEqual({ receipt, status: "processing" });
     expect(admin.rpc).not.toHaveBeenCalledWith("complete_account_deletion", expect.anything());
   });
+  it("テスト対象外の受付番号では削除を再開しない", async () => {
+    const { admin } = fakeAdmin();
+    expect(await resumeAccountDeletion(receipt, ["another-user"])).toBeNull();
+    expect(admin.auth.admin.deleteUser).not.toHaveBeenCalled();
+    expect(admin.rpc).not.toHaveBeenCalled();
+  });
+  it("テスト対象の受付番号だけ削除を再開できる", async () => {
+    const { admin } = fakeAdmin();
+    expect(await resumeAccountDeletion(receipt, ["user-1"])).toEqual({ receipt, status: "completed" });
+    expect(admin.auth.admin.deleteUser).toHaveBeenCalledWith("user-1");
+  });
+
 });

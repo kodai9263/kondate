@@ -1,3 +1,4 @@
+import { canDeleteAccount, deletionTestUserIds } from "@/lib/account/deletion-access";
 import { isStorageTransferRequired, resumeAccountDeletion, startAccountDeletion } from "@/lib/account/deletion";
 import { mobileJsonError, mobileNoStore, mobileOrigin, mobileResponseHeaders } from "@/lib/mobile/request";
 import { createMobileRequestClient } from "@/lib/supabase/mobile";
@@ -15,7 +16,9 @@ export function OPTIONS(request: Request) {
 export async function POST(request: Request) {
   const origin = mobileOrigin(request);
   if (origin === false) return mobileJsonError("origin_not_allowed", 403, null);
-  if (process.env.ACCOUNT_DELETION_ENABLED !== "true") return mobileJsonError("deletion_unavailable", 503, origin);
+  const generalEnabled = process.env.ACCOUNT_DELETION_ENABLED === "true";
+  const testIds = deletionTestUserIds();
+  if (!generalEnabled && testIds.length === 0) return mobileJsonError("deletion_unavailable", 503, origin);
   if (Number(request.headers.get("content-length") ?? 0) > 4096) return mobileJsonError("invalid_request", 400, origin);
 
   let body: unknown;
@@ -29,7 +32,7 @@ export async function POST(request: Request) {
       return mobileJsonError("invalid_receipt", 400, origin);
     }
     try {
-      const status = await resumeAccountDeletion(input.receipt);
+      const status = await resumeAccountDeletion(input.receipt, generalEnabled ? undefined : testIds);
       if (!status) return mobileJsonError("receipt_not_found", 404, origin);
       return Response.json({ version: 1, ...status }, {
         status: status.status === "completed" ? 200 : 202, headers: mobileResponseHeaders(origin),
@@ -48,6 +51,7 @@ export async function POST(request: Request) {
   try {
     const { data: { user }, error } = await createMobileRequestClient(token).auth.getUser(token);
     if (error || !user) return mobileJsonError("unauthenticated", 401, origin);
+    if (!canDeleteAccount(user.id)) return mobileJsonError("deletion_unavailable", 503, origin);
     const status = await startAccountDeletion(user.id);
     return Response.json({ version: 1, ...status }, {
       status: status.status === "completed" ? 200 : 202, headers: mobileResponseHeaders(origin),

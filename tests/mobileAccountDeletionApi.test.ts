@@ -27,7 +27,7 @@ beforeEach(() => {
   mocks.resume.mockResolvedValue({ receipt, status: "processing" });
 });
 
-afterEach(() => { delete process.env.ACCOUNT_DELETION_ENABLED; });
+afterEach(() => { delete process.env.ACCOUNT_DELETION_ENABLED; delete process.env.ACCOUNT_DELETION_TEST_USER_IDS; });
 
 describe("スマホ向け退会API", () => {
   it("未公開時は一切の削除処理を始めない", async () => {
@@ -56,7 +56,7 @@ describe("スマホ向け退会API", () => {
     const response = await POST(request({ action: "status", receipt }));
     expect(response.status).toBe(202);
     expect(await response.json()).toEqual({ version: 1, receipt, status: "processing" });
-    expect(mocks.resume).toHaveBeenCalledWith(receipt);
+    expect(mocks.resume).toHaveBeenCalledWith(receipt, undefined);
     expect(mocks.createClient).not.toHaveBeenCalled();
   });
 
@@ -71,4 +71,21 @@ describe("スマホ向け退会API", () => {
     expect(response.status).toBe(409);
     expect(await response.json()).toEqual({ error: "deletion_requires_support" });
   });
+  it("テスト許可ID以外は一般受付OFFのまま拒否する", async () => {
+    process.env.ACCOUNT_DELETION_ENABLED = "false";
+    process.env.ACCOUNT_DELETION_TEST_USER_IDS = receipt;
+    expect((await POST(request({ action: "delete", confirmation: "削除" }, "capacitor://localhost", `Bearer ${token}`))).status).toBe(503);
+    expect(mocks.start).not.toHaveBeenCalled();
+    mocks.createClient.mockReturnValue({ auth: { getUser: vi.fn(async () => ({ data: { user: { id: receipt } }, error: null })) } });
+    expect((await POST(request({ action: "delete", confirmation: "削除" }, "capacitor://localhost", `Bearer ${token}`))).status).toBe(200);
+    expect(mocks.start).toHaveBeenCalledWith(receipt);
+  });
+
+  it("一般受付OFFの再試行にも許可IDを渡す", async () => {
+    process.env.ACCOUNT_DELETION_ENABLED = "false";
+    process.env.ACCOUNT_DELETION_TEST_USER_IDS = receipt;
+    await POST(request({ action: "status", receipt }));
+    expect(mocks.resume).toHaveBeenCalledWith(receipt, [receipt]);
+  });
+
 });

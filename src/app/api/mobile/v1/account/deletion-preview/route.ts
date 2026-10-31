@@ -1,3 +1,4 @@
+import { canDeleteAccount } from "@/lib/account/deletion-access";
 import { isActiveSubscriptionStatus } from "@/lib/billing/entitlements";
 import { mobileJsonError, mobileNoStore, mobileOrigin, mobileResponseHeaders } from "@/lib/mobile/request";
 import { createMobileRequestClient } from "@/lib/supabase/mobile";
@@ -37,7 +38,7 @@ export async function GET(request: Request) {
 
     return Response.json({ version: 1,
       // 本番での実認証・写真削除検証が完了するまで環境変数はOFFにする。
-      deletionAvailable: process.env.ACCOUNT_DELETION_ENABLED === "true",
+      deletionAvailable: canDeleteAccount(user.id),
       account: { displayName: profile.display_name, isAnonymous: user.is_anonymous ?? false },
       household: { memberCount: members.length, lastMember: members.length === 1 },
       subscription: { active: subscription ? isActiveSubscriptionStatus(subscription.status, subscription.current_period_end) : false,
