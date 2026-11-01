@@ -158,6 +158,7 @@ export default async function LandingPage({ searchParams }: { searchParams?: Pro
           <p className="font-mincho text-sm text-kondate-ink">きょうのごはん</p>
           <div className="flex flex-wrap gap-x-5 gap-y-1">
             <Link className="inline-flex min-h-11 items-center hover:underline" href="/pricing">料金</Link>
+            <Link className="inline-flex min-h-11 items-center hover:underline" href="/support">サポート</Link>
             <Link className="inline-flex min-h-11 items-center hover:underline" href="/business">運営サービス</Link>
             <Link className="inline-flex min-h-11 items-center hover:underline" href="/terms">利用規約</Link>
             <Link className="inline-flex min-h-11 items-center hover:underline" href="/privacy">プライバシー</Link>
