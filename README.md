@@ -75,3 +75,33 @@ Supabase Authのログイン・新規登録・パスワード再設定と、登�
 - `persisted_task_checks`
 - `seasonal_templates`
 - `child_feedback`
+
+## 登録メールとフィードバック通知
+
+登録確認メールはSupabase Auth、フィードバック通知はWebサーバーから送信します。専用Gmailを使う場合は、アカウント作成・本人確認・2段階認証を所有者が完了し、用途ごとにアプリパスワードを作成します。通常のGoogleパスワードやアプリパスワードをソース・チャット・ログへ記載しないでください。
+
+### Supabaseの登録メール
+
+Authentication → Emails → SMTP Settingsで、送信元とUsernameを取得済みの専用Gmail、Sender nameを「きょうのごはん」、Hostを `smtp.gmail.com`、Portを `465` にします。Passwordには所有者がSupabase専用のアプリパスワードを直接入力します。送信元の準備が完了するまでは現在の設定を維持します。
+
+接続後、Confirm sign upの件名を「【きょうのごはん】メールアドレスの確認をお願いします」、本文を `supabase/templates/confirmation.html` に設定します。Site URLは本番の `https://kondate-bay.vercel.app` を使います。メールのリンク先は `/auth/confirm` で、ページを開いただけでは認証せず、本人の確認ボタン操作で認証します。
+
+### フィードバック通知
+
+Vercelに次を設定して再デプロイします。Gmailのアプリパスワードは、Supabase用とは別に作成して `FEEDBACK_SMTP_PASSWORD` に保存します。
+
+| 設定 | 値 |
+| --- | --- |
+| `NEXT_PUBLIC_SUPPORT_EMAIL` | 取得済みの専用Gmail。公開の問い合わせ先と通知の宛先に使用 |
+| `FEEDBACK_EMAIL_PROVIDER` | `smtp` |
+| `FEEDBACK_SMTP_HOST` | `smtp.gmail.com` |
+| `FEEDBACK_SMTP_PORT` | `465` |
+| `FEEDBACK_SMTP_USER` | 同じ専用Gmail |
+| `FEEDBACK_SMTP_PASSWORD` | フィードバック送信用のアプリパスワード。サーバーのSecretとして保存 |
+| `FEEDBACK_SMTP_FROM` | 空欄なら `FEEDBACK_SMTP_USER` と同じ |
+
+設定を切り替える前に、所有者が承認した宛先へ登録メール・フィードバックの各テストを行い、受信箱で件名・本文・リンク動作を確認します。メールが届いたことはSMTPの受付成功だけでは判定しません。Gmailには送信上限があるため、利用者が増えた場合は専用の配信サービスへ移行します。
+
+フィードバック本文はメール送信前に `app_feedback` に保存されます。送信失敗でも保存内容を失わず、結果不明の場合も自動再送や別サービスへの切り替えはしません。SMTPを使わない場合は `FEEDBACK_EMAIL_PROVIDER=resend`（または未設定）で従来のResend設定を使用します。
+
+参考: [SupabaseのSMTP設定](https://supabase.com/docs/guides/auth/auth-smtp)、[Googleのアプリパスワード](https://support.google.com/accounts/answer/185833?hl=ja)、[Gmailの送信上限](https://support.google.com/mail/answer/22839?hl=ja)。
