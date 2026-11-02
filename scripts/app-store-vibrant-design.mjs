@@ -1,0 +1,53 @@
+// 掲載画像の別案。アプリ本体のUIは変更せず、見出しと背景だけを組み立てる。
+const escape = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+const page = (title, body, styles) => `<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escape(title)}</title><style>${styles}</style></head><body>${body}</body></html>`;
+
+export const vibrantScreens = [
+  { id: '01-today', tab: 'today', label: '今日の献立', title: ['今日のごはん、', 'もう迷わない。'], subtitle: '家族のごはん支度を、ひとつに。', badge: '献立も、買い物も。', background: '#CC3826', ink: '#FFF9EB', accent: '#FFDA58', accentInk: '#492B20', angle: -2.3 },
+  { id: '02-planner', tab: 'planner', label: '予定に合わせる', title: ['作らない日も、', 'わが家の予定。'], subtitle: '外食やお出かけに合わせて調整。', badge: '「作らない日」を設定', background: '#245748', ink: '#FFF9EB', accent: '#FFDA58', accentInk: '#244C3E', angle: 2.1 },
+  { id: '03-change', tab: 'planner', label: '献立を変える', title: ['食べたい！で、', '献立チェンジ。'], subtitle: '主菜も副菜も、気分に合わせて。', badge: '買い物リストにも反映', background: '#FFD252', ink: '#4C2A22', accent: '#B92F22', accentInk: '#FFF9EB', angle: -2 },
+  { id: '04-shopping', tab: 'shopping', label: '買い物リスト', title: ['買うもの、', 'ひと目で全部。'], subtitle: '献立からリストへ。買い足しも追加。', badge: '保存したリストは圏外でも', background: '#F6AEA2', ink: '#622E28', accent: '#A82D23', accentInk: '#FFF9EB', angle: 2.2 },
+  { id: '05-menu', tab: 'menu', label: 'わが家のメニュー', title: ['わが家の味を、', 'いつもの献立に。'], subtitle: '材料も作り方も、家族のレシピ帳に。', badge: 'メニューの登録・編集は無料', background: '#47302D', ink: '#FFF9EB', accent: '#FFDA58', accentInk: '#492B20', angle: -2.1 },
+];
+
+const spark = '<svg class="spark" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 2 38 22 58 16 45 32 62 43 41 42 36 63 27 44 7 53 18 35 1 24 23 24Z" fill="currentColor"/></svg>';
+const bowl = '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M9 26h30c-1 9-6 14-15 14S10 35 9 26Z" fill="currentColor"/><path d="M18 43h12M19 8c-6 6 6 7 0 13m11-15c-6 6 6 7 0 13" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>';
+
+export function vibrantPoster(screen, device, note) {
+  const ipad = device === 'ipad';
+  const width = ipad ? 1024 : 393;
+  const height = ipad ? 1366 : 852;
+  const scale = ipad ? 2 : 3;
+  const appWidth = ipad ? 1024 : 393;
+  const appHeight = ipad ? 1040 : 600;
+  const appScale = ipad ? 870 / 1024 : 333 / 393;
+  const body = `<article class="poster ${ipad ? 'ipad' : 'iphone'} design-${screen.id}" style="--bg:${screen.background};--ink:${screen.ink};--accent:${screen.accent};--accent-ink:${screen.accentInk};--angle:${screen.angle}deg">
+    <div class="orbit orbit-one" aria-hidden="true"></div><div class="orbit orbit-two" aria-hidden="true"></div><div class="dots" aria-hidden="true"></div>
+    <header><div class="brand-row"><p class="brand"><span class="brand-mark">食</span>きょうのごはん</p><span class="sequence">${screen.id.slice(0, 2)} / 05</span></div><h1><span>${escape(screen.title[0])}</span><strong>${escape(screen.title[1])}</strong></h1><p class="subtitle">${escape(screen.subtitle)}</p></header>
+    <div class="feature"><span class="feature-check" aria-hidden="true">✓</span>${escape(screen.badge)}</div>
+    <div class="decor-bowl">${bowl}</div>${spark}
+    <div class="device"><div class="app-screen"><iframe title="実装済みアプリの画面" src="/app?tab=${screen.tab}" width="${appWidth}" height="${appHeight}"></iframe></div></div>
+    <footer><span class="footer-label">${escape(screen.label)}</span><p>${escape(note)}</p></footer>
+  </article>`;
+  return page(`${screen.label}・${device}・鮮やかな掲載画像案`, body, `
+    *{box-sizing:border-box}html,body{margin:0;width:${width * scale}px;height:${height * scale}px;overflow:hidden}body{font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN',-apple-system,BlinkMacSystemFont,sans-serif}
+    .poster{position:relative;isolation:isolate;overflow:clip;width:${width}px;height:${height}px;transform:scale(${scale});transform-origin:0 0;background:var(--bg);color:var(--ink)}
+    header{position:absolute;z-index:3;top:27px;left:24px;right:24px}.brand-row{display:flex;align-items:center;justify-content:space-between}.brand{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;letter-spacing:.02em;margin:0}.brand-mark{display:grid;place-items:center;width:26px;height:26px;background:var(--ink);color:var(--bg);border-radius:9px;font-size:15px}.sequence{font-size:10px;letter-spacing:.14em;font-weight:700;border:1px solid currentColor;border-radius:20px;padding:6px 9px}
+    h1{margin:25px 0 0;font-size:46px;line-height:1.2;letter-spacing:-.065em;font-weight:900;font-feature-settings:'palt';-webkit-text-stroke:.5px currentColor}h1 span,h1 strong{display:block;white-space:nowrap}h1 strong{font-weight:900;color:var(--accent)}.design-03-change h1 strong,.design-04-shopping h1 strong{color:var(--accent)}.design-05-menu h1{font-size:43px;line-height:1.28}
+    .subtitle{margin:15px 0 0;font-size:14px;font-weight:600;letter-spacing:-.03em;line-height:1.7}.feature{position:absolute;left:27px;top:237px;z-index:4;display:flex;align-items:center;gap:7px;padding:9px 12px;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:800;border-radius:6px;box-shadow:3px 3px 0 #00000016;transform:rotate(-2deg)}.feature-check{display:grid;place-items:center;width:17px;height:17px;border:1.5px solid currentColor;border-radius:50%;font-size:11px}
+    .device{position:absolute;left:23px;top:290px;z-index:2;width:347px;height:510px;padding:7px;background:var(--ink);border-radius:31px;transform:rotate(var(--angle));box-shadow:0 20px 28px #241b2333,3px 4px 0 #0000001f}.app-screen{height:100%;overflow:clip;border-radius:24px;background:#fffbf0}iframe{display:block;border:0;transform:scale(${appScale});transform-origin:0 0;background:#fffbf0}
+    .orbit{position:absolute;z-index:0;width:460px;height:460px;border:1px solid var(--ink);opacity:.16;border-radius:50%;left:95px;top:370px}.orbit-two{width:330px;height:330px;left:160px;top:435px}.dots{position:absolute;left:-20px;top:500px;width:180px;height:260px;opacity:.17;background-image:radial-gradient(var(--ink) 1.2px,transparent 1.2px);background-size:10px 10px;transform:rotate(-12deg)}
+    .spark{position:absolute;z-index:1;right:20px;top:235px;width:42px;height:42px;color:var(--accent);transform:rotate(14deg)}.decor-bowl{position:absolute;z-index:1;right:-34px;top:625px;width:112px;height:112px;border:1px solid var(--ink);border-radius:50%;opacity:.28;transform:rotate(12deg)}.decor-bowl svg{width:76px;height:76px;margin:16px}
+    footer{position:absolute;left:24px;right:24px;bottom:11px;z-index:5}.footer-label{display:none}footer p{margin:0;font-size:8.6px;line-height:1.55;font-weight:500;letter-spacing:-.015em;text-align:center}
+    .ipad header{top:54px;left:62px;right:62px}.ipad .brand{font-size:25px;gap:12px}.ipad .brand-mark{width:43px;height:43px;border-radius:14px;font-size:26px}.ipad .sequence{font-size:15px;padding:10px 17px}.ipad h1{font-size:76px;line-height:1.13;margin-top:28px;letter-spacing:-.055em}.ipad.design-05-menu h1{font-size:73px;line-height:1.17}.ipad .subtitle{font-size:23px;margin-top:17px}.ipad .feature{top:372px;left:65px;padding:12px 18px;font-size:18px;gap:10px}.ipad .feature-check{width:25px;height:25px;font-size:17px}.ipad .spark{width:85px;height:85px;top:300px;right:79px}
+    .ipad .device{width:886px;height:860px;padding:8px;top:445px;left:69px;border-radius:35px;transform:rotate(calc(var(--angle) * .45));box-shadow:0 25px 45px #241b2333,4px 5px 0 #0000001f}.ipad .app-screen{border-radius:27px}.ipad footer{left:62px;right:62px;bottom:15px}.ipad footer p{font-size:13px}.ipad .orbit-one{width:1000px;height:1000px;top:500px;left:330px}.ipad .orbit-two{width:760px;height:760px;top:620px;left:450px}.ipad .dots{width:350px;height:500px;top:700px;background-size:17px 17px}.ipad .decor-bowl{width:200px;height:200px;right:-50px;top:1080px}.ipad .decor-bowl svg{width:130px;height:130px;margin:34px}
+  `);
+}
+
+const galleryStyles = `*{box-sizing:border-box}body{margin:0;background:#FFF8EB;color:#482D25;font-family:'Hiragino Sans',-apple-system,BlinkMacSystemFont,sans-serif}main{max-width:1480px;margin:auto;padding:38px 36px 60px}header{border-bottom:2px solid #482D25;padding-bottom:25px}.eyebrow{font-size:12px;letter-spacing:.1em;font-weight:800;color:#B33222;margin:0 0 14px}h1{font-size:40px;letter-spacing:-.06em;margin:0 0 12px}p{font-size:14px;line-height:1.8;margin:6px 0}.status{font-size:12px;color:#6B5144}.gallery{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:20px}h2{font-size:20px;margin:30px 0 16px}.gallery a{display:block;color:inherit;text-decoration:none;border-radius:13px}.gallery img{display:block;width:100%;height:auto;border-radius:13px;box-shadow:0 9px 18px #3b281619}.gallery a:focus-visible{outline:3px solid #B33222;outline-offset:5px}a{color:#A52F23}summary{padding:18px 0;cursor:pointer;font-size:16px;font-weight:700;min-height:44px}.compare{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:690px;margin:10px 0}.compare img{width:100%;border-radius:12px}figcaption{margin-bottom:10px;font-size:14px;font-weight:700}figure{margin:0}@media(max-width:700px){main{padding:25px 18px}h1{font-size:29px}.gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.compare{gap:12px}}`;
+
+export function vibrantGallery({ contactSheet = false } = {}) {
+  const groups = ['iphone', 'ipad'].map(device => `<section><h2>${device === 'iphone' ? 'iPhone' : 'iPad'} / 5枚</h2><div class="gallery">${vibrantScreens.map(screen => `<a href="./${device}-${screen.id}.jpg"><img src="./${device}-${screen.id}.jpg" width="${device === 'iphone' ? 1179 : 2048}" height="${device === 'iphone' ? 2556 : 2732}" alt="${escape(screen.title.join(''))}"></a>`).join('')}</div></section>`).join('');
+  const compare = `<details><summary>前の案と比べる</summary><div class="compare"><figure><figcaption>前の案</figcaption><img src="../iphone-01-today.jpg" alt="前の落ち着いた案"></figure><figure><figcaption>今回の案</figcaption><img src="./iphone-01-today.jpg" alt="今回の鮮やかな案"></figure></div></details><p><a href="../index.html">説明文・料金案内を見る</a></p>`;
+  return page('きょうのごはん・目を引く掲載画像案', `<main><header><p class="eyebrow">きょうのごはん / APP STORE DESIGN</p><h1>毎日のごはんを、もっと軽やかに。</h1><p>大きな見出しと、料理を思わせる鮮やかな5色。実際のアプリ画面を主役にしました。</p><p class="status">架空データで表示した掲載案です。Appleへの登録と実機での最終照合はまだ行っていません。</p></header>${groups}${contactSheet ? '' : compare}</main>`, galleryStyles + (contactSheet ? 'main{width:1480px;padding:24px 32px 32px}header{padding-bottom:15px}h1{font-size:28px}p{font-size:12px;line-height:1.6}.eyebrow{margin-bottom:8px}h2{margin:20px 0 12px;font-size:16px}.gallery{gap:18px}' : ''));
+}

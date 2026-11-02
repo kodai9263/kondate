@@ -1,0 +1,148 @@
+{
+  "checkedOn": "2026-11-02",
+  "sourceCommit": "5369aad",
+  "status": "鮮やかな掲載画像案。Appleへ未登録、実機照合前。",
+  "images": [
+    {
+      "file": "ipad-01-today.jpg",
+      "width": 2048,
+      "height": 2732,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "ac92b006aabb528ccdcb4ca06cdd0333a0747917e04fdb34d21acada9ae0da50",
+      "passed": true
+    },
+    {
+      "file": "ipad-02-planner.jpg",
+      "width": 2048,
+      "height": 2732,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "022f3c88317872a024d45d7705c701a96338c285f89a3a79aa5f2edf1547d2b1",
+      "passed": true
+    },
+    {
+      "file": "ipad-03-change.jpg",
+      "width": 2048,
+      "height": 2732,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "78d3f676d8e14ac08a5f5d509ba85e3a0afb61efee0354bb123941b41dbde963",
+      "passed": true
+    },
+    {
+      "file": "ipad-04-shopping.jpg",
+      "width": 2048,
+      "height": 2732,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "ff55d148910cd5fad36099b54bf38674353aabafa4e1a90523a5fdfa84be115c",
+      "passed": true
+    },
+    {
+      "file": "ipad-05-menu.jpg",
+      "width": 2048,
+      "height": 2732,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "84b64e65c9bb4f60844732f29aeacf211fa7042803369d8fd8334190977c667c",
+      "passed": true
+    },
+    {
+      "file": "iphone-01-today.jpg",
+      "width": 1179,
+      "height": 2556,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "639dbf89ad11658bf11daee4f2a9ae614b58c7bac3ec8faa92b4f97f345976fd",
+      "passed": true
+    },
+    {
+      "file": "iphone-02-planner.jpg",
+      "width": 1179,
+      "height": 2556,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "1f4fb31e407d3dcf17175d14834e9f4bae497e4c08f6f9c78303e541cedc5258",
+      "passed": true
+    },
+    {
+      "file": "iphone-03-change.jpg",
+      "width": 1179,
+      "height": 2556,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "cd2668cadf09b9ba9d5ff4f1a19547a4446b3579f7caf77950d1a03dc46af05b",
+      "passed": true
+    },
+    {
+      "file": "iphone-04-shopping.jpg",
+      "width": 1179,
+      "height": 2556,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "dc1fc27c0eb9f074f6ef07f0fdd1743c7e148b9a32393516b1df9a182796f52e",
+      "passed": true
+    },
+    {
+      "file": "iphone-05-menu.jpg",
+      "width": 1179,
+      "height": 2556,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "54576b08fa02b2d99bf67fdd7d9208eed9cfef9d3d9afceabc311d88bb50dc18",
+      "passed": true
+    }
+  ],
+  "colors": [
+    {
+      "id": "01-today",
+      "bodyContrast": 4.81,
+      "largeHeadlineContrast": 3.71,
+      "badgeContrast": 9.35
+    },
+    {
+      "id": "02-planner",
+      "bodyContrast": 7.9,
+      "largeHeadlineContrast": 6.09,
+      "badgeContrast": 7.08
+    },
+    {
+      "id": "03-change",
+      "bodyContrast": 8.78,
+      "largeHeadlineContrast": 4.18,
+      "badgeContrast": 5.73
+    },
+    {
+      "id": "04-shopping",
+      "bodyContrast": 5.92,
+      "largeHeadlineContrast": 3.75,
+      "badgeContrast": 6.53
+    },
+    {
+      "id": "05-menu",
+      "bodyContrast": 11.57,
+      "largeHeadlineContrast": 8.92,
+      "badgeContrast": 9.35
+    }
+  ],
+  "originalPreserved": true,
+  "productionChanged": false,
+  "realPersonalDataUsed": false,
+  "visualChecks": [
+    "iPhoneとiPad各5枚を一覧で目視確認",
+    "操作後にポスター枠がスクロールして見出しが欠ける問題をoverflow:clipで修正",
+    "操作がある献立変更・メニュー詳細を修正後に再撮影",
+    "有料機能の注記を維持"
+  ],
+  "codeChecks": [
+    "node --check",
+    "ESLint",
+    "git diff --check",
+    "ローカル確認ページの全参照先が存在"
+  ],
+  "pending": [
+    "ネイティブ端末との最終照合",
+    "App Storeへの保存・画像アップロード・審査提出"
+  ]
+}

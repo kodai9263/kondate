@@ -1,12 +1,14 @@
 import { build } from 'esbuild';
 import { createServer } from 'node:http';
-import { readFileSync, existsSync, writeFileSync } from 'node:fs';
+import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { todaySnapshot, shoppingSnapshot, plannerSnapshot, recipes, menuDetail, editorData } from '../tests/fixtures/app-store-data.mjs';
+import { vibrantScreens, vibrantPoster, vibrantGallery } from './app-store-vibrant-design.mjs';
 
 const root = process.cwd();
 const assetsRoot = resolve(root, 'docs/app-store-assets/ja');
 const listing = JSON.parse(readFileSync(resolve(assetsRoot, 'listing.json'), 'utf8'));
+const vibrantRoot = resolve(assetsRoot, 'vibrant');
 const escape = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 
 // 本番のApp/CSSをそのまま描画し、認証と読み取りデータだけを掲載用に差し替える。
@@ -39,7 +41,7 @@ const bundle = await build({
 const js = bundle.outputFiles.find(file => file.path.endsWith('.js')).contents;
 // デスクトップ側の常時表示スクロールバーだけを撮影から除く。
 const css = Buffer.concat([bundle.outputFiles.find(file => file.path.endsWith('.css')).contents,
-  Buffer.from('\nhtml{scrollbar-width:none}html::-webkit-scrollbar{display:none}')]);
+  Buffer.from('\n*{scrollbar-width:none}*::-webkit-scrollbar{display:none}')]);
 const html = (title, body, styles = '') => `<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escape(title)}</title><style>${styles}</style></head><body>${body}</body></html>`;
 
 function poster(screen, device) {
@@ -76,6 +78,14 @@ if (process.argv.includes('--export-review')) {
   process.exit(0);
 }
 
+if (process.argv.includes('--export-vibrant')) {
+  mkdirSync(vibrantRoot, { recursive: true });
+  writeFileSync(resolve(vibrantRoot, 'index.html'), vibrantGallery());
+  writeFileSync(resolve(vibrantRoot, 'design.json'), `${JSON.stringify(vibrantScreens, null, 2)}\n`);
+  console.log('新しい掲載画像案の確認ページを保存しました。');
+  process.exit(0);
+}
+
 const server = createServer((req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -100,6 +110,22 @@ const server = createServer((req, res) => {
     res.setHeader('Content-Type', url.pathname.endsWith('.js') ? 'text/javascript' : 'text/css'); res.end(url.pathname.endsWith('.js') ? js : css); return;
   }
   if (url.pathname === '/listing.json') return json(listing);
+  if (url.pathname === '/vibrant/poster') {
+    const screen = vibrantScreens.find(item => item.id === url.searchParams.get('screen'));
+    const device = url.searchParams.get('device');
+    if (!screen || !['iphone', 'ipad'].includes(device)) { res.writeHead(404); return res.end(); }
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.end(vibrantPoster(screen, device, listing.screens.find(item => item.id === screen.id).note));
+  }
+  if (url.pathname === '/vibrant/' || url.pathname === '/vibrant/contact-sheet') {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.end(vibrantGallery({ contactSheet: url.pathname.endsWith('contact-sheet') }).replaceAll('src="../', 'src="/assets/').replaceAll('href="../index.html"', 'href="/"'));
+  }
+  if (/^\/vibrant\/(iphone|ipad)-0[1-5]-(today|planner|change|shopping|menu)\.jpg$/.test(url.pathname)) {
+    const file = resolve(vibrantRoot, url.pathname.split('/').at(-1));
+    if (existsSync(file)) { res.setHeader('Content-Type', 'image/jpeg'); return res.end(readFileSync(file)); }
+    res.writeHead(404); return res.end();
+  }
   if (/^\/assets\/(iphone|ipad)-0[1-5]-(today|planner|change|shopping|menu)\.jpg$/.test(url.pathname)) {
     const file = resolve(assetsRoot, url.pathname.split('/').at(-1));
     if (existsSync(file)) { res.setHeader('Content-Type', 'image/jpeg'); res.end(readFileSync(file)); return; }

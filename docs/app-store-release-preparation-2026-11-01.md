@@ -45,6 +45,10 @@ App Store提出には必須情報とビルドの指定が必要。アカウン�
 
 ## 掲載画像案（11月2日作成）
 
+所有者から「もっと派手で惹きつける感じに」と要望があり、[鮮やかな別案](app-store-assets/ja/vibrant/index.html)を追加した。朱色・深緑・黄色・コーラル・ブラウンの5色、太く大きい見出し、少し傾けたアプリ画面で構成。初稿は残し、確認ページから比較できる。新しい案もiPhone・iPad各5枚で、[一覧画像](app-store-assets/ja/vibrant/overview.jpg)と[検証記録](app-store-assets/ja/vibrant/validation.json)を用意した。
+
+別案の再表示は同じプレビューの `/vibrant/`、再出力は `node scripts/preview-app-store.mjs --export-vibrant`。画像は `/vibrant/poster?screen=01-today&device=iphone` 等をブラウザで撮影する。献立変更とメニュー詳細は実際に画面を開いて撮影した。枠を `overflow:clip` にし、内部ボタンへフォーカスした際にポスター全体がスクロールして見出しが欠けないことを確認している。
+
 「今日の献立」「予定に合わせた献立」「料理の変更」「買い物」「わが家のメニュー」の5枚を、iPhone用1179×2556・iPad用2048×2732で用意した。10枚ともJPEG、透過なし。掲載画像内にも有料機能の注記を付けている。
 
 画像は実際の `mobile/src` の画面・CSSを使い、認証と読み取りデータだけを架空データへ差し替えたブラウザ描画。製品コードは変更していない。本人の写真・メール・家族情報は使用せず、プレビューは保存不可・外部通信不可とした。
