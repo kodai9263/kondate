@@ -45,6 +45,10 @@ App Store提出には必須情報とビルドの指定が必要。アカウン�
 
 ## 掲載画像案（11月2日作成）
 
+11月3日、「トップページのようにご飯が写っていて、リアルでモダンな感じに」という要望に合わせ、[料理写真を使った案](app-store-assets/ja/photo/index.html)を追加した。既存の `public/images` にある食卓・うどん・照り焼き・豆腐ハンバーグの写真を使用し、余白、明朝体、白・深緑・温かみのある差し色で統一。写真はアプリ画面の外に置き、実際のアプリ画面と区別している。[10枚の一覧](app-store-assets/ja/photo/overview.jpg)、[検証記録](app-store-assets/ja/photo/validation.json)、[配置の測定結果](app-store-assets/ja/photo/layout-check.json)を保存した。
+
+料理写真の案は `/photo/` で確認でき、確認ページの再出力は `node scripts/preview-app-store.mjs --export-photo`。撮影ページは `/photo/poster?screen=01-today&device=iphone` 等。iPhone・iPad各5枚の見出しと注記のはみ出し、写真の読み込み、375px幅の確認ページを検証。前の案も保持し、Appleへの登録と実機との最終照合は引き続き未実施。
+
 所有者から「もっと派手で惹きつける感じに」と要望があり、[鮮やかな別案](app-store-assets/ja/vibrant/index.html)を追加した。朱色・深緑・黄色・コーラル・ブラウンの5色、太く大きい見出し、少し傾けたアプリ画面で構成。初稿は残し、確認ページから比較できる。新しい案もiPhone・iPad各5枚で、[一覧画像](app-store-assets/ja/vibrant/overview.jpg)と[検証記録](app-store-assets/ja/vibrant/validation.json)を用意した。
 
 別案の再表示は同じプレビューの `/vibrant/`、再出力は `node scripts/preview-app-store.mjs --export-vibrant`。画像は `/vibrant/poster?screen=01-today&device=iphone` 等をブラウザで撮影する。献立変更とメニュー詳細は実際に画面を開いて撮影した。枠を `overflow:clip` にし、内部ボタンへフォーカスした際にポスター全体がスクロールして見出しが欠けないことを確認している。

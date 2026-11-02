@@ -1,0 +1,177 @@
+{
+  "checkedOn": "2026-11-03",
+  "sourceCommit": "694af57",
+  "status": "料理写真を使った掲載画像案。Appleへ未登録、実機照合前。",
+  "images": [
+    {
+      "file": "ipad-01-today.jpg",
+      "width": 2048,
+      "height": 2732,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "63ebe08f6cc0c723c455c4acf05731bc51255d1e4f72811d41ec78cc41c0aa75",
+      "passed": true
+    },
+    {
+      "file": "ipad-02-planner.jpg",
+      "width": 2048,
+      "height": 2732,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "2a94883e13c4d7e91fa80280dedf1a0d3fc4a2fd41dd87fef0d67208feb76357",
+      "passed": true
+    },
+    {
+      "file": "ipad-03-change.jpg",
+      "width": 2048,
+      "height": 2732,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "d554a8e8a8e171b36b13c793972f51de61bab34d4ef004881b6516aa80e4b215",
+      "passed": true
+    },
+    {
+      "file": "ipad-04-shopping.jpg",
+      "width": 2048,
+      "height": 2732,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "7fe95ef27f6caa81d2a4aaa9faa37f9bced75dcb8e8157224666921efff409ae",
+      "passed": true
+    },
+    {
+      "file": "ipad-05-menu.jpg",
+      "width": 2048,
+      "height": 2732,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "d1b0f9269fc1c60bcc98f5a1e19e583b7432ca7e26bb74b99a5be652915b08fd",
+      "passed": true
+    },
+    {
+      "file": "iphone-01-today.jpg",
+      "width": 1179,
+      "height": 2556,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "a3e1d43fed7724b467ed7e470cea45ec94d9ca82fc61e36eaab2689c7d07d52a",
+      "passed": true
+    },
+    {
+      "file": "iphone-02-planner.jpg",
+      "width": 1179,
+      "height": 2556,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "185bbf308af74c31fd35ae7842d8944945e63a8b306060d4765080ccba110fa8",
+      "passed": true
+    },
+    {
+      "file": "iphone-03-change.jpg",
+      "width": 1179,
+      "height": 2556,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "31b8ed77fec7d82bb28a8e1ea38853ea0119d87e89481696744b5dfb4ee59a95",
+      "passed": true
+    },
+    {
+      "file": "iphone-04-shopping.jpg",
+      "width": 1179,
+      "height": 2556,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "f7f36718096f7bc669b1ae4b7145d717ddb5c51da651ac428e398dd88f5bce57",
+      "passed": true
+    },
+    {
+      "file": "iphone-05-menu.jpg",
+      "width": 1179,
+      "height": 2556,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "b734d795af33c931c29e70fedcdec8f561424176af0c7d893cafd0ece9c873ed",
+      "passed": true
+    }
+  ],
+  "photos": [
+    {
+      "path": "public/images/family-dinner.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "62d40e33f2ba1a3c1bf771d57b2509a93edc689c24cf328da3718c823ac1a053",
+      "edited": false
+    },
+    {
+      "path": "public/images/udon.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "298281cfa61a5d638825491b4ccf992c23ffcefd088a097718ef3e7fa854c829",
+      "edited": false
+    },
+    {
+      "path": "public/images/chicken-teriyaki.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "9e6a5500d8d38d30cf4a846d795eb2f7e8edebca7a7f86e5b4ce4318b3b01def",
+      "edited": false
+    },
+    {
+      "path": "public/images/tofu-hamburg.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "5ca200b8b4631a4ffb048de460e16d00dbdced79e231e3c0e4d2301ae1ec02c4",
+      "edited": false
+    }
+  ],
+  "colors": [
+    {
+      "id": "01-today",
+      "body": 13.12,
+      "accent": 5.81
+    },
+    {
+      "id": "02-planner",
+      "body": 9.96,
+      "accent": 5.18
+    },
+    {
+      "id": "03-change",
+      "body": 11.72,
+      "accent": 7.87
+    },
+    {
+      "id": "04-shopping",
+      "body": 13.12,
+      "accent": 5.81
+    },
+    {
+      "id": "05-menu",
+      "body": 10.56,
+      "accent": 5.48
+    }
+  ],
+  "originalsPreserved": true,
+  "productionChanged": false,
+  "productCodeChanged": false,
+  "personalDataUsed": false,
+  "visualChecks": [
+    "全10枚の見出し・写真・注記を一覧で目視確認",
+    "写真とアプリ画面を別々の領域へ配置",
+    "アプリ内は実際のmobile/srcと架空の家族データで表示",
+    "献立変更とメニュー詳細を画面操作して撮影",
+    "375px幅の確認ページには横はみ出しなし、比較画像を含む12枚が読み込み成功"
+  ],
+  "codeChecks": [
+    "node --check",
+    "ESLint",
+    "git diff --check",
+    "JPEGの寸法・透過なし",
+    "全画像の文字コントラスト4.5:1以上",
+    "確認ページの全相対リンクが存在"
+  ],
+  "pending": [
+    "提出ビルドとネイティブ実機での最終照合",
+    "Appleへの画像登録・審査提出"
+  ]
+}

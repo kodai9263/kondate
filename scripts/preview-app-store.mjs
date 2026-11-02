@@ -4,11 +4,13 @@ import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { todaySnapshot, shoppingSnapshot, plannerSnapshot, recipes, menuDetail, editorData } from '../tests/fixtures/app-store-data.mjs';
 import { vibrantScreens, vibrantPoster, vibrantGallery } from './app-store-vibrant-design.mjs';
+import { photoScreens, photoPoster, photoGallery } from './app-store-photo-design.mjs';
 
 const root = process.cwd();
 const assetsRoot = resolve(root, 'docs/app-store-assets/ja');
 const listing = JSON.parse(readFileSync(resolve(assetsRoot, 'listing.json'), 'utf8'));
 const vibrantRoot = resolve(assetsRoot, 'vibrant');
+const photoRoot = resolve(assetsRoot, 'photo');
 const escape = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 
 // 本番のApp/CSSをそのまま描画し、認証と読み取りデータだけを掲載用に差し替える。
@@ -86,6 +88,14 @@ if (process.argv.includes('--export-vibrant')) {
   process.exit(0);
 }
 
+if (process.argv.includes('--export-photo')) {
+  mkdirSync(photoRoot, { recursive: true });
+  writeFileSync(resolve(photoRoot, 'index.html'), photoGallery());
+  writeFileSync(resolve(photoRoot, 'design.json'), `${JSON.stringify(photoScreens, null, 2)}\n`);
+  console.log('料理写真を使った掲載画像案の確認ページを保存しました。');
+  process.exit(0);
+}
+
 const server = createServer((req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -110,6 +120,26 @@ const server = createServer((req, res) => {
     res.setHeader('Content-Type', url.pathname.endsWith('.js') ? 'text/javascript' : 'text/css'); res.end(url.pathname.endsWith('.js') ? js : css); return;
   }
   if (url.pathname === '/listing.json') return json(listing);
+  if (url.pathname === '/photo/poster') {
+    const screen = photoScreens.find(item => item.id === url.searchParams.get('screen'));
+    const device = url.searchParams.get('device');
+    if (!screen || !['iphone', 'ipad'].includes(device)) { res.writeHead(404); return res.end(); }
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.end(photoPoster(screen, device, listing.screens.find(item => item.id === screen.id).note));
+  }
+  if (url.pathname === '/photo/' || url.pathname === '/photo/contact-sheet') {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.end(photoGallery({ contactSheet: url.pathname.endsWith('contact-sheet') }).replaceAll('src="../vibrant/', 'src="/vibrant/').replaceAll('href="../index.html"', 'href="/"'));
+  }
+  if (/^\/photo\/(iphone|ipad)-0[1-5]-(today|planner|change|shopping|menu)\.jpg$/.test(url.pathname)) {
+    const file = resolve(photoRoot, url.pathname.split('/').at(-1));
+    if (existsSync(file)) { res.setHeader('Content-Type', 'image/jpeg'); return res.end(readFileSync(file)); }
+    res.writeHead(404); return res.end();
+  }
+  if (/^\/food\/(family-dinner|chicken-teriyaki|tofu-hamburg|udon)\.png$/.test(url.pathname)) {
+    const file = resolve(root, 'public/images', url.pathname.split('/').at(-1));
+    res.setHeader('Content-Type', 'image/png'); return res.end(readFileSync(file));
+  }
   if (url.pathname === '/vibrant/poster') {
     const screen = vibrantScreens.find(item => item.id === url.searchParams.get('screen'));
     const device = url.searchParams.get('device');
