@@ -1,0 +1,272 @@
+{
+  "checkedOn": "2026-11-03",
+  "designCommit": "084fdb59c6313acacda61676a51681e58f82b09a",
+  "status": "掲載画像と保存済みビルド12のデータ照合済み。実機で初回設定未完了の案内不備を確認し、ローカルで修正。主要画面の実機照合は継続中。",
+  "build": {
+    "bundleId": "app.kyounogohan.mobile",
+    "version": "1.0",
+    "build": "12",
+    "supportedDeviceFamilies": [
+      1,
+      2
+    ],
+    "mobileSourceCommit": "ac89fee",
+    "changedSourceFilesSinceBuild12": [],
+    "packagedPublicFiles": [
+      {
+        "path": "assets/base-Kd_80LJ_.js",
+        "archiveSha256": "b64e4c2f7b8ff9e03f5f88ce9fbc007a1b35e6d8e3e8859ebb925a0f36db87fb",
+        "localSha256": "b64e4c2f7b8ff9e03f5f88ce9fbc007a1b35e6d8e3e8859ebb925a0f36db87fb"
+      },
+      {
+        "path": "assets/index-1gw2Mz_b.css",
+        "archiveSha256": "30a1bec16cf98ab2dfb9eb2b9b57bb3e00ba697a285374bcc3e900ec31ca35c4",
+        "localSha256": "30a1bec16cf98ab2dfb9eb2b9b57bb3e00ba697a285374bcc3e900ec31ca35c4"
+      },
+      {
+        "path": "assets/index-B-TLhu8W.js",
+        "archiveSha256": "b827f466b5807285a60a14d08f03f48017ed63e863a42b62e05fd677b43dd41f",
+        "localSha256": "b827f466b5807285a60a14d08f03f48017ed63e863a42b62e05fd677b43dd41f"
+      },
+      {
+        "path": "assets/native-DrdGFlKo.js",
+        "archiveSha256": "0bc2d3f29e595534a89c4e3c96ee065f53ef4008e7789716ac0ca1a5f3e99101",
+        "localSha256": "0bc2d3f29e595534a89c4e3c96ee065f53ef4008e7789716ac0ca1a5f3e99101"
+      },
+      {
+        "path": "assets/web-6PcK9y5Y.js",
+        "archiveSha256": "7f5aaf210f6a6022d9d79853afb0db578b81a2a797664d6a8d0d734454e14715",
+        "localSha256": "7f5aaf210f6a6022d9d79853afb0db578b81a2a797664d6a8d0d734454e14715"
+      },
+      {
+        "path": "assets/web-BhaVL80_.js",
+        "archiveSha256": "30cda69852abe5b801eadb0ad8c06fbff2e84da03ab6ee0b8597122925893598",
+        "localSha256": "30cda69852abe5b801eadb0ad8c06fbff2e84da03ab6ee0b8597122925893598"
+      },
+      {
+        "path": "cordova.js",
+        "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "localSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "cordova_plugins.js",
+        "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "localSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "index.html",
+        "archiveSha256": "b75c866928afa79ef0ba33e25e84ec8cfb26caa66eed53d816c7336f331593f2",
+        "localSha256": "b75c866928afa79ef0ba33e25e84ec8cfb26caa66eed53d816c7336f331593f2"
+      }
+    ],
+    "packagedPublicMatches": true
+  },
+  "screenshots": {
+    "count": 10,
+    "images": [
+      {
+        "file": "ipad-01-today.jpg",
+        "width": 2048,
+        "height": 2732,
+        "format": "jpeg",
+        "hasAlpha": false,
+        "sha256": "63ebe08f6cc0c723c455c4acf05731bc51255d1e4f72811d41ec78cc41c0aa75",
+        "passed": true
+      },
+      {
+        "file": "ipad-02-planner.jpg",
+        "width": 2048,
+        "height": 2732,
+        "format": "jpeg",
+        "hasAlpha": false,
+        "sha256": "2a94883e13c4d7e91fa80280dedf1a0d3fc4a2fd41dd87fef0d67208feb76357",
+        "passed": true
+      },
+      {
+        "file": "ipad-03-change.jpg",
+        "width": 2048,
+        "height": 2732,
+        "format": "jpeg",
+        "hasAlpha": false,
+        "sha256": "d554a8e8a8e171b36b13c793972f51de61bab34d4ef004881b6516aa80e4b215",
+        "passed": true
+      },
+      {
+        "file": "ipad-04-shopping.jpg",
+        "width": 2048,
+        "height": 2732,
+        "format": "jpeg",
+        "hasAlpha": false,
+        "sha256": "7fe95ef27f6caa81d2a4aaa9faa37f9bced75dcb8e8157224666921efff409ae",
+        "passed": true
+      },
+      {
+        "file": "ipad-05-menu.jpg",
+        "width": 2048,
+        "height": 2732,
+        "format": "jpeg",
+        "hasAlpha": false,
+        "sha256": "d1b0f9269fc1c60bcc98f5a1e19e583b7432ca7e26bb74b99a5be652915b08fd",
+        "passed": true
+      },
+      {
+        "file": "iphone-01-today.jpg",
+        "width": 1179,
+        "height": 2556,
+        "format": "jpeg",
+        "hasAlpha": false,
+        "sha256": "a3e1d43fed7724b467ed7e470cea45ec94d9ca82fc61e36eaab2689c7d07d52a",
+        "passed": true
+      },
+      {
+        "file": "iphone-02-planner.jpg",
+        "width": 1179,
+        "height": 2556,
+        "format": "jpeg",
+        "hasAlpha": false,
+        "sha256": "185bbf308af74c31fd35ae7842d8944945e63a8b306060d4765080ccba110fa8",
+        "passed": true
+      },
+      {
+        "file": "iphone-03-change.jpg",
+        "width": 1179,
+        "height": 2556,
+        "format": "jpeg",
+        "hasAlpha": false,
+        "sha256": "31b8ed77fec7d82bb28a8e1ea38853ea0119d87e89481696744b5dfb4ee59a95",
+        "passed": true
+      },
+      {
+        "file": "iphone-04-shopping.jpg",
+        "width": 1179,
+        "height": 2556,
+        "format": "jpeg",
+        "hasAlpha": false,
+        "sha256": "f7f36718096f7bc669b1ae4b7145d717ddb5c51da651ac428e398dd88f5bce57",
+        "passed": true
+      },
+      {
+        "file": "iphone-05-menu.jpg",
+        "width": 1179,
+        "height": 2556,
+        "format": "jpeg",
+        "hasAlpha": false,
+        "sha256": "b734d795af33c931c29e70fedcdec8f561424176af0c7d893cafd0ece9c873ed",
+        "passed": true
+      }
+    ],
+    "allFilesPassed": true,
+    "nativeCapture": false,
+    "usesFictionalData": true,
+    "appleSpecificationCheckedOn": "2026-11-03",
+    "appleSpecificationUrl": "https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/",
+    "appleUploadValidated": false
+  },
+  "featureComparison": [
+    {
+      "screen": "01-today",
+      "source": [
+        "mobile/src/App.tsx",
+        "src/app/api/mobile/v1/today/route.ts"
+      ],
+      "checked": "朝食・夕食・材料・手順の表示。掲載画像に家族プランの注記あり。",
+      "deviceVerified": false
+    },
+    {
+      "screen": "02-planner",
+      "source": [
+        "mobile/src/MobilePlanner.tsx"
+      ],
+      "checked": "作らない日の表示、夕食材料の除外案内、献立を戻すボタン。",
+      "deviceVerified": false
+    },
+    {
+      "screen": "03-change",
+      "source": [
+        "mobile/src/MobilePlanner.tsx",
+        "src/app/api/mobile/v1/planner/route.ts"
+      ],
+      "checked": "主菜・副菜の選択画面と、保存後の買い物リスト反映。今回の確認では保存しない。",
+      "deviceVerified": false
+    },
+    {
+      "screen": "04-shopping",
+      "source": [
+        "mobile/src/App.tsx"
+      ],
+      "checked": "買うものの追加欄、カテゴリ別リスト、チェック欄。今回の確認では追加・チェックを変更しない。",
+      "deviceVerified": false
+    },
+    {
+      "screen": "05-menu",
+      "source": [
+        "mobile/src/MobileMenu.tsx",
+        "mobile/src/MenuEditor.tsx"
+      ],
+      "checked": "料理の詳細、材料・作り方、登録・編集画面への導線。今回の確認では保存しない。",
+      "deviceVerified": false
+    }
+  ],
+  "deviceCheck": {
+    "status": "blocked_by_initial_setup",
+    "usbConnected": true,
+    "displayMethod": "QuickTimeのiPhone画面プレビュー。録画・端末へのインストールはしていない。",
+    "observedScreens": {
+      "settings": "通知設定の文字・ボタンに目立つ崩れなし。",
+      "today": "「この家族の献立にはアクセスできません。」を表示し、献立は表示されなかった。"
+    },
+    "accountStateReadOnlyCheck": {
+      "accountScope": "所有者が確認した購入テスト用アカウント",
+      "emailConfirmed": true,
+      "freeTrialActive": true,
+      "householdFirstMember": true,
+      "initialPlannerSetupComplete": false
+    },
+    "cause": "初回設定未完了でも、今日のAPIの403を一律にアクセス拒否と表示していた。",
+    "installedBuildVerified": false,
+    "iphoneMainScreensVerified": false,
+    "ipadVisualVerified": false,
+    "xcodeState": "Install Requiredのため端末一覧コマンドを中断。初期設定は実行していない。"
+  },
+  "remaining": [
+    "購入テスト用アカウントの初回献立設定を本人が確認して完了",
+    "修正をTestFlightへ反映する前に配布承認を確認",
+    "実機上のTestFlightバージョン確認",
+    "iPhoneで今日・献立・買い物・メニューの表示を照合",
+    "iPad表示の最終確認",
+    "App Store Connectで画像を登録して各欄の受理を確認",
+    "初回設定をアプリ内で完了する導線は未実装。現在はWeb版での設定が必要。"
+  ],
+  "localFix": {
+    "deployed": false,
+    "testFlightUpdated": false,
+    "files": [
+      "mobile/src/planningAccess.ts",
+      "mobile/src/today.ts",
+      "mobile/src/planner.ts",
+      "mobile/src/App.tsx"
+    ],
+    "changes": [
+      "初回設定・期限終了・家族共有の403案内を分離",
+      "今日に最新の献立を確認ボタンを追加",
+      "再取得に失敗した場合は以前の献立を表示し続けない"
+    ],
+    "unitTests": {
+      "files": 3,
+      "passed": 34
+    },
+    "typecheck": "passed",
+    "lint": "passed",
+    "preview": {
+      "width": 375,
+      "horizontalOverflow": false,
+      "retryButtonVerified": true
+    },
+    "evidenceDirectory": "/private/tmp/kondate-store-device-review-2026-11-03",
+    "mobileBuild": {
+      "status": "passed",
+      "command": "npm --prefix mobile run build -- --configLoader runner --outDir /private/tmp/kondate-planning-access-build.kDLyAg",
+      "note": "共有node_modulesへの一時設定ファイル書き込みが制限されたため、Viteのrunnerを使用。配布済みビルド12の格納先は変更していない。"
+    }
+  }
+}

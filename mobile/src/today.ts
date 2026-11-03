@@ -1,3 +1,5 @@
+import { planningAccessMessage } from "./planningAccess";
+
 export type TodaySnapshot = {
   version: 1;
   fetchedAt: string;
@@ -24,7 +26,11 @@ export async function loadToday(accessToken: string): Promise<TodaySnapshot> {
     headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store",
   });
   if (response.status === 401) throw new Error("ログインの有効期限が切れました。もう一度ログインしてください。");
-  if (response.status === 403) throw new Error("この家族の献立にはアクセスできません。");
+  if (response.status === 403) {
+    const body: unknown = await response.json().catch(() => null);
+    const code = body && typeof body === "object" && "error" in body ? body.error : null;
+    throw new Error(planningAccessMessage(code) ?? "献立を表示できませんでした。「設定」で利用状態を確認してください。");
+  }
   if (!response.ok) throw new Error("今日の献立を読み込めませんでした。接続を確認してください。");
   const value: unknown = await response.json();
   if (!isTodaySnapshot(value)) throw new Error("今日の献立の形式を確認できませんでした。");

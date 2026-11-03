@@ -11,6 +11,7 @@ const assetsRoot = resolve(root, 'docs/app-store-assets/ja');
 const listing = JSON.parse(readFileSync(resolve(assetsRoot, 'listing.json'), 'utf8'));
 const vibrantRoot = resolve(assetsRoot, 'vibrant');
 const photoRoot = resolve(assetsRoot, 'photo');
+const setupRequired = process.argv.includes('--setup-required');
 const escape = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 
 // 本番のApp/CSSをそのまま描画し、認証と読み取りデータだけを掲載用に差し替える。
@@ -104,6 +105,10 @@ const server = createServer((req, res) => {
   if (req.method !== 'GET') { res.writeHead(405); res.end('掲載用プレビューでは保存できません。'); return; }
   const json = value => { res.setHeader('Content-Type', 'application/json; charset=utf-8'); res.end(JSON.stringify(value)); };
   if (url.pathname.startsWith('/api/')) {
+    if (setupRequired && ['/api/mobile/v1/today', '/api/mobile/v1/planner'].includes(url.pathname)) {
+      res.statusCode = 403;
+      return json({ error: 'planner_setup_required' });
+    }
     switch (url.pathname) {
       case '/api/mobile/v1/today': return json(todaySnapshot);
       case '/api/mobile/v1/shopping': return json(shoppingSnapshot);
