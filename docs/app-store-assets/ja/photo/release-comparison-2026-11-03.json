@@ -1,7 +1,7 @@
 {
   "checkedOn": "2026-11-03",
   "designCommit": "084fdb59c6313acacda61676a51681e58f82b09a",
-  "status": "掲載画像と保存済みビルド12のデータ照合済み。実機で初回設定未完了の案内不備を確認し、ローカルで修正。主要画面の実機照合は継続中。",
+  "status": "掲載画像と保存済みビルド12のデータ照合済み。初回設定未完了の案内をローカルで修正。普段のアカウントでの献立表示は本人確認済みで、映像停止により最終的な見た目の照合は未完了。",
   "build": {
     "bundleId": "app.kyounogohan.mobile",
     "version": "1.0",
@@ -208,7 +208,7 @@
     }
   ],
   "deviceCheck": {
-    "status": "blocked_by_initial_setup",
+    "status": "awaiting_device_screenshots",
     "usbConnected": true,
     "displayMethod": "QuickTimeのiPhone画面プレビュー。録画・端末へのインストールはしていない。",
     "observedScreens": {
@@ -226,16 +226,17 @@
     "installedBuildVerified": false,
     "iphoneMainScreensVerified": false,
     "ipadVisualVerified": false,
-    "xcodeState": "Install Requiredのため端末一覧コマンドを中断。初期設定は実行していない。"
+    "xcodeState": "Install Requiredのため端末一覧コマンドを中断。初期設定は実行していない。",
+    "normalAccountTodayDisplayed": "本人が普段のアカウントで献立表示を確認。Mac側の映像はロック画面のままで、表示接続の開き直し後も確認できなかった。",
+    "nextVerificationMethod": "本人から送られるアプリ画面のスクリーンショットを照合する。"
   },
   "remaining": [
-    "購入テスト用アカウントの初回献立設定を本人が確認して完了",
-    "修正をTestFlightへ反映する前に配布承認を確認",
+    "iPhoneの今日・献立・買い物・メニューの画面をスクリーンショットで照合",
     "実機上のTestFlightバージョン確認",
-    "iPhoneで今日・献立・買い物・メニューの表示を照合",
+    "ローカル修正をTestFlightへ反映する前に配布承認を確認",
+    "初回設定をアプリ内で完了する導線は未実装。現在はWeb版での設定が必要",
     "iPad表示の最終確認",
-    "App Store Connectで画像を登録して各欄の受理を確認",
-    "初回設定をアプリ内で完了する導線は未実装。現在はWeb版での設定が必要。"
+    "App Store Connectで画像を登録して各欄の受理を確認"
   ],
   "localFix": {
     "deployed": false,
