@@ -1,7 +1,7 @@
 {
   "checkedOn": "2026-11-03",
   "designCommit": "084fdb59c6313acacda61676a51681e58f82b09a",
-  "status": "掲載画像と保存済みビルド12のデータ照合済み。掲載画像に使うiPhoneの各画面の表示を目視確認済み。実機のバージョン確認とiPadの表示確認は未完了。",
+  "status": "掲載画像と保存済みビルド12のデータ照合済み。TestFlight 1.0 (12) のiPhone実機で、掲載画像に使う各画面の表示を目視確認済み。iPadの表示確認とAppleへの画像登録は未完了。",
   "build": {
     "bundleId": "app.kyounogohan.mobile",
     "version": "1.0",
@@ -318,12 +318,12 @@
       "initialPlannerSetupComplete": false
     },
     "cause": "初回設定未完了でも、今日のAPIの403を一律にアクセス拒否と表示していた。",
-    "installedBuildVerified": false,
+    "installedBuildVerified": true,
     "iphoneMainScreensVerified": true,
     "ipadVisualVerified": false,
     "xcodeState": "Install Requiredのため端末一覧コマンドを中断。初期設定は実行していない。",
     "normalAccountTodayDisplayed": "本人のアカウント切り替え後、11月3日の献立表示をQuickTimeプレビューで直接確認。",
-    "nextVerificationMethod": "TestFlightの実機画面でバージョン・ビルド番号を読み取り確認する。",
+    "nextVerificationMethod": "iPadの実機またはシミュレーターで各掲載画面を確認する。シミュレーターはXcodeの初期設定が必要。",
     "streamRecovered": true,
     "todayEvidence": [
       {
@@ -343,10 +343,19 @@
     ],
     "verificationScope": "実機での表示のみ。保存・購入・削除の操作は行わない。",
     "menuPreviewRecovery": "黒くなったQuickTimeプレビューを録画せず作り直し、iPhoneの画面を再選択して復帰した。",
-    "iphoneMainScreensVerificationScope": "掲載画像に使う今日・献立・主菜選択・買い物・メニューの表示。編集画面への遷移と既存値の読み込みを含む。入力・保存・購入・削除は含めない。"
+    "iphoneMainScreensVerificationScope": "掲載画像に使う今日・献立・主菜選択・買い物・メニューの表示。編集画面への遷移と既存値の読み込みを含む。入力・保存・購入・削除は含めない。",
+    "installedVersion": "1.0",
+    "installedBuild": "12",
+    "installedBuildEvidence": {
+      "file": "/private/tmp/kondate-store-device-review-2026-11-03/testflight-version.png",
+      "width": 590,
+      "height": 1049,
+      "format": "jpeg",
+      "sha256": "8f6689a68a184f0405597eac1a4b7c4cc61f3519bd408687e3d61cdb834853a1",
+      "observed": "TestFlightの「現在テスト中」に、きょうのごはん 1.0 (12) と「開く」を確認。更新・インストールは未実施。"
+    }
   },
   "remaining": [
-    "実機上のTestFlightバージョン確認",
     "ローカル修正をTestFlightへ反映する前に配布承認を確認",
     "初回設定をアプリ内で完了する導線は未実装。現在はWeb版での設定が必要",
     "iPad表示の最終確認",
