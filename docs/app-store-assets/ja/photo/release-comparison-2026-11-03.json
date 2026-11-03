@@ -1,7 +1,7 @@
 {
   "checkedOn": "2026-11-03",
   "designCommit": "084fdb59c6313acacda61676a51681e58f82b09a",
-  "status": "掲載画像と保存済みビルド12のデータ照合済み。普段のアカウントで「今日」の献立・材料・手順を実機確認済み。残る画面の照合は継続中。",
+  "status": "掲載画像と保存済みビルド12のデータ照合済み。iPhoneの今日・献立一覧・主菜選択・買い物を目視確認。メニューの照合は継続中。",
   "build": {
     "bundleId": "app.kyounogohan.mobile",
     "version": "1.0",
@@ -179,7 +179,15 @@
         "mobile/src/MobilePlanner.tsx"
       ],
       "checked": "作らない日の表示、夕食材料の除外案内、献立を戻すボタン。",
-      "deviceVerified": false
+      "deviceVerified": true,
+      "deviceVerificationScope": "変更ボタンと作らない日の説明の表示のみ。設定変更は未実施。",
+      "deviceEvidence": {
+        "file": "/private/tmp/kondate-store-device-review-2026-11-03/planner-actions.png",
+        "width": 590,
+        "height": 1049,
+        "format": "jpeg",
+        "sha256": "447df63e5d213605b05458937ee9c8f68125960d87bd6acc06c1e1e31b4a6354"
+      }
     },
     {
       "screen": "03-change",
@@ -188,7 +196,15 @@
         "src/app/api/mobile/v1/planner/route.ts"
       ],
       "checked": "主菜・副菜の選択画面と、保存後の買い物リスト反映。今回の確認では保存しない。",
-      "deviceVerified": false
+      "deviceVerified": true,
+      "deviceVerificationScope": "候補一覧の表示のみ。選択・保存は未実施。",
+      "deviceEvidence": {
+        "file": "/private/tmp/kondate-store-device-review-2026-11-03/planner-picker.png",
+        "width": 590,
+        "height": 1049,
+        "format": "jpeg",
+        "sha256": "96c6a8f0ad9d01d3d393fe869643231effc05a52be163689a1fe7b19912a9a98"
+      }
     },
     {
       "screen": "04-shopping",
@@ -196,7 +212,24 @@
         "mobile/src/App.tsx"
       ],
       "checked": "買うものの追加欄、カテゴリ別リスト、チェック欄。今回の確認では追加・チェックを変更しない。",
-      "deviceVerified": false
+      "deviceVerified": true,
+      "deviceVerificationScope": "期間・件数・追加欄・カテゴリ別の商品名と分量・チェック欄の表示のみ。追加・チェック・削除は未実施。",
+      "deviceEvidence": [
+        {
+          "file": "/private/tmp/kondate-store-device-review-2026-11-03/shopping-overview.png",
+          "width": 590,
+          "height": 1049,
+          "format": "jpeg",
+          "sha256": "66d045d4f0c5c16f503de0fac9072f6195b6b482bbd3fa5544cbe5bd76152051"
+        },
+        {
+          "file": "/private/tmp/kondate-store-device-review-2026-11-03/shopping-items.png",
+          "width": 590,
+          "height": 1049,
+          "format": "jpeg",
+          "sha256": "c907cabd077bc4460cb5089cbe7e689d77d0041b8abc6506c3ead463d79e8521"
+        }
+      ]
     },
     {
       "screen": "05-menu",
@@ -214,7 +247,10 @@
     "displayMethod": "QuickTimeのiPhone画面プレビュー。録画・端末へのインストールはしていない。",
     "observedScreens": {
       "settings": "通知設定の文字・ボタンに目立つ崩れなし。",
-      "today": "11月3日の鮭の塩焼き、目安35分、材料・調味料、作ること5手順を確認。目視で横はみ出しや文章の欠けなし。朝食は予定なしの状態を表示。"
+      "today": "11月3日の鮭の塩焼き、目安35分、材料・調味料、作ること5手順を確認。目視で横はみ出しや文章の欠けなし。朝食は予定なしの状態を表示。",
+      "planner": "主菜を変更・副菜を変更・固定・この日は作らないのボタン、既存の作らない日の説明と献立を戻すボタンを確認。長い料理名も枠内で折り返している。",
+      "plannerPicker": "主菜選択のダイアログ、料理名検索、閉じるボタン、候補の料理名・副菜・調理時間を確認。候補は選択していない。",
+      "shopping": "7日間の期間・件数・更新状態・追加欄と、肉・魚・野菜などの商品名、分量、チェック欄を確認。チェック済みの品は打ち消し線で区別され、確認した範囲に横はみ出しなし。"
     },
     "accountStateReadOnlyCheck": {
       "accountScope": "所有者が確認した購入テスト用アカウント",
@@ -246,10 +282,11 @@
         "format": "jpeg",
         "sha256": "07e903bb82b6f76d3c5042909a3b7de12bee8e7c7b459c51c1e75c4df19ccfe9"
       }
-    ]
+    ],
+    "verificationScope": "実機での表示のみ。保存・購入・削除の操作は行わない。"
   },
   "remaining": [
-    "iPhoneの献立一覧・主菜選択・買い物・メニューの画面を照合",
+    "iPhoneのメニューの画面を照合",
     "実機上のTestFlightバージョン確認",
     "ローカル修正をTestFlightへ反映する前に配布承認を確認",
     "初回設定をアプリ内で完了する導線は未実装。現在はWeb版での設定が必要",
