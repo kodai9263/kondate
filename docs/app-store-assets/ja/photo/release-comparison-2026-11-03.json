@@ -1,7 +1,7 @@
 {
   "checkedOn": "2026-11-03",
   "designCommit": "084fdb59c6313acacda61676a51681e58f82b09a",
-  "status": "掲載画像と保存済みビルド12のデータ照合済み。iPhoneの今日・献立一覧・主菜選択・買い物を目視確認。メニューの照合は継続中。",
+  "status": "掲載画像と保存済みビルド12のデータ照合済み。掲載画像に使うiPhoneの各画面の表示を目視確認済み。実機のバージョン確認とiPadの表示確認は未完了。",
   "build": {
     "bundleId": "app.kyounogohan.mobile",
     "version": "1.0",
@@ -238,7 +238,59 @@
         "mobile/src/MenuEditor.tsx"
       ],
       "checked": "料理の詳細、材料・作り方、登録・編集画面への導線。今回の確認では保存しない。",
-      "deviceVerified": false
+      "deviceVerified": true,
+      "deviceVerificationScope": "料理一覧・検索欄・登録ボタン、詳細の料理名・材料・分量・作り方1〜10と末尾のボタン、既存値が読み込まれた編集画面を確認。登録は入口の表示まで。入力・保存・削除は未実施。",
+      "deviceEvidence": [
+        {
+          "file": "/private/tmp/kondate-store-device-review-2026-11-03/menu-list.png",
+          "width": 590,
+          "height": 1049,
+          "format": "jpeg",
+          "sha256": "0fc4de71774bd1f3d1b4b4c4d0d28ce4529ab9250de197bb82ce8f91742d4953"
+        },
+        {
+          "file": "/private/tmp/kondate-store-device-review-2026-11-03/menu-ingredients.png",
+          "width": 590,
+          "height": 1049,
+          "format": "jpeg",
+          "sha256": "cb146ceeac644801a56e9891880ef699141edcf1644dba5da0689ee7c89a0a0b"
+        },
+        {
+          "file": "/private/tmp/kondate-store-device-review-2026-11-03/menu-header.png",
+          "width": 590,
+          "height": 1049,
+          "format": "jpeg",
+          "sha256": "434003706f14ab7aa1584eddc65d29839478dba6df3e8483e099e4556f58e73b"
+        },
+        {
+          "file": "/private/tmp/kondate-store-device-review-2026-11-03/menu-editor.png",
+          "width": 590,
+          "height": 1049,
+          "format": "jpeg",
+          "sha256": "25c68a7ef28ca253564d5e126ae5f9dc48ef46f981bd042d33d942323bc6a7bf"
+        },
+        {
+          "file": "/private/tmp/kondate-store-device-review-2026-11-03/menu-overview.png",
+          "width": 590,
+          "height": 1049,
+          "format": "jpeg",
+          "sha256": "0005ce1a7af6ca96e3e31c89b82c137d5fef06e8397ab0de239e0696d36f4b38"
+        },
+        {
+          "file": "/private/tmp/kondate-store-device-review-2026-11-03/menu-steps.png",
+          "width": 590,
+          "height": 1049,
+          "format": "jpeg",
+          "sha256": "1f1316db8fdbd5e6e1c9fa31cec446f5f077ed22fd0de36d05d3d9dc9de10e3e"
+        },
+        {
+          "file": "/private/tmp/kondate-store-device-review-2026-11-03/menu-steps-end.png",
+          "width": 590,
+          "height": 1049,
+          "format": "jpeg",
+          "sha256": "bccb5304d786d6a10bdd30dd1ddd89f0e78954ac9835948cc41321234c6a34b3"
+        }
+      ]
     }
   ],
   "deviceCheck": {
@@ -250,7 +302,13 @@
       "today": "11月3日の鮭の塩焼き、目安35分、材料・調味料、作ること5手順を確認。目視で横はみ出しや文章の欠けなし。朝食は予定なしの状態を表示。",
       "planner": "主菜を変更・副菜を変更・固定・この日は作らないのボタン、既存の作らない日の説明と献立を戻すボタンを確認。長い料理名も枠内で折り返している。",
       "plannerPicker": "主菜選択のダイアログ、料理名検索、閉じるボタン、候補の料理名・副菜・調理時間を確認。候補は選択していない。",
-      "shopping": "7日間の期間・件数・更新状態・追加欄と、肉・魚・野菜などの商品名、分量、チェック欄を確認。チェック済みの品は打ち消し線で区別され、確認した範囲に横はみ出しなし。"
+      "shopping": "7日間の期間・件数・更新状態・追加欄と、肉・魚・野菜などの商品名、分量、チェック欄を確認。チェック済みの品は打ち消し線で区別され、確認した範囲に横はみ出しなし。",
+      "menuList": "料理カード、わが家の区分、調理時間を確認。長い料理名も枠内で折り返し、確認した範囲に横はみ出しなし。",
+      "menuIngredients": "4人分・約25分の表示、カレイと調味料の材料欄を確認。長い調味料名と分量はカード内で折り返し、確認した範囲に横はみ出しなし。",
+      "menuHeader": "カレイの煮付けの料理名、詳細から一覧に戻るボタン、最新確認と編集ボタン、4人分・約25分を確認。文字やボタンに目立つ欠けなし。",
+      "menuEditor": "編集ボタンから編集画面が開き、既存の料理名、25分、4人分が入力欄に読み込まれていることを確認。入力・保存・削除は未実施。",
+      "menuOverview": "メニューを登録、最新のメニューを確認、料理名検索、すべて・わが家の切り替えと件数表示を確認。入力・登録は未実施。",
+      "menuSteps": "作り方1〜10とカードの下端、削除・元レシピのボタンまで目視確認。文章は枠内で折り返し、末尾の文字切れなし。ボタン操作は未実施。"
     },
     "accountStateReadOnlyCheck": {
       "accountScope": "所有者が確認した購入テスト用アカウント",
@@ -261,11 +319,11 @@
     },
     "cause": "初回設定未完了でも、今日のAPIの403を一律にアクセス拒否と表示していた。",
     "installedBuildVerified": false,
-    "iphoneMainScreensVerified": false,
+    "iphoneMainScreensVerified": true,
     "ipadVisualVerified": false,
     "xcodeState": "Install Requiredのため端末一覧コマンドを中断。初期設定は実行していない。",
     "normalAccountTodayDisplayed": "本人のアカウント切り替え後、11月3日の献立表示をQuickTimeプレビューで直接確認。",
-    "nextVerificationMethod": "QuickTimeのiPhone画面プレビューで残りの画面を読み取り確認する。",
+    "nextVerificationMethod": "TestFlightの実機画面でバージョン・ビルド番号を読み取り確認する。",
     "streamRecovered": true,
     "todayEvidence": [
       {
@@ -283,10 +341,11 @@
         "sha256": "07e903bb82b6f76d3c5042909a3b7de12bee8e7c7b459c51c1e75c4df19ccfe9"
       }
     ],
-    "verificationScope": "実機での表示のみ。保存・購入・削除の操作は行わない。"
+    "verificationScope": "実機での表示のみ。保存・購入・削除の操作は行わない。",
+    "menuPreviewRecovery": "黒くなったQuickTimeプレビューを録画せず作り直し、iPhoneの画面を再選択して復帰した。",
+    "iphoneMainScreensVerificationScope": "掲載画像に使う今日・献立・主菜選択・買い物・メニューの表示。編集画面への遷移と既存値の読み込みを含む。入力・保存・購入・削除は含めない。"
   },
   "remaining": [
-    "iPhoneのメニューの画面を照合",
     "実機上のTestFlightバージョン確認",
     "ローカル修正をTestFlightへ反映する前に配布承認を確認",
     "初回設定をアプリ内で完了する導線は未実装。現在はWeb版での設定が必要",
