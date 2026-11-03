@@ -1,7 +1,7 @@
 {
   "checkedOn": "2026-11-03",
   "designCommit": "084fdb59c6313acacda61676a51681e58f82b09a",
-  "status": "掲載画像と保存済みビルド12のデータ照合済み。初回設定未完了の案内をローカルで修正。普段のアカウントでの献立表示は本人確認済みで、映像停止により最終的な見た目の照合は未完了。",
+  "status": "掲載画像と保存済みビルド12のデータ照合済み。普段のアカウントで「今日」の献立・材料・手順を実機確認済み。残る画面の照合は継続中。",
   "build": {
     "bundleId": "app.kyounogohan.mobile",
     "version": "1.0",
@@ -170,7 +170,8 @@
         "src/app/api/mobile/v1/today/route.ts"
       ],
       "checked": "朝食・夕食・材料・手順の表示。掲載画像に家族プランの注記あり。",
-      "deviceVerified": false
+      "deviceVerified": true,
+      "deviceEvidence": "today-overview.png / today-details.png"
     },
     {
       "screen": "02-planner",
@@ -208,12 +209,12 @@
     }
   ],
   "deviceCheck": {
-    "status": "awaiting_device_screenshots",
+    "status": "in_progress",
     "usbConnected": true,
     "displayMethod": "QuickTimeのiPhone画面プレビュー。録画・端末へのインストールはしていない。",
     "observedScreens": {
       "settings": "通知設定の文字・ボタンに目立つ崩れなし。",
-      "today": "「この家族の献立にはアクセスできません。」を表示し、献立は表示されなかった。"
+      "today": "11月3日の鮭の塩焼き、目安35分、材料・調味料、作ること5手順を確認。目視で横はみ出しや文章の欠けなし。朝食は予定なしの状態を表示。"
     },
     "accountStateReadOnlyCheck": {
       "accountScope": "所有者が確認した購入テスト用アカウント",
@@ -227,11 +228,28 @@
     "iphoneMainScreensVerified": false,
     "ipadVisualVerified": false,
     "xcodeState": "Install Requiredのため端末一覧コマンドを中断。初期設定は実行していない。",
-    "normalAccountTodayDisplayed": "本人が普段のアカウントで献立表示を確認。Mac側の映像はロック画面のままで、表示接続の開き直し後も確認できなかった。",
-    "nextVerificationMethod": "本人から送られるアプリ画面のスクリーンショットを照合する。"
+    "normalAccountTodayDisplayed": "本人のアカウント切り替え後、11月3日の献立表示をQuickTimeプレビューで直接確認。",
+    "nextVerificationMethod": "QuickTimeのiPhone画面プレビューで残りの画面を読み取り確認する。",
+    "streamRecovered": true,
+    "todayEvidence": [
+      {
+        "file": "/private/tmp/kondate-store-device-review-2026-11-03/today-overview.png",
+        "width": 590,
+        "height": 1049,
+        "format": "jpeg",
+        "sha256": "fe5ed1c9b97c29ab7a8b98bc8821a1340a5c41488f69ff26d6f726a36da8465c"
+      },
+      {
+        "file": "/private/tmp/kondate-store-device-review-2026-11-03/today-details.png",
+        "width": 590,
+        "height": 1049,
+        "format": "jpeg",
+        "sha256": "07e903bb82b6f76d3c5042909a3b7de12bee8e7c7b459c51c1e75c4df19ccfe9"
+      }
+    ]
   },
   "remaining": [
-    "iPhoneの今日・献立・買い物・メニューの画面をスクリーンショットで照合",
+    "iPhoneの献立一覧・主菜選択・買い物・メニューの画面を照合",
     "実機上のTestFlightバージョン確認",
     "ローカル修正をTestFlightへ反映する前に配布承認を確認",
     "初回設定をアプリ内で完了する導線は未実装。現在はWeb版での設定が必要",
