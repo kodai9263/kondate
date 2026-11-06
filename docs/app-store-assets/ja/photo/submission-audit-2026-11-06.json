@@ -1,0 +1,164 @@
+{
+  "checkedOn": "2026-11-06",
+  "appId": "6826687098",
+  "appName": "きょうのごはん｜献立・買い物リスト",
+  "version": "1.0",
+  "scope": "承認済み掲載画像の登録と申請内容の最終確認",
+  "appStoreStatus": "提出準備中",
+  "submittedForReview": false,
+  "published": false,
+  "changesMade": [
+    "日本語ローカライズにiPhone掲載画像5枚を登録",
+    "日本語ローカライズにiPad掲載画像5枚を登録"
+  ],
+  "screenshots": {
+    "sourceDesign": "photo",
+    "totalUploaded": 10,
+    "hashesMatchApprovedFiles": true,
+    "reloadedAndPersisted": true,
+    "orderingVerified": true,
+    "iphone": {
+      "slot": "Dynamic Island搭載iPhone（中型ディスプレイ）",
+      "requiredSlotInCurrentMediaManager": true,
+      "dimensions": [
+        1179,
+        2556
+      ],
+      "files": [
+        "iphone-01-today.jpg",
+        "iphone-02-planner.jpg",
+        "iphone-03-change.jpg",
+        "iphone-04-shopping.jpg",
+        "iphone-05-menu.jpg"
+      ]
+    },
+    "ipad": {
+      "slot": "iPad 13インチディスプレイ",
+      "requiredSlotInCurrentMediaManager": true,
+      "dimensions": [
+        2048,
+        2732
+      ],
+      "files": [
+        "ipad-01-today.jpg",
+        "ipad-02-planner.jpg",
+        "ipad-03-change.jpg",
+        "ipad-04-shopping.jpg",
+        "ipad-05-menu.jpg"
+      ]
+    },
+    "deviceReuseNotice": "Appleの画面で、選択されている他の同種デバイスサイズ・ローカライズにも今回の画像を使用する案内を確認。",
+    "appReviewApproval": false,
+    "evidenceDirectory": "/private/tmp/kondate-app-store-audit-20261106",
+    "proofImages": [
+      "iphone-upload.jpg",
+      "ipad-upload-confirmed.jpg",
+      "ipad-upload-final.jpg"
+    ]
+  },
+  "confirmed": {
+    "paidAppsAgreement": "有効",
+    "freeAppsAgreement": "有効",
+    "bankAccount": "有効",
+    "usForeignStatusCertificate": "有効",
+    "w8ben": "有効",
+    "appTerritories": [
+      "日本"
+    ],
+    "monthlySubscription": {
+      "productId": "app.kyounogohan.mobile.family.monthly",
+      "period": "1か月",
+      "japanPriceJPY": 480,
+      "territories": [
+        "日本"
+      ],
+      "status": "提出準備中",
+      "reviewScreenshotPresent": false,
+      "reviewNotesPresent": false
+    },
+    "yearlySubscription": {
+      "productId": "app.kyounogohan.mobile.family.yearly",
+      "period": "1年",
+      "japanPriceJPY": 4800,
+      "territories": [
+        "日本"
+      ],
+      "status": "提出準備中",
+      "reviewScreenshotPresent": false,
+      "reviewNotesPresent": false
+    },
+    "subscriptionGroup": "家族プラン",
+    "subscriptionLevels": "月額・年額ともレベル1",
+    "serverNotifications": {
+      "production": "https://kondate-bay.vercel.app/api/billing/apple/notifications",
+      "sandbox": "https://kondate-bay.vercel.app/api/billing/apple/notifications"
+    },
+    "licenseAgreement": "Appleの標準使用許諾契約"
+  },
+  "submissionBlockers": [
+    {
+      "id": "release-build",
+      "evidence": "ビルド12はTestFlightで「内部」と表示。申請のビルド追加画面では12を含む表示済みビルドの選択が無効。",
+      "next": "App Store Connect配布用の設定で公開用ビルドを作成・アップロードし、申請用に選択できることを確認。"
+    },
+    {
+      "id": "support-production",
+      "evidence": "https://kondate-bay.vercel.app/support は公開HTTP GETで404。Apple側のサポートURL欄は空欄。",
+      "next": "用意済みのサポートページを本番へ反映し、ログイン不要で表示・問い合わせ先を確認した後にURLを登録。"
+    },
+    {
+      "id": "privacy",
+      "evidence": "Apple側のプライバシーポリシーURL・データ収集申告は未設定。本番/privacyは200だが2026年9月8日版で、Apple課金とアプリ内削除の記載がない。",
+      "next": "実装とデータの送信先を照合してポリシーを更新し、Apple側のデータ収集申告を完成させる。"
+    },
+    {
+      "id": "metadata",
+      "evidence": "概要は旧版で課金説明がない。カテゴリ未選択。年齢制限・コンテンツ配信権は未設定。",
+      "next": "作成済み説明文を確認・登録し、実装と権利根拠に基づいてカテゴリ・年齢制限・配信権を設定。"
+    },
+    {
+      "id": "app-price",
+      "evidence": "アプリ本体の価格表に「初期価格を設定してください」と表示。",
+      "next": "本体無料・アプリ内家族プラン課金の方針に沿い、初期価格を無料に設定。"
+    },
+    {
+      "id": "review-account",
+      "evidence": "アプリ審査用のユーザー名・パスワード・連絡先・メモが空欄。",
+      "next": "審査専用アカウントのアクセスとデータを準備し、秘密情報をチャットやGitへ保存せずAppleへ入力。"
+    },
+    {
+      "id": "subscription-review",
+      "evidence": "月額・年額とも審査用スクリーンショットが未登録。メモも空欄。初回サブスクリプショングループは新しいアプリバージョンとともに提出する旨の案内。",
+      "next": "個人情報を含まない購入画面を審査用資料として準備し、購入・復元の経路を説明して初回アプリと同時提出する。"
+    }
+  ],
+  "existingImplementationGates": [
+    {
+      "id": "initial-setup",
+      "basis": "既存検証記録とローカル修正",
+      "status": "アプリ内の初回献立設定は未実装でWeb設定が必要。今回の画面審査では再テストしていない。",
+      "next": "新規登録から献立表示までのアプリ内導線を整え、公開用ビルドで確認する。"
+    },
+    {
+      "id": "account-deletion",
+      "basis": "ユーザーの一般受付停止指示と既存の実機検証記録",
+      "status": "一般受付の設定は今回変更していない。本番環境値の再取得は未実施。",
+      "next": "審査前に一般利用者がアプリ内から削除を開始できる状態を整える。開始は既存の停止指示に従い別途確認する。"
+    }
+  ],
+  "otherFindings": [
+    "サブタイトルとプロモーション用テキストは空欄。準備済み原稿あり。",
+    "リリース方法は審査承認後の自動公開。初回公開の時刻を制御する場合は手動公開へ変更する。今回未変更。",
+    "Appleシリコン搭載Macへの配信がオン。Mac上の動作は今回未検証。配信対象を絞るか、公開用ビルドで確認する。",
+    "Apple Vision Pro配信はオンだが、バージョン1.0は互換性がない旨が表示。",
+    "本番/termsは200で2026年8月1日版。Apple課金・復元・解約の説明を含むローカル修正版の反映確認が必要。",
+    "EUトレーダー情報の警告あり。現在の配信先は日本のみ。EU拡大時に対応する。",
+    "購入の再実行・メール送信・退会実行は今回行っていない。"
+  ],
+  "officialReferences": [
+    "https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/",
+    "https://developer.apple.com/help/app-store-connect/manage-submissions-to-app-review/submit-an-app",
+    "https://developer.apple.com/help/app-review/guideline-reference/5-1-1-account-deletion",
+    "https://developer.apple.com/tutorials/develop-in-swift/test-your-beta-app"
+  ]
+}
