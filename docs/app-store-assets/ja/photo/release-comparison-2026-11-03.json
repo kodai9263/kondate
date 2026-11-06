@@ -1,0 +1,679 @@
+{
+  "checkedOn": "2026-11-06",
+  "designCommit": "084fdb59c6313acacda61676a51681e58f82b09a",
+  "status": "iPhoneのTestFlight 1.0 (12) とiPadシミュレーターで掲載用主要画面を確認済み。承認済みの掲載画像をApp Store ConnectへiPhone 5枚・iPad 5枚登録し、再読み込み後の保存・順番・必須枠への登録を確認。申請は未提出。",
+  "build": {
+    "bundleId": "app.kyounogohan.mobile",
+    "version": "1.0",
+    "build": "12",
+    "supportedDeviceFamilies": [
+      1,
+      2
+    ],
+    "mobileSourceCommit": "ac89fee",
+    "changedSourceFilesSinceBuild12": [],
+    "packagedPublicFiles": [
+      {
+        "path": "assets/base-Kd_80LJ_.js",
+        "archiveSha256": "b64e4c2f7b8ff9e03f5f88ce9fbc007a1b35e6d8e3e8859ebb925a0f36db87fb",
+        "localSha256": "b64e4c2f7b8ff9e03f5f88ce9fbc007a1b35e6d8e3e8859ebb925a0f36db87fb"
+      },
+      {
+        "path": "assets/index-1gw2Mz_b.css",
+        "archiveSha256": "30a1bec16cf98ab2dfb9eb2b9b57bb3e00ba697a285374bcc3e900ec31ca35c4",
+        "localSha256": "30a1bec16cf98ab2dfb9eb2b9b57bb3e00ba697a285374bcc3e900ec31ca35c4"
+      },
+      {
+        "path": "assets/index-B-TLhu8W.js",
+        "archiveSha256": "b827f466b5807285a60a14d08f03f48017ed63e863a42b62e05fd677b43dd41f",
+        "localSha256": "b827f466b5807285a60a14d08f03f48017ed63e863a42b62e05fd677b43dd41f"
+      },
+      {
+        "path": "assets/native-DrdGFlKo.js",
+        "archiveSha256": "0bc2d3f29e595534a89c4e3c96ee065f53ef4008e7789716ac0ca1a5f3e99101",
+        "localSha256": "0bc2d3f29e595534a89c4e3c96ee065f53ef4008e7789716ac0ca1a5f3e99101"
+      },
+      {
+        "path": "assets/web-6PcK9y5Y.js",
+        "archiveSha256": "7f5aaf210f6a6022d9d79853afb0db578b81a2a797664d6a8d0d734454e14715",
+        "localSha256": "7f5aaf210f6a6022d9d79853afb0db578b81a2a797664d6a8d0d734454e14715"
+      },
+      {
+        "path": "assets/web-BhaVL80_.js",
+        "archiveSha256": "30cda69852abe5b801eadb0ad8c06fbff2e84da03ab6ee0b8597122925893598",
+        "localSha256": "30cda69852abe5b801eadb0ad8c06fbff2e84da03ab6ee0b8597122925893598"
+      },
+      {
+        "path": "cordova.js",
+        "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "localSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "cordova_plugins.js",
+        "archiveSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "localSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "index.html",
+        "archiveSha256": "b75c866928afa79ef0ba33e25e84ec8cfb26caa66eed53d816c7336f331593f2",
+        "localSha256": "b75c866928afa79ef0ba33e25e84ec8cfb26caa66eed53d816c7336f331593f2"
+      }
+    ],
+    "packagedPublicMatches": true
+  },
+  "screenshots": {
+    "count": 10,
+    "images": [
+      {
+        "file": "ipad-01-today.jpg",
+        "width": 2048,
+        "height": 2732,
+        "format": "jpeg",
+        "hasAlpha": false,
+        "sha256": "63ebe08f6cc0c723c455c4acf05731bc51255d1e4f72811d41ec78cc41c0aa75",
+        "passed": true
+      },
+      {
+        "file": "ipad-02-planner.jpg",
+        "width": 2048,
+        "height": 2732,
+        "format": "jpeg",
+        "hasAlpha": false,
+        "sha256": "2a94883e13c4d7e91fa80280dedf1a0d3fc4a2fd41dd87fef0d67208feb76357",
+        "passed": true
+      },
+      {
+        "file": "ipad-03-change.jpg",
+        "width": 2048,
+        "height": 2732,
+        "format": "jpeg",
+        "hasAlpha": false,
+        "sha256": "d554a8e8a8e171b36b13c793972f51de61bab34d4ef004881b6516aa80e4b215",
+        "passed": true
+      },
+      {
+        "file": "ipad-04-shopping.jpg",
+        "width": 2048,
+        "height": 2732,
+        "format": "jpeg",
+        "hasAlpha": false,
+        "sha256": "7fe95ef27f6caa81d2a4aaa9faa37f9bced75dcb8e8157224666921efff409ae",
+        "passed": true
+      },
+      {
+        "file": "ipad-05-menu.jpg",
+        "width": 2048,
+        "height": 2732,
+        "format": "jpeg",
+        "hasAlpha": false,
+        "sha256": "d1b0f9269fc1c60bcc98f5a1e19e583b7432ca7e26bb74b99a5be652915b08fd",
+        "passed": true
+      },
+      {
+        "file": "iphone-01-today.jpg",
+        "width": 1179,
+        "height": 2556,
+        "format": "jpeg",
+        "hasAlpha": false,
+        "sha256": "a3e1d43fed7724b467ed7e470cea45ec94d9ca82fc61e36eaab2689c7d07d52a",
+        "passed": true
+      },
+      {
+        "file": "iphone-02-planner.jpg",
+        "width": 1179,
+        "height": 2556,
+        "format": "jpeg",
+        "hasAlpha": false,
+        "sha256": "185bbf308af74c31fd35ae7842d8944945e63a8b306060d4765080ccba110fa8",
+        "passed": true
+      },
+      {
+        "file": "iphone-03-change.jpg",
+        "width": 1179,
+        "height": 2556,
+        "format": "jpeg",
+        "hasAlpha": false,
+        "sha256": "31b8ed77fec7d82bb28a8e1ea38853ea0119d87e89481696744b5dfb4ee59a95",
+        "passed": true
+      },
+      {
+        "file": "iphone-04-shopping.jpg",
+        "width": 1179,
+        "height": 2556,
+        "format": "jpeg",
+        "hasAlpha": false,
+        "sha256": "f7f36718096f7bc669b1ae4b7145d717ddb5c51da651ac428e398dd88f5bce57",
+        "passed": true
+      },
+      {
+        "file": "iphone-05-menu.jpg",
+        "width": 1179,
+        "height": 2556,
+        "format": "jpeg",
+        "hasAlpha": false,
+        "sha256": "b734d795af33c931c29e70fedcdec8f561424176af0c7d893cafd0ece9c873ed",
+        "passed": true
+      }
+    ],
+    "allFilesPassed": true,
+    "nativeCapture": false,
+    "usesFictionalData": true,
+    "appleSpecificationCheckedOn": "2026-11-03",
+    "appleSpecificationUrl": "https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/",
+    "appleUploadValidated": true,
+    "appleUploadValidatedOn": "2026-11-06",
+    "appleUploadValidationScope": "App Store Connectの登録受理と再読み込み後の保持を確認。App Reviewによる審査承認を意味しない。"
+  },
+  "featureComparison": [
+    {
+      "screen": "01-today",
+      "source": [
+        "mobile/src/App.tsx",
+        "src/app/api/mobile/v1/today/route.ts"
+      ],
+      "checked": "朝食・夕食・材料・手順の表示。掲載画像に家族プランの注記あり。",
+      "deviceVerified": true,
+      "deviceEvidence": "today-overview.png / today-details.png",
+      "ipadSimulatorVerification": {
+        "portrait": true,
+        "landscape": true,
+        "scope": "表示と遷移のみ。詳細はdeviceCheck.ipadSimulatorReview参照。"
+      }
+    },
+    {
+      "screen": "02-planner",
+      "source": [
+        "mobile/src/MobilePlanner.tsx"
+      ],
+      "checked": "作らない日の表示、夕食材料の除外案内、献立を戻すボタン。",
+      "deviceVerified": true,
+      "deviceVerificationScope": "変更ボタンと作らない日の説明の表示のみ。設定変更は未実施。",
+      "deviceEvidence": {
+        "file": "/private/tmp/kondate-store-device-review-2026-11-03/planner-actions.png",
+        "width": 590,
+        "height": 1049,
+        "format": "jpeg",
+        "sha256": "447df63e5d213605b05458937ee9c8f68125960d87bd6acc06c1e1e31b4a6354"
+      },
+      "ipadSimulatorVerification": {
+        "portrait": true,
+        "landscape": true,
+        "scope": "表示と遷移のみ。詳細はdeviceCheck.ipadSimulatorReview参照。"
+      }
+    },
+    {
+      "screen": "03-change",
+      "source": [
+        "mobile/src/MobilePlanner.tsx",
+        "src/app/api/mobile/v1/planner/route.ts"
+      ],
+      "checked": "主菜・副菜の選択画面と、保存後の買い物リスト反映。今回の確認では保存しない。",
+      "deviceVerified": true,
+      "deviceVerificationScope": "候補一覧の表示のみ。選択・保存は未実施。",
+      "deviceEvidence": {
+        "file": "/private/tmp/kondate-store-device-review-2026-11-03/planner-picker.png",
+        "width": 590,
+        "height": 1049,
+        "format": "jpeg",
+        "sha256": "96c6a8f0ad9d01d3d393fe869643231effc05a52be163689a1fe7b19912a9a98"
+      },
+      "ipadSimulatorVerification": {
+        "portrait": true,
+        "landscape": true,
+        "scope": "表示と遷移のみ。詳細はdeviceCheck.ipadSimulatorReview参照。"
+      }
+    },
+    {
+      "screen": "04-shopping",
+      "source": [
+        "mobile/src/App.tsx"
+      ],
+      "checked": "買うものの追加欄、カテゴリ別リスト、チェック欄。今回の確認では追加・チェックを変更しない。",
+      "deviceVerified": true,
+      "deviceVerificationScope": "期間・件数・追加欄・カテゴリ別の商品名と分量・チェック欄の表示のみ。追加・チェック・削除は未実施。",
+      "deviceEvidence": [
+        {
+          "file": "/private/tmp/kondate-store-device-review-2026-11-03/shopping-overview.png",
+          "width": 590,
+          "height": 1049,
+          "format": "jpeg",
+          "sha256": "66d045d4f0c5c16f503de0fac9072f6195b6b482bbd3fa5544cbe5bd76152051"
+        },
+        {
+          "file": "/private/tmp/kondate-store-device-review-2026-11-03/shopping-items.png",
+          "width": 590,
+          "height": 1049,
+          "format": "jpeg",
+          "sha256": "c907cabd077bc4460cb5089cbe7e689d77d0041b8abc6506c3ead463d79e8521"
+        }
+      ],
+      "ipadSimulatorVerification": {
+        "portrait": true,
+        "landscape": true,
+        "scope": "表示と遷移のみ。詳細はdeviceCheck.ipadSimulatorReview参照。"
+      }
+    },
+    {
+      "screen": "05-menu",
+      "source": [
+        "mobile/src/MobileMenu.tsx",
+        "mobile/src/MenuEditor.tsx"
+      ],
+      "checked": "料理の詳細、材料・作り方、登録・編集画面への導線。今回の確認では保存しない。",
+      "deviceVerified": true,
+      "deviceVerificationScope": "料理一覧・検索欄・登録ボタン、詳細の料理名・材料・分量・作り方1〜10と末尾のボタン、既存値が読み込まれた編集画面を確認。登録は入口の表示まで。入力・保存・削除は未実施。",
+      "deviceEvidence": [
+        {
+          "file": "/private/tmp/kondate-store-device-review-2026-11-03/menu-list.png",
+          "width": 590,
+          "height": 1049,
+          "format": "jpeg",
+          "sha256": "0fc4de71774bd1f3d1b4b4c4d0d28ce4529ab9250de197bb82ce8f91742d4953"
+        },
+        {
+          "file": "/private/tmp/kondate-store-device-review-2026-11-03/menu-ingredients.png",
+          "width": 590,
+          "height": 1049,
+          "format": "jpeg",
+          "sha256": "cb146ceeac644801a56e9891880ef699141edcf1644dba5da0689ee7c89a0a0b"
+        },
+        {
+          "file": "/private/tmp/kondate-store-device-review-2026-11-03/menu-header.png",
+          "width": 590,
+          "height": 1049,
+          "format": "jpeg",
+          "sha256": "434003706f14ab7aa1584eddc65d29839478dba6df3e8483e099e4556f58e73b"
+        },
+        {
+          "file": "/private/tmp/kondate-store-device-review-2026-11-03/menu-editor.png",
+          "width": 590,
+          "height": 1049,
+          "format": "jpeg",
+          "sha256": "25c68a7ef28ca253564d5e126ae5f9dc48ef46f981bd042d33d942323bc6a7bf"
+        },
+        {
+          "file": "/private/tmp/kondate-store-device-review-2026-11-03/menu-overview.png",
+          "width": 590,
+          "height": 1049,
+          "format": "jpeg",
+          "sha256": "0005ce1a7af6ca96e3e31c89b82c137d5fef06e8397ab0de239e0696d36f4b38"
+        },
+        {
+          "file": "/private/tmp/kondate-store-device-review-2026-11-03/menu-steps.png",
+          "width": 590,
+          "height": 1049,
+          "format": "jpeg",
+          "sha256": "1f1316db8fdbd5e6e1c9fa31cec446f5f077ed22fd0de36d05d3d9dc9de10e3e"
+        },
+        {
+          "file": "/private/tmp/kondate-store-device-review-2026-11-03/menu-steps-end.png",
+          "width": 590,
+          "height": 1049,
+          "format": "jpeg",
+          "sha256": "bccb5304d786d6a10bdd30dd1ddd89f0e78954ac9835948cc41321234c6a34b3"
+        }
+      ],
+      "ipadSimulatorVerification": {
+        "portrait": true,
+        "landscape": true,
+        "scope": "表示と遷移のみ。詳細はdeviceCheck.ipadSimulatorReview参照。"
+      }
+    }
+  ],
+  "deviceCheck": {
+    "status": "visual_comparison_complete",
+    "usbConnected": true,
+    "displayMethod": "QuickTimeのiPhone画面プレビュー。録画・端末へのインストールはしていない。",
+    "observedScreens": {
+      "settings": "通知設定の文字・ボタンに目立つ崩れなし。",
+      "today": "11月3日の鮭の塩焼き、目安35分、材料・調味料、作ること5手順を確認。目視で横はみ出しや文章の欠けなし。朝食は予定なしの状態を表示。",
+      "planner": "主菜を変更・副菜を変更・固定・この日は作らないのボタン、既存の作らない日の説明と献立を戻すボタンを確認。長い料理名も枠内で折り返している。",
+      "plannerPicker": "主菜選択のダイアログ、料理名検索、閉じるボタン、候補の料理名・副菜・調理時間を確認。候補は選択していない。",
+      "shopping": "7日間の期間・件数・更新状態・追加欄と、肉・魚・野菜などの商品名、分量、チェック欄を確認。チェック済みの品は打ち消し線で区別され、確認した範囲に横はみ出しなし。",
+      "menuList": "料理カード、わが家の区分、調理時間を確認。長い料理名も枠内で折り返し、確認した範囲に横はみ出しなし。",
+      "menuIngredients": "4人分・約25分の表示、カレイと調味料の材料欄を確認。長い調味料名と分量はカード内で折り返し、確認した範囲に横はみ出しなし。",
+      "menuHeader": "カレイの煮付けの料理名、詳細から一覧に戻るボタン、最新確認と編集ボタン、4人分・約25分を確認。文字やボタンに目立つ欠けなし。",
+      "menuEditor": "編集ボタンから編集画面が開き、既存の料理名、25分、4人分が入力欄に読み込まれていることを確認。入力・保存・削除は未実施。",
+      "menuOverview": "メニューを登録、最新のメニューを確認、料理名検索、すべて・わが家の切り替えと件数表示を確認。入力・登録は未実施。",
+      "menuSteps": "作り方1〜10とカードの下端、削除・元レシピのボタンまで目視確認。文章は枠内で折り返し、末尾の文字切れなし。ボタン操作は未実施。"
+    },
+    "accountStateReadOnlyCheck": {
+      "accountScope": "所有者が確認した購入テスト用アカウント",
+      "emailConfirmed": true,
+      "freeTrialActive": true,
+      "householdFirstMember": true,
+      "initialPlannerSetupComplete": false
+    },
+    "cause": "初回設定未完了でも、今日のAPIの403を一律にアクセス拒否と表示していた。",
+    "installedBuildVerified": true,
+    "iphoneMainScreensVerified": true,
+    "ipadVisualVerified": true,
+    "xcodeState": "Xcode 27.1の共通コンポーネント導入と初期設定を完了。15.9GBのiOS 27.1追加ダウンロードは選択せず、既存のiOS 27.0ランタイムを利用可能と確認。Device Hubを開いた。",
+    "normalAccountTodayDisplayed": "本人のアカウント切り替え後、11月3日の献立表示をQuickTimeプレビューで直接確認。",
+    "nextVerificationMethod": "App Store Connectで掲載画像の登録・受理を確認する。アプリ本体の新しい配布と本番操作は今回実施していない。",
+    "streamRecovered": true,
+    "todayEvidence": [
+      {
+        "file": "/private/tmp/kondate-store-device-review-2026-11-03/today-overview.png",
+        "width": 590,
+        "height": 1049,
+        "format": "jpeg",
+        "sha256": "fe5ed1c9b97c29ab7a8b98bc8821a1340a5c41488f69ff26d6f726a36da8465c"
+      },
+      {
+        "file": "/private/tmp/kondate-store-device-review-2026-11-03/today-details.png",
+        "width": 590,
+        "height": 1049,
+        "format": "jpeg",
+        "sha256": "07e903bb82b6f76d3c5042909a3b7de12bee8e7c7b459c51c1e75c4df19ccfe9"
+      }
+    ],
+    "verificationScope": "実機での表示のみ。保存・購入・削除の操作は行わない。",
+    "menuPreviewRecovery": "黒くなったQuickTimeプレビューを録画せず作り直し、iPhoneの画面を再選択して復帰した。",
+    "iphoneMainScreensVerificationScope": "掲載画像に使う今日・献立・主菜選択・買い物・メニューの表示。編集画面への遷移と既存値の読み込みを含む。入力・保存・購入・削除は含めない。",
+    "installedVersion": "1.0",
+    "installedBuild": "12",
+    "installedBuildEvidence": {
+      "file": "/private/tmp/kondate-store-device-review-2026-11-03/testflight-version.png",
+      "width": 590,
+      "height": 1049,
+      "format": "jpeg",
+      "sha256": "8f6689a68a184f0405597eac1a4b7c4cc61f3519bd408687e3d61cdb834853a1",
+      "observed": "TestFlightの「現在テスト中」に、きょうのごはん 1.0 (12) と「開く」を確認。更新・インストールは未実施。"
+    },
+    "ipadSimulatorPreparation": {
+      "userHasPhysicalIpad": false,
+      "setupApproved": true,
+      "commonComponentsInstalled": true,
+      "xcodeVersion": "27.1",
+      "existingRuntimeVersion": "27.0",
+      "existingRuntimeAvailable": true,
+      "ipadDeviceName": "iPad Pro 13-inch (M5)",
+      "ipadDeviceState": "Shutdown",
+      "newRuntimeDownloaded": false,
+      "appLaunchVerified": true,
+      "latestObservedFreeGiB": 3.65,
+      "nextStep": "主要画面の縦横表示確認は完了。確認用iPadを停止済み。",
+      "proposedDeletionPath": "/Users/yabekoudai/Library/Developer/Xcode/iOS DeviceSupport/iPhone14,6 26.6.2 (23G90)",
+      "deletionApproved": true,
+      "deletedFiles": true,
+      "correction": "初期設定前の固定フォルダ確認ではランタイムが見つからなかった。初期設定後のsimctlで、cryptex管理の既存ランタイムとiPad端末を確認した。",
+      "deletedPath": "/Users/yabekoudai/Library/Developer/Xcode/iOS DeviceSupport/iPhone14,6 26.6.2 (23G90)",
+      "recoveredGiB": 5.56,
+      "freeGiBAfterApprovedDeletion": 7.88,
+      "additionalCacheObserved": {
+        "path": "/Users/yabekoudai/Library/Developer/Xcode/iOS DeviceSupport/iPhone14,6 27.0.1 (24A446)",
+        "sizeGiB": 3.4,
+        "createdAtLocal": "2026-11-05 21:06:06",
+        "finalizedMarkerPresent": false,
+        "deletionApproved": true,
+        "deleted": true,
+        "sizeGiBAtDeletion": 5.93,
+        "deletedOn": "2026-11-06",
+        "freeGiBBeforeDeletion": 0.28,
+        "freeGiBAfterDeletion": 6.21,
+        "recoveredGiB": 5.93,
+        "copyLockInUseBeforeDeletion": false,
+        "recreatedAfterReview": false
+      }
+    },
+    "ipadPortraitMainScreensVerified": true,
+    "ipadSimulatorReview": {
+      "checkedOn": "2026-11-06",
+      "device": "iPad Pro 13-inch (M5)",
+      "runtime": "iPadOS 27.0",
+      "physicalDevice": false,
+      "sourceCommit": "eaf35be52a883cac3e8bcbd86db1406ed400bb6c",
+      "build": {
+        "status": "passed",
+        "configuration": "Debug",
+        "sdk": "iphonesimulator27.1",
+        "codeSigningAllowed": false,
+        "bundleId": "app.kyounogohan.mobile.preview",
+        "project": "/private/tmp/kondate-ipad-review-c8vrpuyi/mobile/ios/App/App.xcodeproj",
+        "log": "/private/tmp/kondate-ipad-review-c8vrpuyi/build-retry.log"
+      },
+      "dataSource": "既存の掲載用架空データ。ローカルサーバーのGETのみ。認証部分は確認用スタブ。",
+      "productionSourceChanged": false,
+      "distributedBuild12Changed": false,
+      "verificationScope": "CapacitorのネイティブWKWebViewで表示と画面遷移を目視確認。入力・保存・購入・削除、本番認証、オフライン保存は検証していない。",
+      "portrait": {
+        "today": true,
+        "planner": true,
+        "plannerPicker": true,
+        "shopping": true,
+        "menuList": true,
+        "menuDetail": true,
+        "menuEditorTop": true,
+        "menuEditorBottom": false
+      },
+      "landscape": {
+        "today": true,
+        "planner": true,
+        "plannerPicker": true,
+        "shopping": true,
+        "menuList": true,
+        "menuDetail": true,
+        "menuEditorTop": true,
+        "menuEditorBottom": true
+      },
+      "observations": [
+        "確認した範囲に目立つ横はみ出しや文字・ボタンの欠けなし。",
+        "主菜候補を開き、料理を選択せず閉じた。",
+        "編集画面に既存値が読み込まれ、横向きの下部では作り方と保存ボタンを確認。保存はしていない。",
+        "11月6日に横向きの今日・献立・主菜候補・買い物を確認。今日の副菜の手順、買い物リストの末尾も確認でき、見た範囲に横はみ出しや文字・ボタンの欠けなし。"
+      ],
+      "limitations": [
+        "買い物で「端末への保存ができませんでした」を観測。未署名・別ID・架空認証の確認用アプリであり、本番版の障害とは未判定。オフライン保存の証拠には使用しない。",
+        "スクロールのツール操作が届かず、Capture KeyboardとPageDown/PageUpで下部・上部へ移動した。タッチ操作でのスクロールは未検証。",
+        "入力・保存・購入・削除、本番認証、実際の同期は今回の表示確認の対象外。編集画面下部は横向きで確認し、縦向きの下部は未確認。"
+      ],
+      "evidence": [
+        {
+          "file": "/private/tmp/kondate-ipad-review-c8vrpuyi/screens/today-portrait.png",
+          "observed": "今日・縦向き",
+          "width": 1100,
+          "height": 800,
+          "format": "jpeg",
+          "sha256": "c23635543f20a4fe27a5564ca712c85d0665c30fb67060b67afd2d2100e66175"
+        },
+        {
+          "file": "/private/tmp/kondate-ipad-review-c8vrpuyi/screens/planner-portrait.png",
+          "observed": "献立と作らない日・縦向き",
+          "width": 726,
+          "height": 1027,
+          "format": "jpeg",
+          "sha256": "4ae21d9a7ab259b4cf649846073112f4d258ccd5008be025eebd7b9fee1dcdd1"
+        },
+        {
+          "file": "/private/tmp/kondate-ipad-review-c8vrpuyi/screens/planner-picker-portrait.png",
+          "observed": "主菜候補・縦向き",
+          "width": 726,
+          "height": 1027,
+          "format": "jpeg",
+          "sha256": "b910580b0dac2daffc5a4c34df97c8aac4f7236ee508823bad7dc13bc3e6f1ef"
+        },
+        {
+          "file": "/private/tmp/kondate-ipad-review-c8vrpuyi/screens/shopping-portrait.png",
+          "observed": "買い物リスト・縦向き",
+          "width": 726,
+          "height": 1027,
+          "format": "jpeg",
+          "sha256": "00932d72fd4a0990db07300e18e265dd2ee15d638afbc8860cb1ccc88e6a4dc2"
+        },
+        {
+          "file": "/private/tmp/kondate-ipad-review-c8vrpuyi/screens/menu-portrait.png",
+          "observed": "料理一覧・縦向き",
+          "width": 726,
+          "height": 1027,
+          "format": "jpeg",
+          "sha256": "8d26d2eb66508794b59a0d0f6158410392ec743182597aad12635a875a56f5ed"
+        },
+        {
+          "file": "/private/tmp/kondate-ipad-review-c8vrpuyi/screens/menu-detail-portrait.png",
+          "observed": "料理詳細・縦向き",
+          "width": 726,
+          "height": 1027,
+          "format": "jpeg",
+          "sha256": "bdebd27bbae8ede0d894f3d73cd6186a84d75a9aa450adfd52bda63d8a273bb6"
+        },
+        {
+          "file": "/private/tmp/kondate-ipad-review-c8vrpuyi/screens/menu-editor-portrait.png",
+          "observed": "編集画面上部・縦向き",
+          "width": 726,
+          "height": 1027,
+          "format": "jpeg",
+          "sha256": "f5040b3a1e09bf141275b814a0a2022b54b6b5ec0aa8e2f7ad7b1a3b7ae49498"
+        },
+        {
+          "file": "/private/tmp/kondate-ipad-review-c8vrpuyi/screens/menu-editor-landscape.png",
+          "observed": "編集画面上部・横向き",
+          "width": 939,
+          "height": 815,
+          "format": "jpeg",
+          "sha256": "a549e03d8bb6945aeda0da1bc2b2b1e5fe507a7773fc1a795f6bcd86f9d61579"
+        },
+        {
+          "file": "/private/tmp/kondate-ipad-review-c8vrpuyi/screens/menu-editor-bottom-landscape.png",
+          "observed": "編集画面下部と保存ボタン・横向き",
+          "width": 939,
+          "height": 814,
+          "format": "jpeg",
+          "sha256": "a11887a50b50331cf29d655913e7e5d23251b821b07ebcdabbaa3a3a707a36eb"
+        },
+        {
+          "file": "/private/tmp/kondate-ipad-review-c8vrpuyi/screens/menu-landscape.png",
+          "observed": "料理詳細・横向き（保存ファイル名はmenu-landscape）",
+          "width": 939,
+          "height": 814,
+          "format": "jpeg",
+          "sha256": "7eca224265cfda2f110263046b46ba15d2860d4530710c73399fa823617f5341"
+        },
+        {
+          "file": "/private/tmp/kondate-ipad-review-c8vrpuyi/screens/menu-list-landscape.png",
+          "observed": "料理一覧・横向き",
+          "width": 939,
+          "height": 814,
+          "format": "jpeg",
+          "sha256": "accb04b8c99f1491caffeabadaeded9477360c22184561df343a17f67542c2d4"
+        },
+        {
+          "file": "/private/tmp/kondate-ipad-review-c8vrpuyi/screens-2026-11-06/today-landscape.jpg",
+          "checkedOn": "2026-11-06",
+          "observed": "今日の料理名・材料・手順・横向き",
+          "width": 939,
+          "height": 815,
+          "format": "jpeg",
+          "sha256": "103ebaaf50477eb80d892b3df861d80eefdb57883ac17e6c479b9750d8744f52"
+        },
+        {
+          "file": "/private/tmp/kondate-ipad-review-c8vrpuyi/screens-2026-11-06/today-bottom-landscape.jpg",
+          "checkedOn": "2026-11-06",
+          "observed": "今日の副菜の手順とカード末尾・横向き",
+          "width": 939,
+          "height": 815,
+          "format": "jpeg",
+          "sha256": "c2f023670b16675bac043cc5c83299f3f52ff743902f7e062c34bab692906805"
+        },
+        {
+          "file": "/private/tmp/kondate-ipad-review-c8vrpuyi/screens-2026-11-06/planner-landscape.jpg",
+          "checkedOn": "2026-11-06",
+          "observed": "献立の変更ボタンと作らない日の案内・横向き",
+          "width": 2156,
+          "height": 1842,
+          "format": "jpeg",
+          "sha256": "609b32bc72c1aba1783c7e106e11607ae719ec274cc34d6056d61789b2f46200"
+        },
+        {
+          "file": "/private/tmp/kondate-ipad-review-c8vrpuyi/screens-2026-11-06/planner-picker-landscape.jpg",
+          "checkedOn": "2026-11-06",
+          "observed": "主菜候補の検索欄・閉じるボタン・料理一覧・横向き",
+          "width": 2156,
+          "height": 1842,
+          "format": "jpeg",
+          "sha256": "e91ded2f12924395ace95cac7b29ec79919d3f198e9fe5f9e4f7e8fc8c810a8c"
+        },
+        {
+          "file": "/private/tmp/kondate-ipad-review-c8vrpuyi/screens-2026-11-06/shopping-landscape.jpg",
+          "checkedOn": "2026-11-06",
+          "observed": "買い物の件数・期間・追加欄・野菜のチェック欄・横向き",
+          "width": 2156,
+          "height": 1842,
+          "format": "jpeg",
+          "sha256": "20413765c435307771eb7fea5b6ab10a35dd3d4cd57acb385f250fb2980d43d2"
+        },
+        {
+          "file": "/private/tmp/kondate-ipad-review-c8vrpuyi/screens-2026-11-06/shopping-end-landscape.jpg",
+          "checkedOn": "2026-11-06",
+          "observed": "買い物の商品名・分量・チェック欄とリスト末尾・横向き",
+          "width": 2156,
+          "height": 1842,
+          "format": "jpeg",
+          "sha256": "5b22b7f74f9a4dbab5d00d501cbe3cfa322f8337b2cdeba1415530427f4a0c1b"
+        }
+      ],
+      "excludedEvidence": [
+        {
+          "file": "/private/tmp/kondate-ipad-review-c8vrpuyi/screens/menu-editor-bottom-portrait.png",
+          "reason": "下部へ移動できておらず、上部の重複画像だったため下部確認の証拠から除外。"
+        },
+        {
+          "file": "/private/tmp/kondate-ipad-review-c8vrpuyi/screens-2026-11-06/shopping-bottom-landscape.jpg",
+          "reason": "スクロール操作で下部へ移動できていない上部の重複画像。末尾の証拠はshopping-end-landscape.jpg。"
+        }
+      ],
+      "publication": {
+        "appStoreImagesUploaded": false,
+        "testFlightUpdated": false,
+        "githubPushed": false
+      },
+      "status": "main_screen_visual_check_complete",
+      "toolRecovery": {
+        "previousCapacityFailure": "11月5日に容量不足で停止。追加の対象キャッシュ削除を承認後、11月6日に約5.93GiBを回収して再開。",
+        "windowInteraction": "容量確保後もnoWindowsAvailableが続いた。Device HubのWindowメニューでMove to Built-in Retina Displayを実行すると、座標タップが復帰した。",
+        "inputMethod": "タブ・候補の開閉はCUAのタップ。末尾への移動はキーボード。",
+        "simulatorStoppedAfterReview": true
+      }
+    },
+    "ipadPhysicalDeviceVerified": false,
+    "ipadVisualVerificationScope": "iPad Pro 13-inch (M5) / iPadOS 27.0 のシミュレーター。架空データ・別ID・未署名の確認用ビルドで主要5画面の縦横表示を確認。TestFlight版のiPad実機確認ではない。",
+    "ipadLandscapeMainScreensVerified": true
+  },
+  "remaining": [
+    "ローカル修正をTestFlightへ反映する前に配布承認を確認",
+    "初回設定をアプリ内で完了する導線は未実装。現在はWeb版での設定が必要",
+    "App Store申請前の不足項目は submission-audit-2026-11-06.json を参照。ビルド12は内部テスト専用で申請用に選択できない。"
+  ],
+  "localFix": {
+    "deployed": false,
+    "testFlightUpdated": false,
+    "files": [
+      "mobile/src/planningAccess.ts",
+      "mobile/src/today.ts",
+      "mobile/src/planner.ts",
+      "mobile/src/App.tsx"
+    ],
+    "changes": [
+      "初回設定・期限終了・家族共有の403案内を分離",
+      "今日に最新の献立を確認ボタンを追加",
+      "再取得に失敗した場合は以前の献立を表示し続けない"
+    ],
+    "unitTests": {
+      "files": 3,
+      "passed": 34
+    },
+    "typecheck": "passed",
+    "lint": "passed",
+    "preview": {
+      "width": 375,
+      "horizontalOverflow": false,
+      "retryButtonVerified": true
+    },
+    "evidenceDirectory": "/private/tmp/kondate-store-device-review-2026-11-03",
+    "mobileBuild": {
+      "status": "passed",
+      "command": "npm --prefix mobile run build -- --configLoader runner --outDir /private/tmp/kondate-planning-access-build.kDLyAg",
+      "note": "共有node_modulesへの一時設定ファイル書き込みが制限されたため、Viteのrunnerを使用。配布済みビルド12の格納先は変更していない。"
+    }
+  }
+}

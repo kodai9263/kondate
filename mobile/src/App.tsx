@@ -297,7 +297,10 @@ export function App() {
     void loadToday(accessToken).then((value) => {
       if (!cancelled) { setTodaySnapshot(value); setTodayError(""); }
     }).catch((cause: unknown) => {
-      if (!cancelled) setTodayError(displayError(cause, "今日の献立を読み込めませんでした。"));
+      if (!cancelled) {
+        setTodaySnapshot(null);
+        setTodayError(displayError(cause, "今日の献立を読み込めませんでした。"));
+      }
     });
     return () => { cancelled = true; };
   }, [accessToken, refreshEpoch]);
@@ -774,7 +777,13 @@ export function App() {
           <div className="page-heading"><span className="section-tag">TODAY</span><h1>今日の献立</h1>
             <p>{todaySnapshot ? `${formatDate(todaySnapshot.today.date)}（${todaySnapshot.today.dow}）` :
               todayError ? "今日の内容を表示できません" : "今日の内容を確認中…"}</p></div>
-          {todayError && <p className="error-message" role="alert">{todayError}</p>}
+          {todayError && <>
+            <p className="error-message" role="alert">{todayError}</p>
+            <button className="refresh-button" type="button" disabled={!online} onClick={() => {
+              setTodayError("");
+              setRefreshEpoch((value) => value + 1);
+            }}>最新の献立を確認</button>
+          </>}
           {todaySnapshot && <>
             <section className="today-card"><p className="section-tag">朝ごはん</p>
               <h2>{todaySnapshot.today.breakfast?.name ?? "朝ごはんの予定はありません"}</h2>

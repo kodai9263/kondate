@@ -1,0 +1,87 @@
+[
+  {
+    "id": "01-today",
+    "tab": "today",
+    "label": "今日の献立",
+    "eyebrow": "EVERYDAY, A LITTLE EASIER",
+    "title": [
+      "ごはんの時間に、",
+      "ゆとりを。"
+    ],
+    "subtitle": "献立も、買い物も。家族のごはん支度をひとつに。",
+    "photo": "family-dinner",
+    "alt": "焼き鮭、ごはん、みそ汁と野菜のおかずが並ぶ食卓",
+    "position": "50% 63%",
+    "background": "#FAF9F6",
+    "ink": "#292E2B",
+    "accent": "#AC3C28"
+  },
+  {
+    "id": "02-planner",
+    "tab": "planner",
+    "label": "予定に合わせる",
+    "eyebrow": "MAKE ROOM FOR YOUR DAY",
+    "title": [
+      "作らない日も、",
+      "わが家のペースで。"
+    ],
+    "subtitle": "外食の日も、忙しい日も。予定に合わせて調整。",
+    "photo": "udon",
+    "alt": "野菜と鶏肉が入ったうどん",
+    "position": "50% 54%",
+    "background": "#EEEEE8",
+    "ink": "#293D33",
+    "accent": "#52694C"
+  },
+  {
+    "id": "03-change",
+    "tab": "planner",
+    "label": "献立を変える",
+    "eyebrow": "SOMETHING YOU WANT TO EAT",
+    "title": [
+      "食べたいものを、",
+      "今日の献立に。"
+    ],
+    "subtitle": "主菜も副菜も変更。買い物リストにも反映。",
+    "photo": "chicken-teriyaki",
+    "alt": "照り焼きチキンと野菜を盛りつけた食卓",
+    "position": "50% 65%",
+    "background": "#25382E",
+    "ink": "#FAF8EF",
+    "accent": "#EBC7A5"
+  },
+  {
+    "id": "04-shopping",
+    "tab": "shopping",
+    "label": "買い物リスト",
+    "eyebrow": "BUY ONLY WHAT YOU NEED",
+    "title": [
+      "買いすぎを、",
+      "減らそう。"
+    ],
+    "subtitle": "献立から、買うものリストへ。買ったらチェック。",
+    "photo": "family-dinner",
+    "alt": "野菜のおかずと主菜が並んだ家庭の食卓",
+    "position": "50% 48%",
+    "background": "#FAF9F6",
+    "ink": "#292E2B",
+    "accent": "#AC3C28"
+  },
+  {
+    "id": "05-menu",
+    "tab": "menu",
+    "label": "わが家のメニュー",
+    "eyebrow": "KEEP YOUR FAMILY FAVORITES",
+    "title": [
+      "わが家の味を、",
+      "いつもの献立に。"
+    ],
+    "subtitle": "料理名も、材料も、作り方も。登録・編集は無料。",
+    "photo": "tofu-hamburg",
+    "alt": "大根おろしを添えた豆腐ハンバーグの定食",
+    "position": "50% 62%",
+    "background": "#F0E8DF",
+    "ink": "#3B3028",
+    "accent": "#80513C"
+  }
+]

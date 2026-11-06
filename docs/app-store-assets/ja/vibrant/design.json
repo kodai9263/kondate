@@ -1,0 +1,82 @@
+[
+  {
+    "id": "01-today",
+    "tab": "today",
+    "label": "今日の献立",
+    "title": [
+      "今日のごはん、",
+      "もう迷わない。"
+    ],
+    "subtitle": "家族のごはん支度を、ひとつに。",
+    "badge": "献立も、買い物も。",
+    "background": "#CC3826",
+    "ink": "#FFF9EB",
+    "accent": "#FFDA58",
+    "accentInk": "#492B20",
+    "angle": -2.3
+  },
+  {
+    "id": "02-planner",
+    "tab": "planner",
+    "label": "予定に合わせる",
+    "title": [
+      "作らない日も、",
+      "わが家の予定。"
+    ],
+    "subtitle": "外食やお出かけに合わせて調整。",
+    "badge": "「作らない日」を設定",
+    "background": "#245748",
+    "ink": "#FFF9EB",
+    "accent": "#FFDA58",
+    "accentInk": "#244C3E",
+    "angle": 2.1
+  },
+  {
+    "id": "03-change",
+    "tab": "planner",
+    "label": "献立を変える",
+    "title": [
+      "食べたい！で、",
+      "献立チェンジ。"
+    ],
+    "subtitle": "主菜も副菜も、気分に合わせて。",
+    "badge": "買い物リストにも反映",
+    "background": "#FFD252",
+    "ink": "#4C2A22",
+    "accent": "#B92F22",
+    "accentInk": "#FFF9EB",
+    "angle": -2
+  },
+  {
+    "id": "04-shopping",
+    "tab": "shopping",
+    "label": "買い物リスト",
+    "title": [
+      "買うもの、",
+      "ひと目で全部。"
+    ],
+    "subtitle": "献立からリストへ。買い足しも追加。",
+    "badge": "保存したリストは圏外でも",
+    "background": "#F6AEA2",
+    "ink": "#622E28",
+    "accent": "#A82D23",
+    "accentInk": "#FFF9EB",
+    "angle": 2.2
+  },
+  {
+    "id": "05-menu",
+    "tab": "menu",
+    "label": "わが家のメニュー",
+    "title": [
+      "わが家の味を、",
+      "いつもの献立に。"
+    ],
+    "subtitle": "材料も作り方も、家族のレシピ帳に。",
+    "badge": "メニューの登録・編集は無料",
+    "background": "#47302D",
+    "ink": "#FFF9EB",
+    "accent": "#FFDA58",
+    "accentInk": "#492B20",
+    "angle": -2.1
+  }
+]

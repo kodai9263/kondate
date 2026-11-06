@@ -1,0 +1,184 @@
+{
+  "checkedOn": "2026-11-02",
+  "sourceCommit": "81d4d76",
+  "status": "ブラウザ描画の掲載案。Appleへ未登録。実機照合前。",
+  "sourceFiles": [
+    {
+      "file": "mobile/src/App.tsx",
+      "sha256": "c91bbb98fe5a1ce6f9b31c48a7ee74e2738196e8fbec24c9ec630a7277ef7494"
+    },
+    {
+      "file": "mobile/src/MobilePlanner.tsx",
+      "sha256": "a1029511d236510830efa1734286eb7e0b5d4967fe3648efcbbba1e16d0b5a4c"
+    },
+    {
+      "file": "mobile/src/MobileMenu.tsx",
+      "sha256": "134fef4f9a6064a368de680a3c0492c7b1ef17bd669e06d752e46f41561a55a2"
+    },
+    {
+      "file": "mobile/src/style.css",
+      "sha256": "875bc0f1249f4c99ed684a6c70d351f1712672b506e654f7d55fcc4951ed3654"
+    },
+    {
+      "file": "tests/fixtures/app-store-data.mjs",
+      "sha256": "d63adb67da51319231278b3b02eeeaa6f242b4cc74d8b86876816f1f657e96ea"
+    },
+    {
+      "file": "scripts/preview-app-store.mjs",
+      "sha256": "99870a3a75f87344a8aeb76632aac8d5c373edc1ce9834709adcbac9c3f16e55"
+    }
+  ],
+  "privacy": {
+    "fictionalData": true,
+    "realUserDataUsed": false,
+    "productionRequests": false,
+    "writeApiEnabled": false
+  },
+  "copy": [
+    {
+      "field": "name",
+      "count": 17,
+      "max": 30,
+      "passed": true
+    },
+    {
+      "field": "subtitle",
+      "count": 14,
+      "max": 30,
+      "passed": true
+    },
+    {
+      "field": "promotionalText",
+      "count": 110,
+      "max": 170,
+      "passed": true
+    },
+    {
+      "field": "description",
+      "count": 1010,
+      "max": 4000,
+      "passed": true
+    },
+    {
+      "field": "keywords",
+      "unit": "UTF-8 bytes",
+      "count": 89,
+      "max": 100,
+      "passed": true
+    }
+  ],
+  "images": [
+    {
+      "file": "ipad-01-today.jpg",
+      "width": 2048,
+      "height": 2732,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "08e3fe7839e35ce79765b0c5dc5139c962b1b51d1f5a71246ffcb4b8beac9990",
+      "passed": true
+    },
+    {
+      "file": "ipad-02-planner.jpg",
+      "width": 2048,
+      "height": 2732,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "317a322d4676b0993cd1c2b869bd8c25892d5be574c599de487537701488ad98",
+      "passed": true
+    },
+    {
+      "file": "ipad-03-change.jpg",
+      "width": 2048,
+      "height": 2732,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "ca3ab8e45124269bef416cec5917803addd2de56bad61ca527afeba154e81ca3",
+      "passed": true
+    },
+    {
+      "file": "ipad-04-shopping.jpg",
+      "width": 2048,
+      "height": 2732,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "e2fc603c043a599015facdd1bbc9248e6f379075366c767466e4526b03bc3c4f",
+      "passed": true
+    },
+    {
+      "file": "ipad-05-menu.jpg",
+      "width": 2048,
+      "height": 2732,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "4d4f913c465bfe6501620e83b1b7f48f2a18dc212f032fdbd29bd7d201c0a15b",
+      "passed": true
+    },
+    {
+      "file": "iphone-01-today.jpg",
+      "width": 1179,
+      "height": 2556,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "d5a56e231404ce40e8f721f17976e54e160d1104737d584446c4f6e804a599d3",
+      "passed": true
+    },
+    {
+      "file": "iphone-02-planner.jpg",
+      "width": 1179,
+      "height": 2556,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "e738c0465dd2117b39b12782278db5ff4c97bacf836a5f63494a1d177127ad7c",
+      "passed": true
+    },
+    {
+      "file": "iphone-03-change.jpg",
+      "width": 1179,
+      "height": 2556,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "8613a1333e8e95f4ea6567cf47c054212ba4348732b837d9fa082563cec99255",
+      "passed": true
+    },
+    {
+      "file": "iphone-04-shopping.jpg",
+      "width": 1179,
+      "height": 2556,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "a5a111e036a9337a39439d7d76fac0b9483906d150a9d3d1c1709cd64f1d1284",
+      "passed": true
+    },
+    {
+      "file": "iphone-05-menu.jpg",
+      "width": 1179,
+      "height": 2556,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "sha256": "b014981b5be88ec0b9f1c0f18ab81f6c1b7e7c42b3361856b967a4bbb5929858",
+      "passed": true
+    }
+  ],
+  "verified": [
+    "アプリ本体のReact画面とCSSを使用",
+    "献立の変更候補とメニュー詳細を実際に開いて撮影",
+    "iPhone・iPad各5枚を目視確認",
+    "node --checkとESLintが成功",
+    "Git差分の空白チェックが成功"
+  ],
+  "pending": [
+    "提出するビルドのiPhone・iPad実機表示との最終照合",
+    "Appleの登録欄への保存と画像アップロード",
+    "サポート・規約等の本番反映",
+    "App Store審査提出"
+  ],
+  "observations": [
+    "ブラウザ操作の記録にMutationObserver.observeのNode型エラーが含まれた。発生元は未特定であり、コンソールエラー0件とは扱わない。撮影対象画面の描画と表示内容は確認済み。",
+    "製品コード・本番データ・退会の一般受付・メール送信設定は変更していない。"
+  ],
+  "references": [
+    "https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/",
+    "https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information/",
+    "https://developer.apple.com/app-store/review/guidelines/#accurate-metadata"
+  ]
+}

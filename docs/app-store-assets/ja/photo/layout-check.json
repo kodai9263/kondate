@@ -1,0 +1,122 @@
+[
+  {
+    "frameFooterGap": 59,
+    "headlineFits": true,
+    "photosLoaded": true,
+    "poster": {
+      "height": 2556,
+      "scroll": 0,
+      "width": 1179
+    },
+    "subtitlePhotoGap": 26,
+    "url": "/photo/poster?screen=01-today&device=iphone"
+  },
+  {
+    "frameFooterGap": 59,
+    "headlineFits": true,
+    "photosLoaded": true,
+    "poster": {
+      "height": 2556,
+      "scroll": 0,
+      "width": 1179
+    },
+    "subtitlePhotoGap": 26,
+    "url": "/photo/poster?screen=02-planner&device=iphone"
+  },
+  {
+    "frameFooterGap": 59,
+    "headlineFits": true,
+    "photosLoaded": true,
+    "poster": {
+      "height": 2556,
+      "scroll": 0,
+      "width": 1179
+    },
+    "subtitlePhotoGap": 26,
+    "url": "/photo/poster?screen=03-change&device=iphone"
+  },
+  {
+    "frameFooterGap": 59,
+    "headlineFits": true,
+    "photosLoaded": true,
+    "poster": {
+      "height": 2556,
+      "scroll": 0,
+      "width": 1179
+    },
+    "subtitlePhotoGap": 26,
+    "url": "/photo/poster?screen=04-shopping&device=iphone"
+  },
+  {
+    "frameFooterGap": 59,
+    "headlineFits": true,
+    "photosLoaded": true,
+    "poster": {
+      "height": 2556,
+      "scroll": 0,
+      "width": 1179
+    },
+    "subtitlePhotoGap": 26,
+    "url": "/photo/poster?screen=05-menu&device=iphone"
+  },
+  {
+    "frameFooterGap": 50,
+    "headlineFits": true,
+    "photosLoaded": true,
+    "poster": {
+      "height": 2732,
+      "scroll": 0,
+      "width": 2048
+    },
+    "subtitlePhotoGap": 37,
+    "url": "/photo/poster?screen=01-today&device=ipad"
+  },
+  {
+    "frameFooterGap": 50,
+    "headlineFits": true,
+    "photosLoaded": true,
+    "poster": {
+      "height": 2732,
+      "scroll": 0,
+      "width": 2048
+    },
+    "subtitlePhotoGap": 37,
+    "url": "/photo/poster?screen=02-planner&device=ipad"
+  },
+  {
+    "frameFooterGap": 50,
+    "headlineFits": true,
+    "photosLoaded": true,
+    "poster": {
+      "height": 2732,
+      "scroll": 0,
+      "width": 2048
+    },
+    "subtitlePhotoGap": 37,
+    "url": "/photo/poster?screen=03-change&device=ipad"
+  },
+  {
+    "frameFooterGap": 50,
+    "headlineFits": true,
+    "photosLoaded": true,
+    "poster": {
+      "height": 2732,
+      "scroll": 0,
+      "width": 2048
+    },
+    "subtitlePhotoGap": 37,
+    "url": "/photo/poster?screen=04-shopping&device=ipad"
+  },
+  {
+    "frameFooterGap": 50,
+    "headlineFits": true,
+    "photosLoaded": true,
+    "poster": {
+      "height": 2732,
+      "scroll": 0,
+      "width": 2048
+    },
+    "subtitlePhotoGap": 37,
+    "url": "/photo/poster?screen=05-menu&device=ipad"
+  }
+]

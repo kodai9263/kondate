@@ -82,9 +82,11 @@ Supabase Authのログイン・新規登録・パスワード再設定と、登�
 
 ### Supabaseの登録メール
 
-Authentication → Emails → SMTP Settingsで、送信元とUsernameを取得済みの専用Gmail、Sender nameを「きょうのごはん」、Hostを `smtp.gmail.com`、Portを `465` にします。Passwordには所有者がSupabase専用のアプリパスワードを直接入力します。送信元の準備が完了するまでは現在の設定を維持します。
+Authentication → Emails → SMTP Settingsで、送信元とUsernameを既存の専用Gmail `kyounogohan2@gmail.com`、Sender nameを「きょうのごはん」、Hostを `smtp.gmail.com`、Portを `465` にします。Passwordには所有者がSupabase専用のアプリパスワードを直接入力します。送信元の準備が完了するまでは現在の設定を維持します。
 
 接続後、Confirm sign upの件名を「【きょうのごはん】メールアドレスの確認をお願いします」、本文を `supabase/templates/confirmation.html` に設定します。Site URLは本番の `https://kondate-bay.vercel.app` を使います。メールのリンク先は `/auth/confirm` で、ページを開いただけでは認証せず、本人の確認ボタン操作で認証します。
+
+本文は「きょうのごはんへようこそ。」から始まり、確認ボタン、確認後にアプリへ戻ってログインする案内、心当たりがない場合の案内に絞っています。ローカルのテンプレートやWebサーバーの更新だけでは、Supabaseが配信するメールは変わりません。管理画面への保存後、承認されたテスト宛先で受信とリンクの動作まで確認します。
 
 ### フィードバック通知
 
