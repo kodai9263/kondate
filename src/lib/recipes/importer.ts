@@ -6,8 +6,6 @@ const allowedRecipeHosts = new Set([
   "oceans-nadia.com",
   "www.oceans-nadia.com",
 ]);
-const maxHtmlBytes = 1_000_000;
-const maxRedirects = 3;
 
 export type ImportedRecipe = {
   sourceUrl: string;
@@ -28,7 +26,7 @@ export type ImportedRecipe = {
   warnings: string[];
 };
 
-export type RecipeImportErrorCode = "invalid_url" | "unsupported_site" | "fetch_failed" | "recipe_not_found";
+export type RecipeImportErrorCode = "invalid_url" | "unsupported_site" | "fetch_failed" | "recipe_not_found" | "import_disabled";
 
 export class RecipeImportError extends Error {
   constructor(public readonly code: RecipeImportErrorCode) {
@@ -37,45 +35,9 @@ export class RecipeImportError extends Error {
 }
 
 export async function fetchImportedRecipe(rawUrl: string): Promise<ImportedRecipe> {
-  let currentUrl = parseAllowedRecipeUrl(rawUrl);
-
-  for (let redirectCount = 0; redirectCount <= maxRedirects; redirectCount += 1) {
-    let response: Response;
-    try {
-      response = await fetch(currentUrl, {
-        headers: {
-          Accept: "text/html,application/xhtml+xml",
-          "User-Agent": "KyouNoGohanRecipeImporter/1.0",
-        },
-        redirect: "manual",
-        signal: AbortSignal.timeout(10_000),
-        cache: "no-store",
-      });
-    } catch {
-      throw new RecipeImportError("fetch_failed");
-    }
-
-    if (response.status >= 300 && response.status < 400) {
-      const location = response.headers.get("location");
-      if (!location || redirectCount === maxRedirects) throw new RecipeImportError("fetch_failed");
-      currentUrl = parseAllowedRecipeUrl(new URL(location, currentUrl).toString());
-      continue;
-    }
-
-    if (!response.ok) throw new RecipeImportError("fetch_failed");
-    if (!response.headers.get("content-type")?.toLowerCase().includes("text/html")) {
-      throw new RecipeImportError("recipe_not_found");
-    }
-
-    const contentLength = Number(response.headers.get("content-length") ?? 0);
-    if (contentLength > maxHtmlBytes) throw new RecipeImportError("fetch_failed");
-
-    const html = await response.text();
-    if (Buffer.byteLength(html, "utf8") > maxHtmlBytes) throw new RecipeImportError("fetch_failed");
-    return parseRecipeHtml(html, currentUrl.toString());
-  }
-
-  throw new RecipeImportError("fetch_failed");
+  // 対応サイト名は転載許諾の根拠にならない。許諾を確認するまでは取得しない。
+  void rawUrl;
+  throw new RecipeImportError("import_disabled");
 }
 
 export function parseRecipeHtml(html: string, sourceUrl: string): ImportedRecipe {

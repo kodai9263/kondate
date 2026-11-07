@@ -1,4 +1,4 @@
-import { planningAccessMessage } from "./planningAccess";
+import { planningAccessMessage, PlanningSetupRequired } from "./planningAccess";
 
 export type TodaySnapshot = {
   version: 1;
@@ -29,6 +29,7 @@ export async function loadToday(accessToken: string): Promise<TodaySnapshot> {
   if (response.status === 403) {
     const body: unknown = await response.json().catch(() => null);
     const code = body && typeof body === "object" && "error" in body ? body.error : null;
+    if (code === "planner_setup_required") throw new PlanningSetupRequired();
     throw new Error(planningAccessMessage(code) ?? "献立を表示できませんでした。「設定」で利用状態を確認してください。");
   }
   if (!response.ok) throw new Error("今日の献立を読み込めませんでした。接続を確認してください。");

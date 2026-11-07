@@ -2,7 +2,6 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { RecipeForm } from "@/components/features/recipes/RecipeForm";
-import { isRecipePublisher } from "@/lib/recipes/publisher";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
 const errors: Record<string, string> = {
@@ -10,7 +9,7 @@ const errors: Record<string, string> = {
   profile: "家族グループを確認できませんでした。",
   save: "メニューを保存できませんでした。時間をおいて再度お試しください。",
   source: "元のレシピURLを確認できませんでした。もう一度読み取ってください。",
-  publish: "このアカウントには、みんなのメニューへ公開する権限がありません。",
+  publish: "現在は手入力の料理を、わが家のメニューとして保存できます。",
   duplicate: "同じ料理名またはURLのメニューが、すでに公開されています。",
 };
 
@@ -24,9 +23,9 @@ export default async function NewRecipePage({ searchParams }: { searchParams: Pr
   return (
     <main className="mx-auto min-h-dvh w-full max-w-3xl px-4 pb-28 pt-5 sm:px-6">
       <Link href="/app/recipes" className="inline-flex min-h-11 items-center gap-2 text-sm text-kondate-muted transition-colors hover:text-kondate-ink"><ArrowLeft size={18} aria-hidden="true" />メニュー一覧</Link>
-      <header className="mt-4 border-b border-kondate-line pb-5"><h1 className="font-mincho text-[26px] font-bold">メニューを登録</h1><p className="mt-1.5 text-sm text-kondate-muted">URLから読み取るか、今までどおり手入力できます。</p></header>
+      <header className="mt-4 border-b border-kondate-line pb-5"><h1 className="font-mincho text-[26px] font-bold">メニューを登録</h1><p className="mt-1.5 text-sm text-kondate-muted">材料と作り方を入力し、家族のメニューに追加できます。</p></header>
       {error ? <p role="alert" className="mt-5 rounded border border-kondate-alert/30 bg-kondate-alertSoft p-3 text-sm text-kondate-alert">{errors[error] ?? errors.save}</p> : null}
-      <RecipeForm canPublish={isRecipePublisher(user)} />
+      <RecipeForm />
     </main>
   );
 }

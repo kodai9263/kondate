@@ -1,3 +1,5 @@
+// 2026-11-07: 旧原稿には確認待ちの内容が含まれるため再生成を停止する。
+throw new Error("旧レシピの再投入は停止中です。content-rights-audit-2026-11-07.mdを確認してください。");
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";

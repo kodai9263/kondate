@@ -1,3 +1,4 @@
+import { heldRecipePlaceholder } from "@/lib/recipes/contentReview";
 import { filterRecipesForAllergies } from "@/lib/family/allergies";
 import { getCurrentHouseholdPreferences } from "@/lib/family/server";
 import { officialNutritionRecipes } from "@/lib/nutrition/catalog";
@@ -20,9 +21,10 @@ export async function getHouseholdPlannerContext(year: number, month: number, st
     supabase.from("plan_entries").select("date,recipe_id,locked,side_mode,side_dish_id,status").eq("meal_type", "dinner").gte("date", firstDate).lte("date", lastDate),
     supabase.from("household_recipe_exclusions").select("recipe_key"),
     supabase.from("side_dishes").select("id,household_id,name,ingredients_text,steps_text").is("archived_at", null).order("created_at", { ascending: false }),
+    supabase.from("recipe_content_holds").select("recipe_id,recipe_name"),
   ]);
   if (strict && results.some((result) => result.error)) throw new Error("shopping_plan_unavailable");
-  const [{ data: rows }, { data: officialRows }, { data: feedbackRows }, { data: savedRows }, { data: exclusions }, { data: sideDishRows }] = results;
+  const [{ data: rows }, { data: officialRows }, { data: feedbackRows }, { data: savedRows }, { data: exclusions }, { data: sideDishRows }, { data: holdRows }] = results;
 
   // 非表示にした自作料理は保存済み献立の表示にだけ使い、新しい候補から除く。
   const savedIds = [...new Set((savedRows ?? []).map(row => row.recipe_id))];
@@ -30,6 +32,7 @@ export async function getHouseholdPlannerContext(year: number, month: number, st
     .select("id,name,cook_minutes,servings_base,image_url,protein_source,meta,recipe_nutrition(energy_kcal,protein_g,fat_g,carbs_g,fiber_g,salt_g,vegetables_g)")
     .in("id",savedIds).not("household_id","is",null).not("archived_at","is",null).neq("category","breakfast") : {data:[],error:null};
   if (strict && archivedResult.error) throw new Error("shopping_plan_unavailable");
+  const held = (holdRows ?? []).filter(row => savedIds.includes(row.recipe_id)).map(heldRecipePlaceholder);
   const archived = (archivedResult.data ?? []).flatMap(row => mapCustomRecipe(row as Record<string,unknown>)).map(recipe => ({...recipe,archived:true}));
 
   const stepCustomizationIds = new Map<string, string>();
@@ -86,7 +89,7 @@ export async function getHouseholdPlannerContext(year: number, month: number, st
   }
 
   const preferenceAllowed = filtered.allowed.filter((recipe) => latestRatings.get(recipe.name) !== "avoid");
-  const recipes = [...(preferenceAllowed.length > 0 ? preferenceAllowed : filtered.allowed), ...archived];
+  const recipes = [...(preferenceAllowed.length > 0 ? preferenceAllowed : filtered.allowed), ...archived, ...held];
   const preferredRecipeIds = recipes.filter((recipe) => latestRatings.get(recipe.name) === "love").map((recipe) => recipe.id);
   const availableRecipeIds = new Set(recipes.map((recipe) => recipe.id));
   const initialSkippedDates = (savedRows ?? []).filter((row) => row.status === "skipped").map((row) => row.date);

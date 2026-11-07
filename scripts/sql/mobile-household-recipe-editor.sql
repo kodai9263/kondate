@@ -4,6 +4,7 @@ create or replace function public.household_recipe_editor(target_id uuid)
 returns jsonb language plpgsql security definer set search_path = '' as $$
 declare r public.recipes%rowtype; fields jsonb; n public.recipe_nutrition%rowtype;
 begin
+  if exists(select 1 from public.recipe_content_holds where recipe_id=target_id) then raise exception 'recipe_not_found'; end if;
   if auth.uid() is null or public.current_household_id() is null then raise exception 'unauthenticated'; end if;
   if not coalesce(public.can_use_breakfast_settings(),false) then raise exception 'family_access_required'; end if;
   select * into r from public.recipes where id=target_id and household_id=public.current_household_id() and archived_at is null and category <> 'breakfast' and coalesce(meta->>'step_customization','false') <> 'true';
@@ -21,6 +22,7 @@ create or replace function public.save_household_recipe_editor(target_id uuid, r
 returns uuid language plpgsql security definer set search_path = '' as $$
 declare r public.recipes%rowtype; household uuid := public.current_household_id(); current_editor jsonb; k text; lim numeric;
 begin
+  if exists(select 1 from public.recipe_content_holds where recipe_id=target_id) then raise exception 'recipe_not_found'; end if;
   if auth.uid() is null or household is null then raise exception 'unauthenticated'; end if;
   if not coalesce(public.can_use_breakfast_settings(),false) then raise exception 'family_access_required'; end if;
   if target_id is null or request_id is null then raise exception 'invalid_recipe'; end if;

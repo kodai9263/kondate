@@ -271,6 +271,7 @@ export type Database = {
       };
     };
     Functions: {
+      configure_first_week: { Args: { start_input: string; adults: number; children: number; allergens: string[] }; Returns: undefined };
       household_recipe_editor: { Args: { target_id: string }; Returns: Json };
       save_household_recipe_editor: { Args: { target_id: string; request_id: string; expected_revision: string | null; fields: Json }; Returns: string };
       accept_household_invite: {
