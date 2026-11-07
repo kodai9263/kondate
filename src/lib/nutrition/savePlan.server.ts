@@ -49,7 +49,7 @@ export async function saveMonthlyDinnerPlanForClient(input: unknown, client?: Aw
       ? supabase.from("side_dishes").select("id").eq("household_id", profile.household_id).in("id", sideDishIds).is("archived_at", null)
       : Promise.resolve({ data: [], error: null }),
   ]);
-  if (recipeError || savedError || sideDishError || recipes?.length !== recipeIds.length || sideDishes?.length !== sideDishIds.length) {
+  if (recipeError || savedError || sideDishError || !recipes || sideDishes?.length !== sideDishIds.length) {
     return { ok: false, message: "保存できないレシピが含まれています。" };
   }
 
@@ -62,6 +62,8 @@ export async function saveMonthlyDinnerPlanForClient(input: unknown, client?: Aw
     return isManualDinnerCandidate(catalog ?? databaseRecipeTime(recipe));
   }).map((recipe) => recipe.id));
   const savedByDate = new Map((saved ?? []).map((entry) => [entry.date, entry.recipe_id]));
+  // 公開保留の料理は取得できなくても同じ日の保存済み献立として維持する。
+  // 新しい日への追加や差し替えには、取得できる選択可能な料理だけを許可する。
   if (parsed.data.entries.some((entry) => !candidateIds.has(entry.recipeId) && savedByDate.get(entry.date) !== entry.recipeId)) {
     return { ok: false, message: "選択できない料理が含まれています。最新の献立を確認してください。" };
   }
