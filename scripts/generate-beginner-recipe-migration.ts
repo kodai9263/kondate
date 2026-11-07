@@ -1,3 +1,5 @@
+// 2026-11-07: 旧原稿には確認待ちの内容が含まれるため再生成を停止する。
+throw new Error("旧レシピの再投入は停止中です。content-rights-audit-2026-11-07.mdを確認してください。");
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { officialNutritionRecipes } from "../src/lib/nutrition/catalog";

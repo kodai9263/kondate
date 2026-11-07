@@ -1,0 +1,34 @@
+{
+  "reviewedOn": "2026-11-07",
+  "origin": "text-to-image followed by edits of the generated icon",
+  "externalReferenceImage": false,
+  "originSession": "01a07962-43aa-7181-8a57-89ee5fd57571",
+  "evidenceLines": [
+    55,
+    94,
+    117
+  ],
+  "generatedOriginal": "exec-34e1fbf8-9d1e-4420-9530-6fcadb89d122.png",
+  "refinedOriginal": "exec-57219cfb-212e-440c-aaf6-bd78cf6e9927.png",
+  "iosEditSession": "01a0c82f-4a0b-70d3-aa8d-0f157b1c12df",
+  "iosEvidenceLines": [
+    13428,
+    13442
+  ],
+  "iosGeneratedOriginal": "exec-95676b3a-0bfa-40c8-9bdd-75f3ea21bbe0.png",
+  "files": [
+    {
+      "path": "public/icons/icon-192.png",
+      "sha256": "86e20aeb5cf5f16a526ba1d835b93a9b765573ff4c6752b1900177fee06ef5e6"
+    },
+    {
+      "path": "public/icons/icon-512.png",
+      "sha256": "dee8cf812b940d89ecabbe104457fe8486d1f26febb910912819689c15cedf5b"
+    },
+    {
+      "path": "mobile/ios/App/App/Assets.xcassets/AppIcon.appiconset/KondateAppIcon-1024-v2.png",
+      "sha256": "02ec6a3c62958cc87f3af5842b347960c67005acd3eb25dd8867af5c60c1568b"
+    }
+  ],
+  "limitation": "作成履歴と現行ハッシュの記録。第三者権利が存在しないことの保証ではない。"
+}

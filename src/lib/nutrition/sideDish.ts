@@ -4,12 +4,14 @@ import { getSeasoningGroups, getStepSeasoningIds, parseSeasoningLine, scopeSideS
 const sideSectionPattern = /副菜|味噌汁|すまし汁|スープ|ナムル|付け合わせ|ごま和え|おひたし|浅漬け|サラダ|冷ややっこ|酢の物|甘酢|白和え|和え物|和え衣|きんぴら|かきたま汁/;
 
 export function resolveDinnerIngredients(day: PlannedDinner) {
+  if (day.recipe.contentUnavailable) return undefined;
   const mode = day.sideMode ?? "default";
   if (mode === "default") return day.recipe.ingredientsText;
   return replaceSideIngredients(day.recipe.ingredientsText, day.recipe.side, mode, day.sideDish ?? null);
 }
 
 export function resolveDinnerSteps(day: PlannedDinner) {
+  if (day.recipe.contentUnavailable) return day.recipe.eveningSteps;
   const mode = day.sideMode ?? "default";
   if (mode === "default") return day.recipe.eveningSteps;
   return removeDefaultSideSteps(day.recipe.eveningSteps ?? [], day.recipe.ingredientsText, day.recipe.side);

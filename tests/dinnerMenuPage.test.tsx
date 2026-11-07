@@ -2,16 +2,16 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ custom: [] as unknown[], community: [] as unknown[], exclusions: [] as unknown[] }));
+const mocks = vi.hoisted(() => ({ custom: [] as unknown[], community: [] as unknown[], official: [] as unknown[], exclusions: [] as unknown[] }));
 vi.mock("@/lib/supabase/server", () => ({ getSupabaseServer: async () => ({
   auth: { getUser: async () => ({ data: { user: { id: "user" } } }) },
   from: (table: string) => {
-    let householdRecipes = false;
+    let householdRecipes = false; let communityOnly = false;
     const result = () => ({ data: table === "profiles" ? { household_id: "household" }
       : table === "household_billing_access" ? null : table === "household_recipe_exclusions" ? mocks.exclusions
-      : householdRecipes ? mocks.custom : mocks.community });
+      : householdRecipes ? mocks.custom : communityOnly ? mocks.community : mocks.official });
     const query = {
-      select: () => query, eq: () => query, is: () => query, neq: () => query, contains: () => query,
+      select: () => query, eq: () => query, is: () => query, neq: () => query, contains: () => { communityOnly = true; return query; },
       not: () => { householdRecipes = true; return query; }, order: () => query,
       maybeSingle: async () => result(), then: (resolve: (value: unknown) => unknown) => Promise.resolve(result()).then(resolve),
     };
@@ -21,7 +21,7 @@ vi.mock("@/lib/supabase/server", () => ({ getSupabaseServer: async () => ({
 vi.mock("@/components/features/recipes/ArchiveRecipeButton", () => ({ ArchiveRecipeButton: () => <button>削除</button> }));
 import RecipesPage from "@/app/app/recipes/page";
 
-beforeEach(() => { mocks.custom = []; mocks.community = []; mocks.exclusions = []; });
+beforeEach(() => { mocks.custom = []; mocks.community = []; mocks.exclusions = []; mocks.official = ["豚のしょうが焼き", "鮭の塩焼き", "さわらの西京焼き"].map(name => ({ id: name, name, meta: {} })); });
 const row = (id: string, minutes: number, meta = {}) => ({ id, name: id, cook_minutes: minutes, meta });
 describe("メニュー一覧の40分条件", () => {
   it("公式・共有・自分のメニューすべてに完成までの上限を適用する", async () => {

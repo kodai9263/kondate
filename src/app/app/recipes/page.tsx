@@ -12,11 +12,12 @@ export default async function RecipesPage({ searchParams }: { searchParams: Prom
   const supabase = await getSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = await supabase.from("profiles").select("household_id").eq("id", user?.id ?? "").maybeSingle();
-  const [{ data: customRecipeRows }, { data: communityRecipeRows }, { data: subscription }, { data: exclusions }] = await Promise.all([
+  const [{ data: customRecipeRows }, { data: communityRecipeRows }, { data: subscription }, { data: exclusions }, { data: officialRows }] = await Promise.all([
     supabase.from("recipes").select("id,name,cook_minutes,protein_source,meta").not("household_id", "is", null).neq("category", "breakfast").is("archived_at", null).order("created_at", { ascending: false }),
     supabase.from("recipes").select("id,name,cook_minutes,meta").is("household_id", null).is("archived_at", null).contains("meta", { visibility: "community" }).order("created_at", { ascending: false }),
     profile?.household_id ? supabase.from("household_billing_access").select("status,current_period_end").eq("household_id", profile.household_id).maybeSingle() : Promise.resolve({ data: null }),
     supabase.from("household_recipe_exclusions").select("recipe_key"),
+    supabase.from("recipes").select("id,name,meta").is("household_id", null).is("archived_at", null),
   ]);
   const customRecipes = (customRecipeRows ?? []).filter((recipe) => !isStepCustomization(recipe.meta) && isDinnerCandidate(databaseRecipeTime(recipe)));
   const customizedOfficialKeys = new Set((customRecipeRows ?? []).flatMap((recipe) => {
@@ -35,7 +36,7 @@ export default async function RecipesPage({ searchParams }: { searchParams: Prom
     const exclusionKey = getMetaString(recipe.meta, "community_key") ?? `community:${recipe.id}`;
     return !excludedRecipeKeys.has(exclusionKey) && !customizedSourceIds.has(recipe.id) && isDinnerCandidate(databaseRecipeTime(recipe));
   });
-  const visibleOfficialRecipes = officialNutritionRecipes.filter((recipe) => !excludedRecipeKeys.has(recipe.id) && !customizedOfficialKeys.has(recipe.id) && isDinnerCandidate(recipe));
+  const visibleOfficialRecipes = officialNutritionRecipes.filter((recipe) => (officialRows ?? []).some(row => getMetaString(row.meta, "nutrition_catalog_id") === recipe.id || row.name === recipe.name) && !excludedRecipeKeys.has(recipe.id) && !customizedOfficialKeys.has(recipe.id) && isDinnerCandidate(recipe));
   const visibleRecipeCount = visibleCommunityRecipes.length + visibleOfficialRecipes.length;
   return <main className="mx-auto min-h-dvh w-full max-w-5xl px-4 pb-28 pt-5 sm:px-6"><header className="flex items-end justify-between gap-4 border-b border-kondate-line pb-5"><div><h1 className="font-mincho text-[26px] font-bold">メニュー</h1><p className="mt-1.5 text-sm text-kondate-muted">完成まで40分以内の料理から選べます。</p></div><Link href="/app/recipes/new" className={buttonClass({ className: "shrink-0 px-4 text-sm" })}><Plus size={18} aria-hidden="true" />登録</Link></header>
     <Link href="/app/favorites" className="mt-4 inline-flex min-h-11 items-center text-sm underline">お気に入りを見る</Link>

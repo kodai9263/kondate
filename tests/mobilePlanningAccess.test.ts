@@ -12,7 +12,7 @@ describe.each([
   it("初回設定の未完了をアクセス拒否や期間終了と混同しない", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ error: "planner_setup_required" }, { status: 403 })));
     const result = load();
-    await expect(result).rejects.toThrow("最初の献立設定がまだ完了していません");
+    await expect(result).rejects.toThrow("最初に人数・アレルギー・献立の開始日を確認してください");
     await expect(result).rejects.toThrow("人数・アレルギー・献立の開始日");
   });
 

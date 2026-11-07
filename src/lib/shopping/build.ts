@@ -56,6 +56,7 @@ export function buildPlannedShopping({ start, end, dinners, breakfastVersions, s
     const breakfast = breakfastForDate(breakfastVersions, date);
     meals.push({ date, dinner: plannedDinner?.skipped ? "作らない日" : dinner?.name ?? null, breakfast: breakfast?.name ?? null });
     if (!dinner && !plannedDinner?.skipped) warnings.push(`${date}：夕食が未設定です。`);
+    else if (dinner?.contentUnavailable) warnings.push(`${date}：${dinner.name}の材料は買い物リストに含まれていません。献立から主菜を選び直してください。`);
     else if (dinner && !dinnerIngredientsText?.trim()) warnings.push(`${date}：${dinner.name}の材料が未登録です。メニューで確認してください。`);
     else if (dinner && dinnerIngredientsText) {
       const base = dinner.servingsBase;

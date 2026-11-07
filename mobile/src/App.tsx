@@ -1,3 +1,5 @@
+import { FirstWeekSetup } from "./FirstWeekSetup";
+import { PlanningSetupRequired } from "./planningAccess";
 import { ApplePurchaseCard, useApplePurchases } from "./MobilePurchases";
 import { signupValidationMessage } from "./signupValidation";
 import { Menu } from "./MobileMenu";
@@ -44,6 +46,7 @@ export function App() {
   const [snapshot, setSnapshot] = useState<ShoppingSnapshot | null>(null);
   const [todaySnapshot, setTodaySnapshot] = useState<TodaySnapshot | null>(null);
   const [todayError, setTodayError] = useState("");
+  const [setupRequired, setSetupRequired] = useState(false);
   const [activeTab, setActiveTab] = useState<"today" | "planner" | "menu" | "shopping" | "settings">("today");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -295,10 +298,11 @@ export function App() {
     if (!accessToken) return;
     let cancelled = false;
     void loadToday(accessToken).then((value) => {
-      if (!cancelled) { setTodaySnapshot(value); setTodayError(""); }
+      if (!cancelled) { setTodaySnapshot(value); setTodayError(""); setSetupRequired(false); }
     }).catch((cause: unknown) => {
       if (!cancelled) {
         setTodaySnapshot(null);
+        setSetupRequired(cause instanceof PlanningSetupRequired);
         setTodayError(displayError(cause, "今日の献立を読み込めませんでした。"));
       }
     });
@@ -784,6 +788,7 @@ export function App() {
               setRefreshEpoch((value) => value + 1);
             }}>最新の献立を確認</button>
           </>}
+          {setupRequired && accessToken && <FirstWeekSetup key={userId} accessToken={accessToken} online={online} onSaved={() => { setSetupRequired(false); setTodayError(""); setRefreshEpoch(value => value + 1); }} />}
           {todaySnapshot && <>
             <section className="today-card"><p className="section-tag">朝ごはん</p>
               <h2>{todaySnapshot.today.breakfast?.name ?? "朝ごはんの予定はありません"}</h2>

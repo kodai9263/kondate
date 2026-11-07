@@ -17,7 +17,9 @@ export function menuEntries(rows: MenuRow[], excluded: string[], householdId: st
     if (row.household_id !== null || meta.visibility !== "community" || hidden.has(String(meta.community_key ?? `community:${row.id}`)) || sourceIds.has(row.id) || !isDinnerCandidate(databaseRecipeTime(row))) continue;
     result.push({ id: row.id, name: row.name, minutes: databaseRecipeTime(row).totalMinutes ?? row.cook_minutes, kind: "community", customized: false });
   }
+  const availableOfficial = rows.filter(row => row.household_id === null && recipeMeta(row.meta).visibility !== "community");
   for (const recipe of officialNutritionRecipes) {
+    if (!availableOfficial.some(row => recipeMeta(row.meta).nutrition_catalog_id === recipe.id || row.name === recipe.name)) continue;
     if (hidden.has(recipe.id) || officialKeys.has(recipe.id) || !isDinnerCandidate(recipe)) continue;
     result.push({ id: recipe.id, name: recipe.name, minutes: recipe.totalMinutes ?? recipe.cookMinutes, kind: "official", customized: false });
   }

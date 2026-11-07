@@ -16,17 +16,12 @@ describe("みんなのメニュー", () => {
     expect(migrationSource).not.toMatch(/create_community_recipe[\s\S]*to authenticated/);
   });
 
-  it("Server Actionで認証・契約・公開者を再検証する", () => {
-    expect(createActionSource).toContain("supabase.auth.getUser()");
-    expect(createActionSource).toContain("isActiveSubscriptionStatus");
-    expect(createActionSource).toContain("isRecipePublisher(user)");
-    expect(createActionSource).toContain('getSupabaseAdmin().rpc("create_community_recipe"');
-  });
-
-  it("元URLを保存し、同じ公開URLの重複を防ぐ", () => {
-    expect(migrationSource).toContain("recipes_community_source_url_idx");
-    expect(migrationSource).toContain("'source_url', source_url");
-    expect(createActionSource).toContain('error?.code === "23505"');
+  it("新しい登録は家庭内編集RPCを使い、外部URL・公開指定を拒否する", () => {
+    expect(createActionSource).toContain('supabase.auth.getUser()');
+    expect(createActionSource).toContain('formData.get("visibility") === "community"');
+    expect(createActionSource).toContain('formData.get("sourceUrl")');
+    expect(createActionSource).toContain('supabase.rpc("save_household_recipe_editor"');
+    expect(createActionSource).not.toContain('getSupabaseAdmin');
   });
 
   it("一覧と献立候補に表示し、家庭単位で非表示にできる", () => {
