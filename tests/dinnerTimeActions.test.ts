@@ -43,6 +43,31 @@ beforeEach(() => {
 });
 
 describe("献立保存の時間制限", () => {
+  it("公開保留で取得できない保存済み料理を維持して別の日を変更できる", async () => {
+    mocks.saved = [{ date: "2026-09-01", recipe_id: longId }];
+    const value = input(); value.entries[0].recipeId = longId;
+    expect(await saveMonthlyDinnerPlan(value)).toEqual({ ok: true });
+    expect(mocks.upsert.mock.calls[0][0][0].recipe_id).toBe(longId);
+    expect(mocks.upsert.mock.calls[0][0][1].recipe_id).toBe(shortId);
+  });
+  it("取得できない料理を別の日に新しく追加することは拒否する", async () => {
+    mocks.saved = [{ date: "2026-09-01", recipe_id: longId }];
+    const value = input(); value.entries[1].recipeId = longId;
+    expect((await saveMonthlyDinnerPlan(value)).ok).toBe(false);
+    expect(mocks.upsert).not.toHaveBeenCalled();
+  });
+  it("公開保留の保存済み料理を利用できる料理へ変更できる", async () => {
+    mocks.saved = [{ date: "2026-09-01", recipe_id: longId }];
+    expect(await saveMonthlyDinnerPlan(input())).toEqual({ ok: true });
+    expect(mocks.upsert.mock.calls[0][0][0].recipe_id).toBe(shortId);
+  });
+  it("レシピ取得自体が失敗した場合は保存済みでも書き込まない", async () => {
+    mocks.saved = [{ date: "2026-09-01", recipe_id: longId }];
+    mocks.recipeError = new Error("offline");
+    const value = input(); value.entries[0].recipeId = longId;
+    expect((await saveMonthlyDinnerPlan(value)).ok).toBe(false);
+    expect(mocks.upsert).not.toHaveBeenCalled();
+  });
   it("作らない日はスキップとして保存し、元の料理を維持する", async () => {
     const value = input();
     expect((await saveMonthlyDinnerPlan({ ...value, entries: value.entries.map((entry, index) => ({ ...entry, skipped: index === 0 })) })).ok).toBe(true);
