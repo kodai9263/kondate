@@ -26,7 +26,7 @@ export type ImportedRecipe = {
   warnings: string[];
 };
 
-export type RecipeImportErrorCode = "invalid_url" | "unsupported_site" | "fetch_failed" | "recipe_not_found" | "import_disabled";
+export type RecipeImportErrorCode = "invalid_url" | "unsupported_site" | "fetch_failed" | "recipe_not_found";
 
 export class RecipeImportError extends Error {
   constructor(public readonly code: RecipeImportErrorCode) {
@@ -35,9 +35,53 @@ export class RecipeImportError extends Error {
 }
 
 export async function fetchImportedRecipe(rawUrl: string): Promise<ImportedRecipe> {
-  // 対応サイト名は転載許諾の根拠にならない。許諾を確認するまでは取得しない。
-  void rawUrl;
-  throw new RecipeImportError("import_disabled");
+  let url = parseAllowedRecipeUrl(rawUrl);
+  const signal = AbortSignal.timeout(12_000);
+  try {
+    for (let redirects = 0; redirects <= 3; redirects++) {
+      const response = await fetch(url, {
+        headers: { Accept: "text/html,application/xhtml+xml", "User-Agent": "KyouNoGohanRecipeImporter/1.0" },
+        redirect: "manual", signal, cache: "no-store",
+      });
+      if (response.status >= 300 && response.status < 400) {
+        await response.body?.cancel();
+        const location = response.headers.get("location");
+        if (!location || redirects === 3) throw new RecipeImportError("fetch_failed");
+        // 転送先も毎回検証し、対応外サイトや内部ネットワークへはアクセスしない。
+        url = parseAllowedRecipeUrl(new URL(location, url).toString());
+        continue;
+      }
+      if (!response.ok || !response.body) {
+        await response.body?.cancel();
+        throw new RecipeImportError("fetch_failed");
+      }
+      if (!/text\/html|application\/xhtml\+xml/i.test(response.headers.get("content-type") ?? "")) {
+        await response.body.cancel();
+        throw new RecipeImportError("recipe_not_found");
+      }
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let bytes = 0;
+      let html = "";
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          bytes += value.byteLength;
+          if (bytes > 2_000_000) throw new RecipeImportError("fetch_failed");
+          html += decoder.decode(value, { stream: true });
+        }
+        html += decoder.decode();
+      } finally {
+        await reader.cancel();
+      }
+      return parseRecipeHtml(html, url.toString());
+    }
+  } catch (error) {
+    if (error instanceof RecipeImportError) throw error;
+    throw new RecipeImportError("fetch_failed");
+  }
+  throw new RecipeImportError("fetch_failed");
 }
 
 export function parseRecipeHtml(html: string, sourceUrl: string): ImportedRecipe {
@@ -51,15 +95,17 @@ export function parseRecipeHtml(html: string, sourceUrl: string): ImportedRecipe
     throw new RecipeImportError("recipe_not_found");
   }
 
-  const sourceServings = parseFirstNumber(readText(recipe.recipeYield));
+  const yieldText = readText(recipe.recipeYield).normalize("NFKC").trim();
+  const yieldMatch = yieldText.match(/^(\d+)\s*(?:人分|人前|servings?)?\s*[〜~]?$/i);
+  const count = yieldMatch ? Number(yieldMatch[1]) : 0;
+  const sourceServings = count >= 1 && count <= 20 ? count : null;
   const warnings: string[] = [];
-  let ingredientLines = rawIngredients;
-  if (sourceServings && sourceServings > 0 && sourceServings !== 4) {
-    const factor = 4 / sourceServings;
-    ingredientLines = rawIngredients.map((line) => scaleIngredientLine(line, factor));
-  } else if (!sourceServings) {
-    warnings.push("元レシピの人数を確認できないため、材料は掲載量のままです。");
-  }
+  if (sourceServings && /[〜~]/.test(yieldText)) warnings.push("元レシピの人数は目安です。保存前に何人分かを確認してください。");
+  if (!sourceServings) warnings.push("何人分かを読み取れませんでした。元のレシピを確認して入力してください。");
+  const ingredients = rawIngredients.map(cleanLine).filter(Boolean).join("\n");
+  const steps = rawSteps.map(cleanLine).filter(Boolean).join("\n");
+  // 材料や加熱手順を途中で切り捨てた状態で保存しない。
+  if (name.length > 80 || ingredients.length > 4000 || steps.length > 4000) throw new RecipeImportError("recipe_not_found");
 
   const nutritionSource = isRecord(recipe.nutrition) ? recipe.nutrition : {};
   const nutrition = compactNutrition({
@@ -71,19 +117,16 @@ export function parseRecipeHtml(html: string, sourceUrl: string): ImportedRecipe
     saltG: parseSaltEquivalent(nutritionSource, sourceUrl),
   });
 
-  if (Object.keys(nutrition).length < 6) {
-    warnings.push("取得できない栄養項目は、フォームの初期値を残しています。");
-  }
-  warnings.push("野菜量は元ページから自動計算できないため、フォームの初期値を確認してください。");
+  warnings.push("材料・分量・作り方を確認してから保存してください。栄養値は自動登録しません。");
 
   return {
     sourceUrl,
     sourceServings,
-    name: name.slice(0, 80),
+    name,
     cookMinutes: parseDurationMinutes(recipe.totalTime) ?? parseDurationMinutes(recipe.cookTime),
     proteinSource: detectProteinSource(rawIngredients.join(" ")),
-    ingredients: ingredientLines.map(cleanLine).filter(Boolean).join("\n").slice(0, 4000),
-    steps: rawSteps.map(cleanLine).filter(Boolean).join("\n").slice(0, 4000),
+    ingredients,
+    steps,
     nutrition,
     warnings,
   };
@@ -224,37 +267,6 @@ function detectProteinSource(ingredientsText: string): ProteinSource {
     }
   }
   return best?.source ?? "noodle";
-}
-
-function scaleIngredientLine(line: string, factor: number) {
-  const normalized = line.normalize("NFKC");
-  const prefixUnits = /(大さじ|小さじ|カップ)(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?)/gi;
-  const suffixUnits = /(\d+\s+\d+\/\d+|\d+\/\d+|\d+(?:\.\d+)?)(\s*(?:kg|g|mg|ml|l|本|枚|個|玉|束|袋|缶|パック|片|かけ|合|丁|株|房))/gi;
-
-  return normalized
-    .replace(prefixUnits, (_match, unit: string, amount: string) => `${unit}${formatAmount(parseAmount(amount) * factor)}`)
-    .replace(suffixUnits, (_match, amount: string, unit: string) => `${formatAmount(parseAmount(amount) * factor)}${unit}`);
-}
-
-function parseAmount(value: string) {
-  const mixed = value.match(/^(\d+)\s+(\d+)\/(\d+)$/);
-  if (mixed) return Number(mixed[1]) + Number(mixed[2]) / Number(mixed[3]);
-  const fraction = value.match(/^(\d+)\/(\d+)$/);
-  if (fraction) return Number(fraction[1]) / Number(fraction[2]);
-  return Number(value);
-}
-
-function formatAmount(value: number) {
-  const rounded = roundNumber(value, 2);
-  if (Number.isInteger(rounded)) return String(rounded);
-  const whole = Math.floor(rounded);
-  const fraction = rounded - whole;
-  const fractionText = Math.abs(fraction - 0.5) < 0.001 ? "1/2"
-    : Math.abs(fraction - 0.25) < 0.001 ? "1/4"
-      : Math.abs(fraction - 0.75) < 0.001 ? "3/4"
-        : null;
-  if (!fractionText) return String(rounded);
-  return whole > 0 ? `${whole} ${fractionText}` : fractionText;
 }
 
 function roundNumber(value: number, digits: number) {
