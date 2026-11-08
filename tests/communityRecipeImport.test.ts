@@ -16,7 +16,7 @@ describe("みんなのメニュー", () => {
     expect(migrationSource).not.toMatch(/create_community_recipe[\s\S]*to authenticated/);
   });
 
-  it("新しい登録は家庭内編集RPCを使い、外部URL・公開指定を拒否する", () => {
+  it("新しい登録は家庭内編集RPCを使い、取り込みも家族内保存に限定する", () => {
     expect(createActionSource).toContain('supabase.auth.getUser()');
     expect(createActionSource).toContain('formData.get("visibility") === "community"');
     expect(createActionSource).toContain('formData.get("sourceUrl")');

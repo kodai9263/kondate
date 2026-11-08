@@ -8,9 +8,9 @@ import { menuEntries } from "@/lib/recipes/mobileCatalog";
 
 afterEach(() => vi.unstubAllGlobals());
 describe("公開確認待ちの本文", () => {
-  it("URL取得関数を直接呼んでも外部へ通信しない", async () => {
+  it("対応外URLでは外部へ通信しない", async () => {
     const fetch = vi.fn(); vi.stubGlobal("fetch", fetch);
-    await expect(fetchImportedRecipe("https://cookpad.com/jp/recipes/123456")).rejects.toMatchObject({ code: "import_disabled" });
+    await expect(fetchImportedRecipe("https://example.com/recipes/123456")).rejects.toMatchObject({ code: "unsupported_site" });
     expect(fetch).not.toHaveBeenCalled();
   });
   it("DBで配信されない静的メニューを一覧へ復活させない", () => { expect(menuEntries([], [], "household")).toEqual([]); });

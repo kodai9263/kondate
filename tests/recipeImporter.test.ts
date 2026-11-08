@@ -10,7 +10,7 @@ afterEach(() => {
 });
 
 describe("レシピURL取り込み", () => {
-  it("JSON-LDを読み取り、2人分の材料だけを4人分へ換算する", () => {
+  it("JSON-LDを読み取り、元の2人分の材料を換算せず読み取る", () => {
     const html = `<script data-test="recipe" type="application/ld+json">
       {"@context":"https://schema.org","@type":"Recipe","name":"なすの豚しゃぶ香味だれ","recipeYield":"2人分","totalTime":"PT10M","recipeIngredient":["なす 2本(200g)","豚肉 150g","醤油、酢 各大さじ1","ごま油 大さじ1/2","めんつゆ(3倍濃縮) 大さじ1"],"recipeInstructions":[{"@type":"HowToSection","itemListElement":[{"@type":"HowToStep","text":"なすを切る"},{"@type":"HowToStep","text":"豚肉をゆでる"}]}],"nutrition":{"calories":"350 kcal","proteinContent":"20 g","fatContent":"12 g","carbohydrateContent":"30 g","fiberContent":"4 g","saltContent":"2.1 g"}}
     </script>`;
@@ -21,11 +21,11 @@ describe("レシピURL取り込み", () => {
     expect(recipe.sourceServings).toBe(2);
     expect(recipe.cookMinutes).toBe(10);
     expect(recipe.proteinSource).toBe("meat");
-    expect(recipe.ingredients).toContain("なす 4本(400g)");
-    expect(recipe.ingredients).toContain("豚肉 300g");
-    expect(recipe.ingredients).toContain("醤油、酢 各大さじ2");
-    expect(recipe.ingredients).toContain("ごま油 大さじ1");
-    expect(recipe.ingredients).toContain("めんつゆ(3倍濃縮) 大さじ2");
+    expect(recipe.ingredients).toContain("なす 2本(200g)");
+    expect(recipe.ingredients).toContain("豚肉 150g");
+    expect(recipe.ingredients).toContain("醤油、酢 各大さじ1");
+    expect(recipe.ingredients).toContain("ごま油 大さじ1/2");
+    expect(recipe.ingredients).toContain("めんつゆ(3倍濃縮) 大さじ1");
     expect(recipe.steps).toBe("なすを切る\n豚肉をゆでる");
     expect(recipe.nutrition).toEqual({ energyKcal: 350, proteinG: 20, fatG: 12, carbsG: 30, fiberG: 4, saltG: 2.1 });
   });
