@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="プライバシーポリシー" updated="2026年11月1日">
+    <LegalPage title="プライバシーポリシー" updated="2026年11月14日">
       <p>「きょうのごはん」のWeb版・スマホアプリで取り扱う情報について説明します。</p>
       <section>
         <h2 className="text-lg font-black">取得する情報</h2>
@@ -24,11 +24,12 @@ export default function PrivacyPage() {
       <section>
         <h2 className="text-lg font-black">外部サービス</h2>
         <ul className="mt-2 list-disc space-y-2 pl-5">
-          <li>Supabase：アカウントの認証、登録確認メール、データ・料理写真の保存。</li>
+          <li>Supabase：アカウントの認証、登録確認・パスワード再設定の管理、データ・料理写真の保存。</li>
           <li>Vercel：Webサイトとアプリ用サーバーの運用。</li>
           <li>Apple：iPhoneアプリの購入・復元・契約管理。購入の検証に必要な情報をAppleと本サービスの間でやり取りします。</li>
           <li>Stripe：Web版の購入と契約管理。</li>
-          <li>{process.env.FEEDBACK_EMAIL_PROVIDER === "smtp" ? "Google Gmail" : "Resend"}：フィードバック通知のメール配信。</li>
+          <li>Brevo：登録確認・パスワード再設定メールとフィードバック通知の配信。送信先メールアドレス、メール本文、配信状況などを取り扱います。</li>
+          <li>Google Gmail：お問い合わせとフィードバック通知の受信・保管、返信対応。</li>
         </ul>
         <p className="mt-3">各サービスには、機能の提供に必要な範囲で情報を送信します。各社の規約・プライバシーポリシーに基づき、日本国外で情報が処理される場合があります。</p>
       </section>
