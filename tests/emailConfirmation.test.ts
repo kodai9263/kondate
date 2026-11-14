@@ -17,9 +17,11 @@ beforeEach(() => {
 describe("登録メールの確認", () => {
   it("リンクの先読みでは認証を消費しない", async () => {
     const response = await GET(new NextRequest(url));
-    expect(await response.text()).toContain('method="post"');
+    const html = await response.text();
+    expect(html).toContain('method="post"');
+    expect(html).toContain('name="referrer" content="same-origin"');
     expect(mock.verify).not.toHaveBeenCalled();
-    expect(response.headers.get("referrer-policy")).toBe("no-referrer");
+    expect(response.headers.get("referrer-policy")).toBe("same-origin");
   });
   it("本人のボタン操作で確認し、同じリンクの再訪を成功として扱う", async () => {
     const response = await POST(post());
@@ -48,5 +50,12 @@ describe("登録メールの確認", () => {
     expect(mock.verify).not.toHaveBeenCalled();
     const response = await POST(post(`token_hash=${hash}&next=https://evil.test`));
     expect(response.headers.get("location")).toContain("redirect_to=%2Fapp");
+  });
+  it("Originのない送信にも空の応答ではなく日本語の案内を返す", async () => {
+    const response = await POST(post(undefined, "null"));
+    expect(response.status).toBe(403);
+    expect(response.headers.get("content-type")).toBe("text/html; charset=utf-8");
+    expect(await response.text()).toContain("メールのリンクを開き直してください");
+    expect(mock.verify).not.toHaveBeenCalled();
   });
 });
