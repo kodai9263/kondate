@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildTodayTaskBindings, mergeTodayPlan, type DailyPlanRow } from "@/lib/today/server";
-import { officialRecipeDetails } from "@/lib/nutrition/recipeDetails";
+import { officialRecipeDetails } from "./fixtures/legacy-standard/recipeDetails";
 import type { PlanMeal } from "@/types/domain";
 
 const fallbackToday: PlanMeal = {

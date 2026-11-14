@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { standardSideDishes, standardSideServings } from "./standardSideDishes";
+import { standardSideStorageKeys, standardSideServings } from "./standardSideDishes";
 import type { SideDish } from "@/types/nutrition";
 
 // 家庭と定番キーからUUID v5を作る。同時選択・再選択でも同じ家庭に同じ副菜を重複登録しない。
@@ -14,6 +14,6 @@ export function standardSideDishId(householdId: string, key: string) {
 }
 
 export function restoreStandardSideMetadata(sideDish: SideDish, householdId?: string): SideDish {
-  const standard = householdId && standardSideDishes.find((dish) => standardSideDishId(householdId, dish.key) === sideDish.id);
-  return standard ? { ...sideDish, standardKey: standard.key, servingsBase: standardSideServings } : sideDish;
+  const standard = householdId && standardSideStorageKeys.find((key) => standardSideDishId(householdId, key) === sideDish.id);
+  return standard ? { ...sideDish, standardKey: standard, servingsBase: standardSideServings } : sideDish;
 }

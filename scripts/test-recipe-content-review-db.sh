@@ -12,4 +12,5 @@ for migration in supabase/migrations/*.sql; do
   "${psql_cmd[@]}" --single-transaction -f "$migration" >> "$planner_test_dir/migrations.log" 2>&1
 done
 "${psql_cmd[@]}" -f tests/sql/recipeContentReview.sql
+"${psql_cmd[@]}" -f tests/sql/standardRecipeReview.sql
 printf "検証ログ: %s\n" "$planner_test_dir"

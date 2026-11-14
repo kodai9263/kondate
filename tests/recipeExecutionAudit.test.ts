@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { officialRecipeDetails } from "@/lib/nutrition/recipeDetails";
+import { officialRecipeDetails } from "./fixtures/legacy-standard/recipeDetails";
 import { auditedCommunityRecipe } from "@/lib/recipes/communityRecipeDetails";
 
 const recipes = [...Object.entries(officialRecipeDetails), ["community", auditedCommunityRecipe.detail] as const];

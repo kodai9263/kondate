@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { officialNutritionRecipes } from "@/lib/nutrition/catalog";
+import { officialNutritionRecipes } from "./fixtures/legacy-standard/catalog";
 import { resolveMonthlyDinnerPlan } from "@/lib/nutrition/planner";
 import { buildPlannedShopping } from "@/lib/shopping/build";
 import { isCookingWaterOrIce, parseIngredientLine } from "@/lib/shopping/ingredients";

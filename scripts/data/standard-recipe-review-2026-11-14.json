@@ -1,0 +1,848 @@
+[
+  {
+    "id": "29e90200-3351-46f5-9216-65ab9aef8008",
+    "name": "おにぎり・味噌汁・卵焼き・果物",
+    "category": "breakfast",
+    "catalog_key": null
+  },
+  {
+    "id": "321225dc-68e4-4200-bad8-3bd8234e297e",
+    "name": "お茶漬け・卵焼き・浅漬け・ヨーグルト",
+    "category": "breakfast",
+    "catalog_key": null
+  },
+  {
+    "id": "1d53022e-6503-4587-8c5f-3c415774862e",
+    "name": "コーンフレーク・牛乳・バナナ・チーズ",
+    "category": "breakfast",
+    "catalog_key": null
+  },
+  {
+    "id": "1478eee6-6bd5-4ecd-b237-00527e3e510d",
+    "name": "ごはん・味噌汁・目玉焼き・ミニトマト",
+    "category": "breakfast",
+    "catalog_key": null
+  },
+  {
+    "id": "fd8e874b-719c-4ff7-ad35-36b30b0a5729",
+    "name": "ごはん・味噌汁・納豆・バナナ",
+    "category": "breakfast",
+    "catalog_key": null
+  },
+  {
+    "id": "aae19107-5f79-4215-b4c9-e09eaf682253",
+    "name": "ごはん・味噌汁・鮭フレーク・ヨーグルト",
+    "category": "breakfast",
+    "catalog_key": null
+  },
+  {
+    "id": "e35cfe9b-c449-421e-989e-4ad19975ca39",
+    "name": "しらすごはん・味噌汁・のり・ヨーグルト",
+    "category": "breakfast",
+    "catalog_key": null
+  },
+  {
+    "id": "ae5267eb-323d-4955-9c58-0b9d42dd95ff",
+    "name": "ツナマヨトースト・スープ・ヨーグルト",
+    "category": "breakfast",
+    "catalog_key": null
+  },
+  {
+    "id": "7127f099-4215-4a72-89a6-4508301d25cb",
+    "name": "トースト・チーズ・ヨーグルト・果物",
+    "category": "breakfast",
+    "catalog_key": null
+  },
+  {
+    "id": "4f67dbbe-b64b-4de3-ab8e-215d8fcdf612",
+    "name": "ハムチーズトースト・ゆで卵・果物",
+    "category": "breakfast",
+    "catalog_key": null
+  },
+  {
+    "id": "2a455ee2-c4ce-44d0-aec3-3f171a2e4e4f",
+    "name": "あさりと春キャベツの酒蒸し",
+    "category": "main",
+    "catalog_key": "asari-cabbage"
+  },
+  {
+    "id": "3c8b9cea-0c46-4ad4-bb0f-a0083ba05921",
+    "name": "あじの南蛮漬け",
+    "category": "main",
+    "catalog_key": "aji-nanban"
+  },
+  {
+    "id": "5b96c0d6-21eb-4846-bfe8-767855f3d6bd",
+    "name": "あじの開き",
+    "category": "main",
+    "catalog_key": null
+  },
+  {
+    "id": "a0589d6d-66c4-4ba2-875c-f4185059e738",
+    "name": "あじの香草パン粉焼き",
+    "category": "main",
+    "catalog_key": "aji-herb-grill"
+  },
+  {
+    "id": "ca2cd4df-0425-462f-9608-b30173fb21b6",
+    "name": "アスパラの肉巻き",
+    "category": "main",
+    "catalog_key": "quick-asparagus-pork-rolls"
+  },
+  {
+    "id": "d09b0de4-7b01-492b-9b50-a708d63637c3",
+    "name": "いわしの蒲焼き丼",
+    "category": "main",
+    "catalog_key": "sardine-bowl"
+  },
+  {
+    "id": "60e54d0f-0722-4022-8e5e-9d9929c534b1",
+    "name": "うなぎと夏野菜のちらし丼",
+    "category": "main",
+    "catalog_key": "unagi-bowl"
+  },
+  {
+    "id": "f238ebf9-fedf-4dae-b995-6c10f82e9f98",
+    "name": "エビマヨチャーハン",
+    "category": "main",
+    "catalog_key": "shrimp-mayo-fried-rice"
+  },
+  {
+    "id": "a9cb2c2f-1d80-4b76-901f-5cf3d2f63100",
+    "name": "かじきの照り焼き",
+    "category": "main",
+    "catalog_key": null
+  },
+  {
+    "id": "4a2ca328-d6d5-4e28-8f70-7d55e4fa5e9a",
+    "name": "かに玉",
+    "category": "main",
+    "catalog_key": "quick-kanitama"
+  },
+  {
+    "id": "be341e60-487d-4300-b0d6-ecd9f512e049",
+    "name": "かぼちゃと鶏肉の夏カレー",
+    "category": "main",
+    "catalog_key": "pumpkin-chicken-curry"
+  },
+  {
+    "id": "40969a80-325c-4bd8-8d6d-2d5a7ed9fffc",
+    "name": "カレーライス",
+    "category": "main",
+    "catalog_key": "basic-curry"
+  },
+  {
+    "id": "6bf2436d-3ba5-4826-a15d-beff6b9aee58",
+    "name": "きつねうどん",
+    "category": "main",
+    "catalog_key": "quick-kitsune-udon"
+  },
+  {
+    "id": "5e2f005f-00f2-4020-b14e-864484a09ef8",
+    "name": "きのこあんの豆腐ハンバーグ",
+    "category": "main",
+    "catalog_key": "mushroom-tofu-hamburg"
+  },
+  {
+    "id": "f7df1614-5f88-47c5-b1fb-92357cd6e394",
+    "name": "きのこクリームシチュー",
+    "category": "main",
+    "catalog_key": "mushroom-cream-stew"
+  },
+  {
+    "id": "53c69034-2cd9-4746-b335-5d95bb16cbbf",
+    "name": "きのこと牛肉の混ぜご飯",
+    "category": "main",
+    "catalog_key": "mushroom-beef-rice"
+  },
+  {
+    "id": "cd229d26-a85b-4d6c-bcc8-2336cf391a40",
+    "name": "グリーンピースと新玉ねぎのオムレツ",
+    "category": "main",
+    "catalog_key": "greenpea-omelet"
+  },
+  {
+    "id": "ab49ab3c-cb91-43b9-b077-12e477c18b63",
+    "name": "ゴーヤと豆腐のチャンプルー",
+    "category": "main",
+    "catalog_key": "goya-champuru"
+  },
+  {
+    "id": "e8c30be2-b0fe-4ccd-9223-e3b386613e10",
+    "name": "さばの味噌煮",
+    "category": "main",
+    "catalog_key": "mackerel-miso"
+  },
+  {
+    "id": "fd83a1d9-6c44-4888-8029-0f5b3715b9fc",
+    "name": "さばの塩焼き",
+    "category": "main",
+    "catalog_key": "salt-grilled-mackerel"
+  },
+  {
+    "id": "c70045c3-d4c6-431b-893c-fc36070b3ee6",
+    "name": "さばの塩焼き+豚汁",
+    "category": "main",
+    "catalog_key": null
+  },
+  {
+    "id": "70e5f2c8-79db-497f-b442-6c413dc91ed4",
+    "name": "さわらの西京焼き",
+    "category": "main",
+    "catalog_key": "sawara-saikyo"
+  },
+  {
+    "id": "cb55a5ad-3dbc-4db6-84f8-cc8be969828b",
+    "name": "さんまの塩焼き",
+    "category": "main",
+    "catalog_key": "sanma"
+  },
+  {
+    "id": "047595dd-1fe6-40fb-83ce-a35daa28c6bc",
+    "name": "スナップえんどうの豆腐チャンプルー",
+    "category": "main",
+    "catalog_key": "snappea-champuru"
+  },
+  {
+    "id": "bd608906-9129-4c53-9b79-ceacf2ac74c2",
+    "name": "たけのこと厚揚げのうま煮",
+    "category": "main",
+    "catalog_key": "takenoko-tofu"
+  },
+  {
+    "id": "5f37fdda-168d-4b53-9829-c2f8892a55a2",
+    "name": "たけのこと鶏の炊き込みご飯",
+    "category": "main",
+    "catalog_key": "takenoko-chicken-rice"
+  },
+  {
+    "id": "bd904565-069e-4ac7-b6e2-d7dde158d5af",
+    "name": "タコライス",
+    "category": "main",
+    "catalog_key": null
+  },
+  {
+    "id": "e7a455c9-7847-46f6-8f0e-1018e07cd943",
+    "name": "たらと白菜の寄せ鍋",
+    "category": "main",
+    "catalog_key": "cod-hotpot"
+  },
+  {
+    "id": "325876d9-9a1e-4c4c-bffc-bcb375457c86",
+    "name": "たらと野菜の包み蒸し",
+    "category": "main",
+    "catalog_key": "cod-steam"
+  },
+  {
+    "id": "e3b54902-74d3-4ecf-8464-8fc9a507f25f",
+    "name": "たらのフライ",
+    "category": "main",
+    "catalog_key": "quick-cod-fry"
+  },
+  {
+    "id": "61352fa5-9d35-4a30-b562-42eb48e12f92",
+    "name": "たらのムニエル",
+    "category": "main",
+    "catalog_key": null
+  },
+  {
+    "id": "e04ac571-9084-4341-8d62-78c84a596efe",
+    "name": "チキンソテー",
+    "category": "main",
+    "catalog_key": "quick-chicken-saute"
+  },
+  {
+    "id": "1901b8b0-b684-4ebf-b5a9-3c179e574edc",
+    "name": "チキンピカタ",
+    "category": "main",
+    "catalog_key": null
+  },
+  {
+    "id": "27e578a3-cfb6-4ef6-897d-9b0c7070a81d",
+    "name": "チャーハン",
+    "category": "main",
+    "catalog_key": "fried-rice"
+  },
+  {
+    "id": "2777e4c6-3ab3-429d-87df-7d1c5cf1c907",
+    "name": "チンジャオロース",
+    "category": "main",
+    "catalog_key": "chinjao-rosu"
+  },
+  {
+    "id": "24d5adff-0366-44e7-aeaf-ab52735aac62",
+    "name": "ツナときのこの和風パスタ",
+    "category": "main",
+    "catalog_key": "quick-tuna-mushroom-pasta"
+  },
+  {
+    "id": "c74bc1d3-34a4-46f5-ae35-788b9c44892b",
+    "name": "とうもろこしと鶏肉の炊き込みご飯",
+    "category": "main",
+    "catalog_key": "corn-chicken-rice"
+  },
+  {
+    "id": "59dc2644-cf77-48c8-ab7b-f1b9200c6d34",
+    "name": "とんかつ",
+    "category": "main",
+    "catalog_key": "quick-tonkatsu"
+  },
+  {
+    "id": "2048e3d8-37ee-4967-8a46-490d5566edd6",
+    "name": "なすと豚肉の味噌炒め",
+    "category": "main",
+    "catalog_key": "eggplant-miso-pork"
+  },
+  {
+    "id": "f24230de-0faa-41b7-881e-6a7896a6a191",
+    "name": "ナポリタン",
+    "category": "main",
+    "catalog_key": "napolitan"
+  },
+  {
+    "id": "c1a62883-049b-463d-b971-5939fc953a96",
+    "name": "ハンバーグ",
+    "category": "main",
+    "catalog_key": "hamburg"
+  },
+  {
+    "id": "9bc1d4b3-45b5-4cc6-9bc4-c643f03b59bf",
+    "name": "ビーフペッパーライス",
+    "category": "main",
+    "catalog_key": "beef-pepper-rice"
+  },
+  {
+    "id": "521466e6-92e5-4a06-bb5c-2327f8c48af2",
+    "name": "ブラックチャーハン",
+    "category": "main",
+    "catalog_key": "black-fried-rice"
+  },
+  {
+    "id": "2790757c-78ab-4cc9-a4c0-0d3af64a066c",
+    "name": "ぶりの照り焼き",
+    "category": "main",
+    "catalog_key": null
+  },
+  {
+    "id": "3a0b7cc3-c44e-4437-928a-db7ef0f6f518",
+    "name": "ぶり大根",
+    "category": "main",
+    "catalog_key": "buri-daikon"
+  },
+  {
+    "id": "7c27fbca-bd51-46c3-8708-914b3b2c2d5c",
+    "name": "ふわとろオムライス",
+    "category": "main",
+    "catalog_key": "omelet-rice"
+  },
+  {
+    "id": "964a4f6d-11da-4144-a7f1-cbb97d10bc8f",
+    "name": "ホイコーロー",
+    "category": "main",
+    "catalog_key": "restaurant-hoikoro"
+  },
+  {
+    "id": "fca44747-20c3-461f-ab79-d51b9bfae1b3",
+    "name": "ほうれん草と鶏肉のクリーム煮",
+    "category": "main",
+    "catalog_key": "spinach-cream-chicken"
+  },
+  {
+    "id": "bcd1e65e-8761-4bef-9825-6b4031485066",
+    "name": "ミートソーススパゲッティ",
+    "category": "main",
+    "catalog_key": null
+  },
+  {
+    "id": "d6bd2db4-1d03-4976-8ace-578b8adab175",
+    "name": "ミートソーススパゲティ",
+    "category": "main",
+    "catalog_key": "quick-meat-sauce-pasta"
+  },
+  {
+    "id": "a35cb6b8-b8d4-4647-905c-6f6d59ca7b09",
+    "name": "ミートボールのトマト煮",
+    "category": "main",
+    "catalog_key": "quick-tomato-meatballs"
+  },
+  {
+    "id": "8c3d9522-0357-4baa-86b6-f2f0030aa66d",
+    "name": "レバニラ炒め",
+    "category": "main",
+    "catalog_key": "liver-chive-stir-fry"
+  },
+  {
+    "id": "7f65233b-b467-41b1-afba-da662ba682c3",
+    "name": "れんこん入り鶏つくね",
+    "category": "main",
+    "catalog_key": "lotus-chicken-balls"
+  },
+  {
+    "id": "79d1cd29-6ab5-42d0-85c5-5e37ad3e093a",
+    "name": "三色そぼろ丼",
+    "category": "main",
+    "catalog_key": null
+  },
+  {
+    "id": "439237bb-637b-4ace-a55d-5022af311bc6",
+    "name": "中華丼",
+    "category": "main",
+    "catalog_key": "chinese-bowl"
+  },
+  {
+    "id": "74e08581-744c-4b38-ba18-58e2f4e57593",
+    "name": "冷しゃぶとトマトの香味サラダ",
+    "category": "main",
+    "catalog_key": "cold-pork-tomato"
+  },
+  {
+    "id": "a3e775e7-07c0-4c38-b4ff-8dd0537b1227",
+    "name": "冷やしぶっかけうどん",
+    "category": "main",
+    "catalog_key": null
+  },
+  {
+    "id": "d73f6372-bb71-44eb-aa05-b778677e6ee8",
+    "name": "初がつおのたたき",
+    "category": "main",
+    "catalog_key": "first-katsuo"
+  },
+  {
+    "id": "328a1b71-fa1b-4167-ba39-ed60f76210f6",
+    "name": "厚揚げとひき肉の甘辛炒め",
+    "category": "main",
+    "catalog_key": "atsuage-sweet-savory"
+  },
+  {
+    "id": "9ad0d897-8c09-4aa6-9113-9ffbe612aabd",
+    "name": "唐揚げ",
+    "category": "main",
+    "catalog_key": null
+  },
+  {
+    "id": "dc349228-1ca4-4238-abd1-dfb5b3801b00",
+    "name": "夏野菜カレー",
+    "category": "main",
+    "catalog_key": null
+  },
+  {
+    "id": "eb7a43f0-63c1-4f76-b078-ef6b66ad4c94",
+    "name": "大根と豚肉のこっくり煮",
+    "category": "main",
+    "catalog_key": "daikon-pork"
+  },
+  {
+    "id": "2eee24e0-e0ff-4c0b-8c71-c1f8e57ea896",
+    "name": "天津丼",
+    "category": "main",
+    "catalog_key": "tenshin-bowl"
+  },
+  {
+    "id": "c15c13d2-b429-4be2-9a99-792d2f1bf8f4",
+    "name": "戻りがつおのしょうが焼き",
+    "category": "main",
+    "catalog_key": "returning-katsuo"
+  },
+  {
+    "id": "40b272c2-dfc2-47c1-9b57-8f1087cac46e",
+    "name": "手羽中の甘辛焼き",
+    "category": "main",
+    "catalog_key": null
+  },
+  {
+    "id": "b986d3ca-d653-491d-bdd6-8f61300465d5",
+    "name": "新じゃがの鶏そぼろあん",
+    "category": "main",
+    "catalog_key": "new-potato-soboro"
+  },
+  {
+    "id": "d0a73604-e6fa-4612-826b-945cfb8fc925",
+    "name": "新玉ねぎと蒸し鶏の香味だれ",
+    "category": "main",
+    "catalog_key": "fresh-onion-chicken"
+  },
+  {
+    "id": "d855fbb6-e5a5-4f12-9a8d-1deb42f7ef38",
+    "name": "春キャベツと豚肉の重ね蒸し",
+    "category": "main",
+    "catalog_key": "spring-cabbage-pork"
+  },
+  {
+    "id": "bb5db5a1-750a-4de6-bf3d-a57e1b974276",
+    "name": "栗と鶏肉の炊き込みご飯",
+    "category": "main",
+    "catalog_key": "chestnut-chicken-rice"
+  },
+  {
+    "id": "ce691877-2adb-459f-986d-26049c471a4f",
+    "name": "油淋鶏チャーハン",
+    "category": "main",
+    "catalog_key": "yurinchi-fried-rice"
+  },
+  {
+    "id": "3bb5424b-2c40-4020-bc3e-172fda172227",
+    "name": "焼きうどん",
+    "category": "main",
+    "catalog_key": "yaki-udon"
+  },
+  {
+    "id": "d3a685a4-f379-47dc-8da9-ab3583df4efe",
+    "name": "焼きそば",
+    "category": "main",
+    "catalog_key": null
+  },
+  {
+    "id": "336eca37-7d54-4b9f-a24a-9ab597f6d094",
+    "name": "焼き餃子",
+    "category": "main",
+    "catalog_key": "quick-pan-gyoza"
+  },
+  {
+    "id": "a130ecdc-9aab-4558-8454-f615ee4dbe57",
+    "name": "蒸し鶏の冷やしごまだれ麺",
+    "category": "main",
+    "catalog_key": "sesame-chicken-noodles"
+  },
+  {
+    "id": "09eda332-4c1d-4dba-9d6b-cb4c495cec16",
+    "name": "牛丼",
+    "category": "main",
+    "catalog_key": "gyudon"
+  },
+  {
+    "id": "9710b1e3-6260-45c2-a6f1-14d6813841cd",
+    "name": "牛肉とごぼうのしぐれ煮",
+    "category": "main",
+    "catalog_key": "beef-burdock"
+  },
+  {
+    "id": "73566ebe-e7ff-4b8b-8503-6c43914a53b6",
+    "name": "牡蠣とごぼうの炊き込みご飯",
+    "category": "main",
+    "catalog_key": "oyster-rice"
+  },
+  {
+    "id": "a1b06f99-9790-4891-9267-21dce59af63a",
+    "name": "白菜チャーハン",
+    "category": "main",
+    "catalog_key": "napa-cabbage-fried-rice"
+  },
+  {
+    "id": "d0bd5dc6-635c-4955-9cc7-a9b7e2119596",
+    "name": "白菜と厚揚げのうま煮",
+    "category": "main",
+    "catalog_key": "napa-tofu"
+  },
+  {
+    "id": "260d0cfb-ec4b-4df0-b39d-3a7a67494417",
+    "name": "白菜と豚肉のミルフィーユ蒸し",
+    "category": "main",
+    "catalog_key": "cabbage-millefeuille"
+  },
+  {
+    "id": "680e524d-a64e-4603-b21c-25f1d64b3be6",
+    "name": "白身魚と夏野菜のラタトゥイユ",
+    "category": "main",
+    "catalog_key": "summer-veg-whitefish"
+  },
+  {
+    "id": "dc6ba890-b574-4c06-b94b-8d60d513b5a5",
+    "name": "秋なすとまぐろの味噌炒め",
+    "category": "main",
+    "catalog_key": "autumn-eggplant-tuna"
+  },
+  {
+    "id": "b2da410a-6be5-4998-abd1-44216f69213e",
+    "name": "肉じゃが",
+    "category": "main",
+    "catalog_key": "nikujaga"
+  },
+  {
+    "id": "22603b68-f83f-4a99-b6eb-fc6d26d408da",
+    "name": "肉味噌そうめん",
+    "category": "main",
+    "catalog_key": null
+  },
+  {
+    "id": "bc1c4c36-f89a-417c-a53b-d8d3b78e19a6",
+    "name": "肉豆腐",
+    "category": "main",
+    "catalog_key": "quick-nikudofu"
+  },
+  {
+    "id": "b9586819-cb33-4045-b8c0-8e98fcd0807c",
+    "name": "肉野菜炒め",
+    "category": "main",
+    "catalog_key": "pork-vegetable-stir-fry"
+  },
+  {
+    "id": "63686232-3b03-430b-9b3d-f22a21e5055a",
+    "name": "親子丼",
+    "category": "main",
+    "catalog_key": null
+  },
+  {
+    "id": "1ee91ab4-04ae-4679-89fd-21f5ce3cf511",
+    "name": "豆と野菜のキーマカレー",
+    "category": "main",
+    "catalog_key": "tofu-curry"
+  },
+  {
+    "id": "40ea90cb-d0ab-40ba-87be-640fa05a29f5",
+    "name": "豆腐たっぷり麻婆豆腐",
+    "category": "main",
+    "catalog_key": "tofu-mapo"
+  },
+  {
+    "id": "dc35ed63-cbe5-4dc9-9336-925efe3ffec6",
+    "name": "豆腐ハンバーグ",
+    "category": "main",
+    "catalog_key": "soy-hamburg"
+  },
+  {
+    "id": "be603e31-52ed-47e4-a4f9-11486a9cc5dc",
+    "name": "豚キムチ炒め",
+    "category": "main",
+    "catalog_key": "pork-kimchi"
+  },
+  {
+    "id": "b6786373-e31e-4265-9558-718b57d02cef",
+    "name": "豚こまの甘辛丼",
+    "category": "main",
+    "catalog_key": null
+  },
+  {
+    "id": "bff30e9e-9754-4417-b20d-d6e5f4bb02dc",
+    "name": "豚しゃぶサラダ",
+    "category": "main",
+    "catalog_key": null
+  },
+  {
+    "id": "f8bb1a98-9f95-424f-bf4b-cf5cdddb51a2",
+    "name": "豚のしょうが焼き",
+    "category": "main",
+    "catalog_key": "pork-ginger"
+  },
+  {
+    "id": "b04de2a1-749f-473c-9a7a-bf1d6d1b9783",
+    "name": "豚の生姜焼き",
+    "category": "main",
+    "catalog_key": null
+  },
+  {
+    "id": "04d92521-d663-4fdd-9690-c413265c44a7",
+    "name": "豚汁と焼きおにぎり",
+    "category": "main",
+    "catalog_key": "pork-soup"
+  },
+  {
+    "id": "0ea0fc9f-bdca-4c6b-b60f-3919f1867648",
+    "name": "豚肉・きくらげと卵炒め",
+    "category": "main",
+    "catalog_key": "pork-wood-ear-egg"
+  },
+  {
+    "id": "4dfdbb4b-c9c4-4eea-bdce-41a8950305f5",
+    "name": "豚肉とキャベツの回鍋肉",
+    "category": "main",
+    "catalog_key": "hoikoro"
+  },
+  {
+    "id": "8ece5863-5c2a-4b96-a546-b57194a1e4f0",
+    "name": "豚肉と小松菜の卵炒め",
+    "category": "main",
+    "catalog_key": "quick-pork-egg-stir-fry"
+  },
+  {
+    "id": "8e0eedfd-188a-4446-9cac-1fe3772efc36",
+    "name": "豚肉の味噌焼き",
+    "category": "main",
+    "catalog_key": "quick-miso-pork"
+  },
+  {
+    "id": "84e4d9b9-3edc-4419-9b48-348047bc49af",
+    "name": "豚肉生姜焼き丼",
+    "category": "main",
+    "catalog_key": "pork-ginger-bowl"
+  },
+  {
+    "id": "82f5bd1e-194a-4549-95ab-0c6fb63b9c44",
+    "name": "里芋と鶏肉の含め煮",
+    "category": "main",
+    "catalog_key": "taro-chicken"
+  },
+  {
+    "id": "d80040ef-4346-4047-aec2-97a45aadc22d",
+    "name": "野菜たっぷりおでん",
+    "category": "main",
+    "catalog_key": "oden"
+  },
+  {
+    "id": "10558182-0d54-4d09-b3d3-9f550f9cf65a",
+    "name": "野菜たっぷりタコライス",
+    "category": "main",
+    "catalog_key": "taco-rice"
+  },
+  {
+    "id": "8dbb978f-13b8-4e9e-b7cd-5f20c049b10c",
+    "name": "野菜たっぷり焼きそば",
+    "category": "main",
+    "catalog_key": "vegetable-yakisoba"
+  },
+  {
+    "id": "ebfca5ce-3c70-435c-9e5a-4c83e94d86d5",
+    "name": "野菜たっぷり親子丼",
+    "category": "main",
+    "catalog_key": "oyakodon"
+  },
+  {
+    "id": "b6f10e66-4dcb-465b-be78-5a7056d937f2",
+    "name": "野菜炒め",
+    "category": "main",
+    "catalog_key": "vegetable-stir-fry"
+  },
+  {
+    "id": "4305e6e6-407c-40ea-8e40-24e841ca42f6",
+    "name": "長ねぎと牛肉のすき煮",
+    "category": "main",
+    "catalog_key": "leek-sukiyaki"
+  },
+  {
+    "id": "5e2a0060-9fa1-44ee-96e1-a53cd37a7723",
+    "name": "餃子(家族で包む日)",
+    "category": "main",
+    "catalog_key": null
+  },
+  {
+    "id": "cc301be3-2c17-4301-a0b8-73fbc1ce8e4e",
+    "name": "香味野菜のピリ辛冷ややっこ",
+    "category": "main",
+    "catalog_key": "spicy-hiyayakko"
+  },
+  {
+    "id": "68325fff-7e62-4215-adda-b9eb90965048",
+    "name": "鮭とカリフラワーのグラタン",
+    "category": "main",
+    "catalog_key": "cauliflower-salmon"
+  },
+  {
+    "id": "1eef4591-102d-47f4-b5cf-2752a5458da0",
+    "name": "鮭ときのこのホイル焼き",
+    "category": "main",
+    "catalog_key": "salmon-mushroom"
+  },
+  {
+    "id": "44601c8b-a421-4e84-9141-8d29cd631786",
+    "name": "鮭のちゃんちゃん焼き",
+    "category": "main",
+    "catalog_key": "salmon-chan-chan"
+  },
+  {
+    "id": "545adacf-cf68-4f69-bc04-2024e834f448",
+    "name": "鮭のバター醤油焼き",
+    "category": "main",
+    "catalog_key": null
+  },
+  {
+    "id": "42713332-f6ba-453d-8e98-d115d5c51a81",
+    "name": "鮭のムニエル",
+    "category": "main",
+    "catalog_key": "quick-salmon-meuniere"
+  },
+  {
+    "id": "29f4921e-fc77-4bbe-b595-3a704ba17c2e",
+    "name": "鮭の塩焼き",
+    "category": "main",
+    "catalog_key": "salmon"
+  },
+  {
+    "id": "3c04ace7-0536-4dc0-b8d0-bfc9dc977827",
+    "name": "鶏そぼろ三色丼",
+    "category": "main",
+    "catalog_key": "three-color-soboro-bowl"
+  },
+  {
+    "id": "03a75ebc-f0ad-4073-bd16-e080fb21092e",
+    "name": "鶏と冬野菜の水炊き",
+    "category": "main",
+    "catalog_key": "chicken-mizutaki"
+  },
+  {
+    "id": "646d5afb-eda2-4e7b-b5fd-f24a01c5d62b",
+    "name": "鶏と豆のトマト煮",
+    "category": "main",
+    "catalog_key": "chicken-tomato"
+  },
+  {
+    "id": "ad8f4585-d93d-4246-ac8b-060b8b420d1a",
+    "name": "鶏と野菜の煮込みうどん",
+    "category": "main",
+    "catalog_key": "udon"
+  },
+  {
+    "id": "967ca6c8-1c00-4a08-be23-26d3f7d671c8",
+    "name": "鶏のから揚げ",
+    "category": "main",
+    "catalog_key": "fried-chicken"
+  },
+  {
+    "id": "2ff82d1c-3528-46fc-99dd-6df7e04a2bba",
+    "name": "鶏の照り焼き",
+    "category": "main",
+    "catalog_key": "chicken-teriyaki"
+  },
+  {
+    "id": "4c169a95-63e7-4198-adfd-fe11f2579a1e",
+    "name": "鶏むねの甘辛スティック",
+    "category": "main",
+    "catalog_key": null
+  },
+  {
+    "id": "7802fa0d-8e69-4b78-a942-8eaeff067b06",
+    "name": "鶏むね肉とオクラの梅だれ",
+    "category": "main",
+    "catalog_key": "okra-plum-chicken"
+  },
+  {
+    "id": "f92ec7bd-0107-4df5-ac66-6f512af1b7ff",
+    "name": "鶏むね肉と菜の花の粒マスタード炒め",
+    "category": "main",
+    "catalog_key": "nanohana-chicken"
+  },
+  {
+    "id": "b33e1c1e-0820-4a69-b2c2-876cc3444620",
+    "name": "鶏むね肉のピカタ",
+    "category": "main",
+    "catalog_key": "quick-chicken-piccata"
+  },
+  {
+    "id": "add7a095-1563-42e8-ac7c-9fc5fcb98985",
+    "name": "鶏唐揚げ黒酢あんかけ",
+    "category": "main",
+    "catalog_key": "fried-chicken-black-vinegar"
+  },
+  {
+    "id": "485c5ab4-d1fc-40ee-aa83-59897a376188",
+    "name": "鶏肉とさつまいもの甘辛煮",
+    "category": "main",
+    "catalog_key": "sweetpotato-chicken"
+  },
+  {
+    "id": "9a572759-9a3f-4216-a1ed-66a5ee3d493e",
+    "name": "鶏肉と大根の柚子煮",
+    "category": "main",
+    "catalog_key": "yuzu-chicken"
+  },
+  {
+    "id": "747acd48-1fd4-41f6-a6cc-5b3b8360a20a",
+    "name": "麻婆チャーハン",
+    "category": "main",
+    "catalog_key": "mapo-fried-rice"
+  },
+  {
+    "id": "ce567d93-b247-4a0d-bd9d-48da062f13f3",
+    "name": "麻婆丼",
+    "category": "main",
+    "catalog_key": "mapo-bowl"
+  }
+]

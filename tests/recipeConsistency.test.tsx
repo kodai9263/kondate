@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { RecipeCookingGuide } from "@/components/features/recipes/RecipeCookingGuide";
 import { scaleRecipeIngredient } from "@/lib/family/servings";
-import { officialRecipeDetails } from "@/lib/nutrition/recipeDetails";
+import { officialRecipeDetails } from "./fixtures/legacy-standard/recipeDetails";
 import { auditedCommunityRecipe } from "@/lib/recipes/communityRecipeDetails";
 
 const recipes = [...Object.entries(officialRecipeDetails), ["community", auditedCommunityRecipe.detail] as const];

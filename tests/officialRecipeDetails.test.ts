@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { officialNutritionRecipes } from "@/lib/nutrition/catalog";
-import { officialRecipeDetails } from "@/lib/nutrition/recipeDetails";
+import { officialNutritionRecipes } from "./fixtures/legacy-standard/catalog";
+import { officialRecipeDetails } from "./fixtures/legacy-standard/recipeDetails";
 
 describe("公式献立の調理詳細", () => {
   it("全109献立に材料と6〜10個の個別工程がある", () => {

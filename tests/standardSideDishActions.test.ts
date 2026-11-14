@@ -29,32 +29,32 @@ beforeEach(() => {
 });
 describe("定番副菜の保存", () => {
   it("キーだけを受け取り、家庭の副菜としてサーバーの材料・工程を保存する", async () => {
-    const result = await createStandardSideDish("chilled-tofu");
-    expect(result).toMatchObject({ ok: true, sideDish: { name: "冷ややっこ", standardKey: "chilled-tofu", servingsBase: 4 } });
-    expect(state.writes).toHaveBeenCalledWith(expect.objectContaining({ household_id: "home", ingredients_text: expect.stringContaining("絹ごし豆腐 300g") }), { onConflict: "id", ignoreDuplicates: true });
+    const result = await createStandardSideDish("reviewed-beans-cucumber");
+    expect(result).toMatchObject({ ok: true, sideDish: { name: "大豆ときゅうりのサラダ", standardKey: "reviewed-beans-cucumber", servingsBase: 4 } });
+    expect(state.writes).toHaveBeenCalledWith(expect.objectContaining({ household_id: "home", ingredients_text: expect.stringContaining("大豆（水煮） 200g") }), { onConflict: "id", ignoreDuplicates: true });
   });
   it("同時選択しても1件になり、家庭が違えば別に保存する", async () => {
-    const [a, b] = await Promise.all([createStandardSideDish("chilled-tofu"), createStandardSideDish("chilled-tofu")]);
+    const [a, b] = await Promise.all([createStandardSideDish("reviewed-beans-cucumber"), createStandardSideDish("reviewed-beans-cucumber")]);
     expect(a.sideDish?.id).toBe(b.sideDish?.id); expect(state.records.size).toBe(1);
     state.household = "other-home";
-    const other = await createStandardSideDish("chilled-tofu");
+    const other = await createStandardSideDish("reviewed-beans-cucumber");
     expect(other.sideDish?.id).not.toBe(a.sideDish?.id); expect(state.records.size).toBe(2);
   });
   it("未ログイン・家庭未設定・不正キーを保存しない", async () => {
-    for (const key of [null, "unknown", { key: "chilled-tofu", name: "改ざん" }]) expect((await createStandardSideDish(key)).ok).toBe(false);
-    state.user = false; expect((await createStandardSideDish("chilled-tofu")).ok).toBe(false);
-    state.user = true; state.household = ""; expect((await createStandardSideDish("chilled-tofu")).ok).toBe(false);
+    for (const key of [null, "unknown", { key: "reviewed-beans-cucumber", name: "改ざん" }]) expect((await createStandardSideDish(key)).ok).toBe(false);
+    state.user = false; expect((await createStandardSideDish("reviewed-beans-cucumber")).ok).toBe(false);
+    state.user = true; state.household = ""; expect((await createStandardSideDish("reviewed-beans-cucumber")).ok).toBe(false);
     expect(state.writes).not.toHaveBeenCalled();
   });
   it("アレルギー候補は画面を経由しなくても保存しない", async () => {
-    state.allergies = ["小麦"];
-    expect((await createStandardSideDish("chilled-tofu")).message).toContain("アレルギー");
+    state.allergies = ["大豆"];
+    expect((await createStandardSideDish("reviewed-beans-cucumber")).message).toContain("アレルギー");
     expect(state.writes).not.toHaveBeenCalled();
   });
   it("設定の取得失敗時は保存せず、保存や読み込みの失敗も成功にしない", async () => {
-    state.settingsError = true; expect((await createStandardSideDish("chilled-tofu")).ok).toBe(false);
+    state.settingsError = true; expect((await createStandardSideDish("reviewed-beans-cucumber")).ok).toBe(false);
     expect(state.writes).not.toHaveBeenCalled();
-    state.settingsError = false; state.saveError = true; expect((await createStandardSideDish("chilled-tofu")).ok).toBe(false);
-    state.saveError = false; state.readError = true; expect((await createStandardSideDish("chilled-tofu")).ok).toBe(false);
+    state.settingsError = false; state.saveError = true; expect((await createStandardSideDish("reviewed-beans-cucumber")).ok).toBe(false);
+    state.saveError = false; state.readError = true; expect((await createStandardSideDish("reviewed-beans-cucumber")).ok).toBe(false);
   });
 });
