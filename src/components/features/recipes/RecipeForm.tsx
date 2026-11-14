@@ -10,12 +10,10 @@ export function RecipeForm() {
     <form action={createRecipe} className="space-y-5">
       <fieldset className="space-y-5">
         <label className="block text-sm font-semibold">料理名（必須）<input className={inputClass} name="name" required maxLength={80} /></label>
-        <label className="block text-sm font-semibold">副菜・汁物<input className={inputClass} name="side" maxLength={120} /></label>
-        <div className="grid grid-cols-2 gap-4">
-          <label className="text-sm font-semibold">何人分（必須）<input className={inputClass} name="servings" type="number" min={1} max={20} required defaultValue={4} /></label>
-          <label className="text-sm font-semibold">完成までの時間（分）<input className={inputClass} name="cookMinutes" type="number" min={1} max={240} required defaultValue={25} /></label>
-        </div>
-        <label className="block text-sm font-semibold">主なたんぱく源<select className={inputClass} name="proteinSource" defaultValue="meat"><option value="fish">魚</option><option value="meat">肉</option><option value="soy">大豆・豆腐</option><option value="egg">卵</option><option value="noodle">麺・その他</option></select></label>
+        <input type="hidden" name="side" value="" />
+        <input type="hidden" name="servings" value="4" />
+        <input type="hidden" name="cookMinutes" value="25" />
+        <input type="hidden" name="proteinSource" value="meat" />
         <label className="block text-sm font-semibold">材料（必須）<textarea className={inputClass} rows={6} name="ingredients" required maxLength={4000} placeholder="1行に1つ、食材と分量を入力" /></label>
         <label className="block text-sm font-semibold">作り方（必須）<textarea className={inputClass} rows={8} name="steps" required maxLength={4000} placeholder="1行に1つの手順を入力" /></label>
         <PendingButton>わが家のメニューに保存</PendingButton>
