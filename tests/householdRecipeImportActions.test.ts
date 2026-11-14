@@ -9,17 +9,21 @@ beforeEach(() => { vi.clearAllMocks(); mock.user={id:"user"}; mock.rpc.mockResol
 describe("家族向けURL登録の認証と保存", () => {
  it("未ログインでは外部ページへ接続しない", async () => { mock.user=null; expect((await importRecipeFromUrl("https://cookpad.com/jp/recipes/123456")).ok).toBe(false); expect(mock.fetch).not.toHaveBeenCalled(); });
  it("利用期間外では外部ページへ接続しない", async () => { mock.rpc.mockResolvedValue({data:false,error:null}); expect((await importRecipeFromUrl("https://cookpad.com/jp/recipes/123456")).ok).toBe(false); expect(mock.fetch).not.toHaveBeenCalled(); });
- it("取り込みを家族内RPCへ送り、栄養値を捏造しない", async () => {
-   await expect(createRecipe(form())).rejects.toThrow("redirect:/app/recipes?created=household");
-   expect(mock.rpc).toHaveBeenCalledWith("save_household_recipe_editor", expect.objectContaining({ fields: expect.objectContaining({ sourceUrl: "https://cookpad.com/jp/recipes/123456", servings: 2, ingredients: "卵 2個", steps: "加熱する" }) }));
-   expect(mock.rpc.mock.calls[0][1].fields.energyKcal).toBeUndefined();
+ it("利用可能なアカウントでも外部ページへ接続しない", async () => {
+   expect(await importRecipeFromUrl("https://cookpad.com/jp/recipes/123456")).toMatchObject({ ok: false, message: expect.stringContaining("休止中") });
+   expect(mock.fetch).not.toHaveBeenCalled(); expect(mock.rpc).not.toHaveBeenCalled();
  });
- it("確認なし・全体公開・不正URLでは保存しない", async () => {
-   for (const [key,value,error] of [["importConfirmed","","confirm"],["visibility","community","publish"],["sourceUrl","https://127.0.0.1/","source"]]) {
-     const data=form(); data.set(key,value); await expect(createRecipe(data)).rejects.toThrow(`error=${error}`);
-   }
+ it("旧画面からの取り込み済み保存を拒否する", async () => {
+   await expect(createRecipe(form())).rejects.toThrow("error=import_paused");
    expect(mock.rpc).not.toHaveBeenCalled();
  });
- it("保存失敗は成功扱いしない", async () => { mock.rpc.mockResolvedValue({error:{message:"failed"}}); await expect(createRecipe(form())).rejects.toThrow("error=save"); });
+ it("全体公開は保存しない", async () => {
+   const data=form(); data.set("visibility","community");
+   await expect(createRecipe(data)).rejects.toThrow("error=publish"); expect(mock.rpc).not.toHaveBeenCalled();
+ });
+ it("手入力の保存失敗は成功扱いしない", async () => {
+   const data=form(); data.delete("sourceUrl"); mock.rpc.mockResolvedValue({error:{message:"failed"}});
+   await expect(createRecipe(data)).rejects.toThrow("error=save");
+ });
  it("手入力は従来の保存先を使う", async () => { const data=form(); data.delete("sourceUrl"); await expect(createRecipe(data)).rejects.toThrow("created=household"); expect(mock.rpc.mock.calls[0][0]).toBe("save_household_recipe_editor"); });
 });
