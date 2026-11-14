@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { breakfastForDate, breakfastSettingsSchema, breakfastShoppingForWeek, breakfastTemplates, type BreakfastItem, type BreakfastVersion } from "@/lib/breakfast/settings";
 import { shoppingWithBreakfast } from "@/lib/breakfast/shopping";
-import { menuData } from "@/lib/menuData";
+import { menuData } from "./fixtures/legacy-standard/menuData";
 import { toDateKey, toTokyoCalendarDate } from "@/lib/dates";
 
 const item = (name: string, id = "20000000-0000-4000-8000-000000000001"): BreakfastItem => ({ id, sourceKey: null, name, minutes: null, tasks: [], shoppingItems: [name] });

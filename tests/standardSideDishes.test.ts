@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 vi.mock("@/lib/supabase/server", () => ({ getSupabaseServer: vi.fn() }));
 import { z } from "zod";
-import { availableStandardSideDishes, standardSideDishes, standardSideServings } from "@/lib/nutrition/standardSideDishes";
+import { availableStandardSideDishes, standardSideDishes, standardSideServings } from "./fixtures/legacy-standard/standardSideDishes";
 import { restoreStandardSideMetadata, standardSideDishId } from "@/lib/nutrition/standardSideDishStorage";
-import { officialNutritionRecipes } from "@/lib/nutrition/catalog";
+import { officialNutritionRecipes } from "./fixtures/legacy-standard/catalog";
 import { applySideSelections } from "@/lib/nutrition/planner";
 import { toSavedDinnerEntries } from "@/lib/nutrition/month";
 import { resolveCustomSideSteps, resolveDinnerIngredients, resolveDinnerSteps } from "@/lib/nutrition/sideDish";

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { officialNutritionRecipes } from "@/lib/nutrition/catalog";
+import { officialNutritionRecipes } from "./fixtures/legacy-standard/catalog";
 import { applySideSelections, plannedSideName } from "@/lib/nutrition/planner";
 import { toSavedDinnerEntries } from "@/lib/nutrition/month";
 import { resolveDinnerIngredients, resolveDinnerSteps } from "@/lib/nutrition/sideDish";

@@ -21,7 +21,7 @@ vi.mock("@/lib/supabase/server", () => ({ getSupabaseServer: async () => ({
 vi.mock("@/components/features/recipes/ArchiveRecipeButton", () => ({ ArchiveRecipeButton: () => <button>削除</button> }));
 import RecipesPage from "@/app/app/recipes/page";
 
-beforeEach(() => { mocks.custom = []; mocks.community = []; mocks.exclusions = []; mocks.official = ["豚のしょうが焼き", "鮭の塩焼き", "さわらの西京焼き"].map(name => ({ id: name, name, meta: {} })); });
+beforeEach(() => { mocks.custom = []; mocks.community = []; mocks.exclusions = []; mocks.official = ["肉豆腐", "鮭のムニエル", "さわらの西京焼き"].map(name => ({ id: name, name, meta: {} })); });
 const row = (id: string, minutes: number, meta = {}) => ({ id, name: id, cook_minutes: minutes, meta });
 describe("メニュー一覧の40分条件", () => {
   it("公式・共有・自分のメニューすべてに完成までの上限を適用する", async () => {
@@ -30,19 +30,19 @@ describe("メニュー一覧の40分条件", () => {
     const html = renderToStaticMarkup(await RecipesPage({ searchParams: Promise.resolve({}) }));
     expect(html).toContain("自分の短い料理");
     expect(html).toContain("共有の短い料理");
-    expect(html).toContain("豚のしょうが焼き");
+    expect(html).toContain("肉豆腐");
     expect(html).not.toContain("自分の長い料理");
     expect(html).not.toContain("共有の長い料理");
-    expect(html).toContain("鮭の塩焼き");
+    expect(html).toContain("鮭のムニエル");
     expect(html).not.toContain("さわらの西京焼き");
   });
   it("家庭の除外設定と時間未確認のアレンジも反映する", async () => {
-    mocks.custom = [row("アレンジ", 15, { step_customization: true, source_recipe_id: "共有の短い料理", nutrition_catalog_id: "pork-ginger" })];
+    mocks.custom = [row("アレンジ", 15, { step_customization: true, source_recipe_id: "共有の短い料理", nutrition_catalog_id: "quick-nikudofu" })];
     mocks.community = [row("共有の短い料理", 40)];
     mocks.exclusions = [{ recipe_key: "gyudon" }];
     const html = renderToStaticMarkup(await RecipesPage({ searchParams: Promise.resolve({}) }));
     expect(html).not.toContain("共有の短い料理");
-    expect(html).not.toContain("豚のしょうが焼き");
+    expect(html).not.toContain("肉豆腐");
     expect(html).not.toContain("牛丼");
     expect(html).toContain("時間未確認の料理");
   });

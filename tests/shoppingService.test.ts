@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { menuData } from "@/lib/menuData";
+import { menuData } from "./fixtures/legacy-standard/menuData";
 import { buildShoppingItemKey, buildShoppingItemsFromStaticList, getCurrentShoppingWeekIndex, getShoppingCycle, getStaticShoppingForTemplateWeek, orderShoppingEntries } from "@/lib/services/shoppingService";
 
 describe("shoppingService", () => {

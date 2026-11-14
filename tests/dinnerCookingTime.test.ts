@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { officialNutritionRecipes } from "@/lib/nutrition/catalog";
+import { officialNutritionRecipes } from "./fixtures/legacy-standard/catalog";
 import { databaseRecipeTime, isDinnerCandidate } from "@/lib/nutrition/cookingTime";
 import { generateMonthlyDinnerPlan, materializeDinnerPlan, rankAlternativeRecipes } from "@/lib/nutrition/planner";
 

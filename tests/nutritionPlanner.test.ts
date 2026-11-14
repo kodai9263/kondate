@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { officialNutritionRecipes } from "@/lib/nutrition/catalog";
+import { officialNutritionRecipes } from "./fixtures/legacy-standard/catalog";
 import { generateMonthlyDinnerPlan, isRecipeInSeason, rankAlternativeRecipes, summarizeNutrition } from "@/lib/nutrition/planner";
 
 describe("generateMonthlyDinnerPlan", () => {

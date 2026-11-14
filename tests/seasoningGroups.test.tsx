@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { officialRecipeDetails } from "@/lib/nutrition/recipeDetails";
-import { officialNutritionRecipes } from "@/lib/nutrition/catalog";
+import { officialRecipeDetails } from "./fixtures/legacy-standard/recipeDetails";
+import { officialNutritionRecipes } from "./fixtures/legacy-standard/catalog";
 import { auditedCommunityRecipe } from "@/lib/recipes/communityRecipeDetails";
 import { getSeasoningGroups, getStepSeasoningIds, getStepSeasoningGroups, scopeSideSeasonings } from "@/lib/recipes/seasoningGroups";
 import { removeDefaultSideSteps, replaceSideIngredients, resolveCustomSideSteps } from "@/lib/nutrition/sideDish";

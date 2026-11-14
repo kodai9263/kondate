@@ -14,9 +14,9 @@ describe("登録不要の公開メニュー", () => {
     expect((html.match(/href="\/menus\/official\//g) ?? [])).toHaveLength(expected.length);
   });
   it("検索で料理を絞り、結果ゼロも案内する", async () => {
-    const page = await PublicMenusPage({ searchParams: Promise.resolve({ q: "牛丼" }) });
+    const page = await PublicMenusPage({ searchParams: Promise.resolve({ q: "肉豆腐" }) });
     const html = renderToStaticMarkup(page);
-    expect(html).toContain("/menus/official/gyudon");
+    expect(html).toContain("/menus/official/quick-nikudofu");
     expect(html).not.toContain("/menus/official/salmon");
     const empty = renderToStaticMarkup(await PublicMenusPage({ searchParams: Promise.resolve({ q: "存在しない検証料理名" }) }));
     expect(empty).toContain("料理が見つかりませんでした");
