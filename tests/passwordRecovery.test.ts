@@ -16,9 +16,11 @@ beforeEach(() => {
 describe("メールアプリからのパスワード再設定", () => {
   it("メールの先読みではトークンを消費せず、安全な確認ページだけ表示する", async () => {
     const response = await GET();
-    expect(await response.text()).toContain("confirmationHash");
+    const html = await response.text();
+    expect(html).toContain("confirmationHash");
+    expect(html).toContain('name="referrer" content="same-origin"');
     expect(mock.client).not.toHaveBeenCalled();
-    expect(response.headers.get("referrer-policy")).toBe("no-referrer");
+    expect(response.headers.get("referrer-policy")).toBe("same-origin");
     expect(response.headers.get("cache-control")).toContain("no-store");
   });
   it("申込元のCookieなしでrecoveryトークンを検証し、固定の再設定画面へ進む", async () => {
