@@ -132,9 +132,16 @@ export async function requestPasswordReset(formData: FormData) {
   if (!parsed.success) redirect("/forgot-password?error=invalid");
 
   const supabase = await getSupabaseServer();
-  await supabase.auth.resetPasswordForEmail(parsed.data, {
-    redirectTo: `${getAppUrl()}/auth/callback?next=/reset-password`,
-  });
+  let resetError: { status?: number } | null;
+  try {
+    const result = await supabase.auth.resetPasswordForEmail(parsed.data, {
+      redirectTo: `${getAppUrl()}/auth/callback?next=/reset-password`,
+    });
+    resetError = result.error;
+  } catch {
+    redirect("/forgot-password?error=reset-send");
+  }
+  if (resetError) redirect(resetError.status === 429 ? "/forgot-password?error=reset-rate" : "/forgot-password?error=reset-send");
   redirect("/forgot-password?success=sent");
 }
 
