@@ -12,6 +12,8 @@ import { getSupabaseServer, isSupabaseConfigured } from "@/lib/supabase/server";
 
 import { normalizeMenuNext } from "@/lib/billing/firstWeek";
 
+import { checkPasswordSafety } from "@/lib/auth/passwordSafety.server";
+
 const emailSchema = z.string().trim().email();
 const passwordSchema = z.string().min(8).max(128);
 
@@ -94,6 +96,9 @@ export async function signup(formData: FormData) {
 
   if (!parsed.success) redirect(buildSignupReturnHref(formData, { error: "invalid" }));
 
+  const safety = await checkPasswordSafety(parsed.data.password);
+  if (safety !== "safe") redirect(buildSignupReturnHref(formData, { error: safety === "pwned" ? "password-pwned" : "password-check" }));
+
   const supabase = await getSupabaseServer();
   const monitorClaimToken = signupSource === "monitor" ? crypto.randomUUID() : null;
   if (monitorClaimToken) {
@@ -151,6 +156,10 @@ export async function updatePassword(formData: FormData) {
   if (!parsed.success) redirect("/reset-password?error=invalid");
 
   const supabase = await getSupabaseServer();
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) redirect("/reset-password?error=expired");
+  const safety = await checkPasswordSafety(parsed.data);
+  if (safety !== "safe") redirect(safety === "pwned" ? "/reset-password?error=password-pwned" : "/reset-password?error=password-check");
   const { error } = await supabase.auth.updateUser({ password: parsed.data });
   if (error) redirect("/reset-password?error=expired");
   redirect("/app?notice=password-updated");

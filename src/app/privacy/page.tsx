@@ -25,6 +25,7 @@ export default function PrivacyPage() {
         <h2 className="text-lg font-black">外部サービス</h2>
         <ul className="mt-2 list-disc space-y-2 pl-5">
           <li>Supabase：アカウントの認証、登録確認・パスワード再設定の管理、データ・料理写真の保存。</li>
+          <li>Have I Been Pwned（Pwned Passwords）：Web版の登録・パスワード再設定時に漏洩済みパスワードを確認します。サーバーからSHA-1ハッシュの先頭5文字だけを送信し、パスワードそのもの、完全なハッシュ、メールアドレスは送信しません。</li>
           <li>Vercel：Webサイトとアプリ用サーバーの運用。</li>
           <li>Apple：iPhoneアプリの購入・復元・契約管理。購入の検証に必要な情報をAppleと本サービスの間でやり取りします。</li>
           <li>Stripe：Web版の購入と契約管理。</li>

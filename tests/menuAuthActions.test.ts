@@ -1,3 +1,4 @@
+vi.mock("@/lib/auth/passwordSafety.server", () => ({ checkPasswordSafety: async () => "safe" }));
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const mock = vi.hoisted(() => ({ signup: vi.fn(), login: vi.fn(), rpc: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect: (url: string) => { throw new Error(`redirect:${url}`); } }));

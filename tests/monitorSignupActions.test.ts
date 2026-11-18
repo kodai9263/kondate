@@ -1,3 +1,4 @@
+vi.mock("@/lib/auth/passwordSafety.server", () => ({ checkPasswordSafety: async () => "safe" }));
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ signUp: vi.fn(), rpc: vi.fn(), adminRpc: vi.fn(), getUser: vi.fn(), configured: vi.fn() }));
