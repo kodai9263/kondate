@@ -1,9 +1,13 @@
+"use client";
+
+import { usePathname } from "next/navigation";
 import Script from "next/script";
 import { normalizeGoogleAnalyticsId } from "@/lib/analytics/googleAnalytics";
 
 export function GoogleAnalytics() {
   const measurementId = normalizeGoogleAnalyticsId(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID);
-  if (!measurementId) return null;
+  const pathname = usePathname();
+  if (!measurementId || pathname === "/admin" || pathname.startsWith("/admin/")) return null;
 
   return (
     <>
