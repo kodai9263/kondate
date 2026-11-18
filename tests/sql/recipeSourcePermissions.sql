@@ -1,4 +1,8 @@
 \set ON_ERROR_STOP on
+-- 本番の管理画面と同じサーバー権限・列で取得できることを確認する。
+set role service_role;
+select id, name, household_id, archived_at, meta->>'source_url' from public.recipes limit 1;
+reset role;
 insert into auth.users(id,email) values
 ('10000000-0000-4000-8000-000000000071','source-owner@example.test'),
 ('10000000-0000-4000-8000-000000000072','source-family@example.test'),
