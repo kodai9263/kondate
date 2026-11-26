@@ -6,6 +6,9 @@
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
+    <key>CFBundleURLTypes</key>
+    <array><dict><key>CFBundleURLName</key><string>app.kyounogohan.mobile.invite</string>
+    <key>CFBundleURLSchemes</key><array><string>kyounogohan</string></array></dict></array>
 	<key>CFBundleDisplayName</key>
         <string>きょうのごはん</string>
 	<key>CFBundleExecutable</key>

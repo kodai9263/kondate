@@ -5,6 +5,12 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   async headers() {
     return [{
+      source: "/.well-known/apple-app-site-association",
+      headers: [
+        { key: "Content-Type", value: "application/json" },
+        { key: "Cache-Control", value: "public, max-age=3600" },
+      ],
+    }, {
       source: "/admin/:path*",
       headers: [
         { key: "Cache-Control", value: "private, no-store, max-age=0" },

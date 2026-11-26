@@ -81,6 +81,12 @@ export function App() {
   const [deletionBusy, setDeletionBusy] = useState(false);
   const [deletionError, setDeletionError] = useState("");
 
+  useEffect(() => () => {
+    // 家族への参加画面へ移るとき、以前の画面からの保存を止める。
+    cacheGeneration.current += 1;
+    mutationQueue.current?.cancel();
+  }, []);
+
   useEffect(() => {
     if (!deletionReceipt || !online) return;
     let cancelled = false;
