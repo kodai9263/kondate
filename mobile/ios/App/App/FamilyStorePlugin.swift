@@ -4,6 +4,7 @@ import StoreKit
 class FamilyBridgeViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(FamilyStorePlugin())
+        bridge?.registerPluginInstance(FamilyLinksPlugin())
     }
 }
 

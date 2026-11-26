@@ -5,11 +5,17 @@ import { parseShoppingCache, type CachedShopping } from "./shoppingCacheParser";
 import type { ShoppingSnapshot } from "./shopping";
 
 const key = installationStorageKey("shopping-cache");
+let cacheWrite: Promise<void> = Promise.resolve();
+function serializeWrite(operation: () => Promise<unknown>) {
+  const result = cacheWrite.catch(() => {}).then(operation).then(() => {});
+  cacheWrite = result;
+  return result;
+}
 
 export async function saveShoppingCache(userId: string, snapshot: ShoppingSnapshot) {
   if (!Capacitor.isNativePlatform()) return;
   const value: CachedShopping = { version: 1, userId, savedAt: new Date().toISOString(), snapshot };
-  await SecureStorage.setItem(key, JSON.stringify(value));
+  await serializeWrite(() => SecureStorage.setItem(key, JSON.stringify(value)));
 }
 
 export async function loadShoppingCache(userId: string): Promise<ShoppingSnapshot | null> {
@@ -19,5 +25,5 @@ export async function loadShoppingCache(userId: string): Promise<ShoppingSnapsho
 }
 
 export async function clearShoppingCache() {
-  if (Capacitor.isNativePlatform()) await SecureStorage.removeItem(key);
+  if (Capacitor.isNativePlatform()) await serializeWrite(() => SecureStorage.removeItem(key));
 }

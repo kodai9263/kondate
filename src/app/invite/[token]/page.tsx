@@ -56,9 +56,13 @@ export default async function InvitePage({
         <p className="flex items-center gap-2 font-black"><Users size={18} />{invite.household_name}</p>
         <p className="mt-2 text-sm leading-6 text-kondate-muted">献立や買い物リスト、家族の設定を一緒に使えます。{!user || user.is_anonymous ? "メールアドレス・パスワードの入力は不要です。" : "現在ログイン中のアカウントで参加します。"}</p>
       </div>
+      <div className="mt-5 rounded-lg border border-kondate-line bg-white p-4">
+        <a href={`kyounogohan://invite/${inviteToken}`} className="inline-flex min-h-11 items-center font-black text-kondate-accent underline">アプリで参加する</a>
+        <p className="mt-2 text-sm leading-6 text-kondate-muted">アプリを更新してから開いてください。開かない場合は、このページのリンクをコピーし、アプリの「家族の招待リンクを開く」に貼り付けてください。</p>
+      </div>
       <form action={acceptFamilyInvite} className="mt-5">
           <input type="hidden" name="inviteToken" value={inviteToken} />
-          <PendingButton pendingLabel="参加しています...">この家族グループに参加</PendingButton>
+          <PendingButton pendingLabel="参加しています...">Web版でこの家族グループに参加</PendingButton>
       </form>
       {!user || user.is_anonymous ? <p className="mt-4 text-xs leading-6 text-kondate-muted">参加状態はこのブラウザに保存されます。LINE内で開いている場合は、普段使うSafariやChromeで開いてから参加してください。機種変更やブラウザのデータ削除、ログアウト後は、家族から新しい招待リンクをもらってください。</p> : <p className="mt-4 text-xs leading-6 text-kondate-muted">参加すると、このアカウントの表示先が招待された家族に切り替わります。これまでの家族のデータは削除されません。</p>}
       {!user ? <p className="mt-4 text-center text-sm text-kondate-muted">登録済みの方は <Link href={`/login?invite=${inviteToken}`} className="font-semibold text-kondate-accent underline underline-offset-4">ログインして参加</Link></p> : null}
