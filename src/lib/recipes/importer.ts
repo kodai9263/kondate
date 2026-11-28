@@ -1,4 +1,4 @@
-import type { ProteinSource } from "@/types/nutrition";
+import type { ProteinSource } from "../../types/nutrition";
 
 const allowedRecipeHosts = new Set([
   "cookpad.com",
@@ -35,7 +35,12 @@ export class RecipeImportError extends Error {
 }
 
 export async function fetchImportedRecipe(rawUrl: string): Promise<ImportedRecipe> {
-  let url = parseAllowedRecipeUrl(rawUrl);
+  const { html, url } = await fetchRecipePage(rawUrl, parseAllowedRecipeUrl);
+  return parseRecipeHtml(html, url);
+}
+
+export async function fetchRecipePage(rawUrl: string, validateUrl: (value: string) => URL) {
+  let url = validateUrl(rawUrl);
   const signal = AbortSignal.timeout(12_000);
   try {
     for (let redirects = 0; redirects <= 3; redirects++) {
@@ -48,7 +53,7 @@ export async function fetchImportedRecipe(rawUrl: string): Promise<ImportedRecip
         const location = response.headers.get("location");
         if (!location || redirects === 3) throw new RecipeImportError("fetch_failed");
         // 転送先も毎回検証し、対応外サイトや内部ネットワークへはアクセスしない。
-        url = parseAllowedRecipeUrl(new URL(location, url).toString());
+        url = validateUrl(new URL(location, url).toString());
         continue;
       }
       if (!response.ok || !response.body) {
@@ -75,7 +80,7 @@ export async function fetchImportedRecipe(rawUrl: string): Promise<ImportedRecip
       } finally {
         await reader.cancel();
       }
-      return parseRecipeHtml(html, url.toString());
+      return { html, url: url.toString() };
     }
   } catch (error) {
     if (error instanceof RecipeImportError) throw error;
@@ -147,7 +152,7 @@ export function parseAllowedRecipeUrl(rawUrl: string) {
   return url;
 }
 
-function findRecipeJsonLd(html: string): Record<string, unknown> | null {
+export function findRecipeJsonLd(html: string): Record<string, unknown> | null {
   const scriptPattern = /<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
   for (const match of html.matchAll(scriptPattern)) {
     try {

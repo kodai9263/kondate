@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { inviteTokenFromUrl } from "../mobile/src/inviteLinks";
 import { joinFamilyInvite, previewFamilyInvite } from "../mobile/src/inviteAcceptance";
 
@@ -28,7 +27,7 @@ const accept = vi.fn();
 const client = {
   auth: { getSession, signInAnonymously },
   rpc: vi.fn((name: string) => name === "get_household_invite" ? { maybeSingle: preview } : accept()),
-} as unknown as SupabaseClient;
+} as unknown as Parameters<typeof joinFamilyInvite>[0];
 
 beforeEach(() => {
   vi.clearAllMocks();

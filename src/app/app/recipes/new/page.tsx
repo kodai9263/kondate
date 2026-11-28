@@ -5,7 +5,7 @@ import { RecipeForm } from "@/components/features/recipes/RecipeForm";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
 const errors: Record<string, string> = {
-  import_paused: "URL取り込みは現在休止中です。ご自身のレシピを手入力で登録してください。",
+  import_paused: "このURLの取り込み内容を保存できません。対応URLと確認項目を見直してください。",
   invalid: "入力内容を確認してください。必須項目と数値を見直せます。",
   profile: "家族グループを確認できませんでした。",
   save: "メニューを保存できませんでした。時間をおいて再度お試しください。",

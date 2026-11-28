@@ -33,3 +33,9 @@ describe('メニュー削除API',()=>{
   q.maybeSingle.mockResolvedValue({data:null,error:{message:'failed'}});expect((await DELETE(request({id}))).status).toBe(503);
  });
 });
+
+it('対応元の確認済み取り込みを保存し、未確認・未対応の出典を拒否',async()=>{
+ const source={sourceUrl:'https://www.kikkoman.co.jp/homecook/search/recipe/00002478/',sourceServingsText:'3〜4人分',importConfirmed:'yes'};
+ expect((await POST(request({...payload,fields:{...fields,...source}}))).status).toBe(200);
+ for(const bad of [{...source,importConfirmed:undefined},{...source,sourceUrl:'https://www.sbfoods.co.jp/recipe/1'},{...source,sourceServingsText:undefined}])expect((await POST(request({...payload,fields:{...fields,...bad}}))).status).toBe(400);
+});
