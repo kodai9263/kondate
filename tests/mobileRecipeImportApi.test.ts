@@ -1,0 +1,10 @@
+import { beforeEach, expect, it, vi } from "vitest";
+const mock=vi.hoisted(()=>({auth:vi.fn(),rpc:vi.fn(),fetch:vi.fn()}));
+vi.mock("@/lib/mobile/request",async original=>({...await original<typeof import("@/lib/mobile/request")>(),authorizeMobileRequest:mock.auth}));
+vi.mock("@/lib/recipes/privateImport",async original=>({...await original<typeof import("@/lib/recipes/privateImport")>(),fetchPrivateRecipe:mock.fetch}));
+import { POST,OPTIONS } from "@/app/api/mobile/v1/recipes/import/route";
+const request=(url="https://www.kikkoman.co.jp/homecook/search/recipe/00002478/",origin="capacitor://localhost")=>new Request("https://app.test/api/mobile/v1/recipes/import",{method:"POST",headers:{Origin:origin},body:JSON.stringify({url})});
+beforeEach(()=>{vi.clearAllMocks();mock.auth.mockResolvedValue({supabase:{rpc:mock.rpc}});mock.rpc.mockResolvedValue({data:true,error:null});mock.fetch.mockResolvedValue({steps:"切る\n煮る"});});
+it("認証・利用権限がなければ取得しない",async()=>{mock.auth.mockResolvedValue(new Response(null,{status:401}));expect((await POST(request())).status).toBe(401);expect(mock.fetch).not.toHaveBeenCalled();});
+it("未対応URL・異なるorigin・連続実行を取得前に拒否",async()=>{expect((await POST(request("https://127.0.0.1/"))).status).toBe(400);expect((await POST(request(undefined,"https://evil.test"))).status).toBe(403);mock.rpc.mockResolvedValue({data:false});expect((await POST(request())).status).toBe(429);expect(mock.fetch).not.toHaveBeenCalled();});
+it("正常応答はキャッシュせず工程を返す",async()=>{const response=await POST(request());expect(response.status).toBe(200);expect(response.headers.get("cache-control")).toContain("no-store");expect(await response.json()).toMatchObject({version:1,recipe:{steps:"切る\n煮る"}});expect(OPTIONS(request()).status).toBe(204);});
