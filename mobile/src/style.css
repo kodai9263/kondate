@@ -200,3 +200,11 @@ h1 { margin: 7px 0 4px; font-family: "Noto Serif JP", serif; font-size: 29px; li
 .first-week-fields input:not([type="checkbox"]) { min-height: 44px; border: 1px solid #d9c9ba; border-radius: 9px; padding: 8px; background: #fffefa; color: #2b2724; font-size: 16px; }
 .first-week-allergies label { min-height: 44px; border: 1px solid #e3cdbb; border-radius: 9px; padding: 8px; }
 .first-week-fields .primary-button { margin-top: 4px; }
+.guest-page { padding-bottom: 2rem; }
+.guest-mode-note { margin: 1rem 0; }
+.guest-page .secondary-button { margin: .35rem .35rem .35rem 0; }
+.guest-page form > label { display: grid; gap: .5rem; margin: 1rem 0; }
+.guest-shopping-row { display: flex; align-items: center; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid #e4ded2; }
+.guest-shopping-row label { display: flex; align-items: center; flex: 1; gap: .8rem; overflow-wrap: anywhere; }
+.guest-shopping-row input[type="checkbox"] { width: 1.5rem; height: 1.5rem; flex-shrink: 0; }
+.guest-shopping-row small { display: block; font-size: .8rem; color: #70675f; margin-top: .3rem; }

@@ -1,4 +1,5 @@
 import { FirstWeekSetup } from "./FirstWeekSetup";
+import { GuestApp } from "./GuestApp";
 import { PlanningSetupRequired } from "./planningAccess";
 import { ApplePurchaseCard, useApplePurchases } from "./MobilePurchases";
 import { signupValidationMessage } from "./signupValidation";
@@ -24,6 +25,7 @@ import { checkAccountDeletion, requestAccountDeletion, type DeletionStatus } fro
 const deletionReceiptKey = "kondate-account-deletion-receipt-v1";
 
 export function App() {
+  const [showAuth, setShowAuth] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
@@ -215,6 +217,7 @@ export function App() {
       }
       restoreGeneration += 1;
       if (!session) {
+        setShowAuth(false);
         authReady.current = false;
         currentUserId.current = null;
         freshOwner.current = null;
@@ -658,7 +661,7 @@ export function App() {
     </header>
 
     <main>
-      {!isConfigured ? <section className="card setup-message" role="alert">
+      {!accessToken && !restoringSession && !showAuth && !deletionReceipt ? <GuestApp onLogin={() => { setShowAuth(true); setError(""); setAuthNotice(""); }} /> : !isConfigured ? <section className="card setup-message" role="alert">
         <h1>接続設定を確認してください</h1>
         <p>アプリの認証先がまだ設定されていません。開発用の設定を確認してください。</p>
       </section> : deletionReceipt ? <section className="login-card">
@@ -672,9 +675,10 @@ export function App() {
           localStorage.removeItem(deletionReceiptKey); setDeletionReceipt(null); setDeletionStatus(null);
         }}>ログイン画面へ</button>}
       </section> : restoringSession ? <p className="loading" role="status">ログイン状態を確認中…</p> : !accessToken ? <section className="login-card">
+        <button type="button" className="secondary-button" disabled={busy} onClick={() => { setShowAuth(false); setPassword(""); setPasswordConfirmation(""); }}>登録せずに使う</button>
         <span className="section-tag">きょうのごはん</span>
         <h1>{authMode === "signup" ? "無料で始める" : authMode === "reset" ? "パスワードを再設定" : <>今日の献立も、<br />買い物も、手のひらに。</>}</h1>
-        <p>{authMode === "login" ? "Web版で使っているアカウントでもログインできます。" :
+        <p>{authMode === "login" ? "家族共有・同期にはログインが必要です。登録なしでも端末内で献立・買い物を利用できます。" :
           authMode === "signup" ? "メールで確認後、家族の献立を使い始められます。" : "登録したメールアドレスを入力してください。"}</p>
         <form onSubmit={(event) => void submitAuth(event)}>
           {authMode === "signup" && <><label htmlFor="display-name">表示名</label>
@@ -772,7 +776,7 @@ export function App() {
             <h2>退会</h2>
             <p>アカウントとあなたのプロフィールを削除します。元に戻せません。</p>
             {accountPreview && <p>{accountPreview.household.lastMember ? "家族の最後の一人のため、共有していた献立と買い物も削除します。" : "ほかの家族の献立と買い物は残し、あなたの操作履歴から名前を外します。"}</p>}
-            {accountPreview?.subscription.provider === "apple" && <><p>退会してもAppleの定期購入は自動解約されません。先にAppleの契約管理で解約してください。退会すると、この購入による家族プランの利用も終了します。</p><button type="button" className="purchase-secondary" onClick={() => void purchase.manage()}>Appleの契約を管理</button></>}
+            {accountPreview?.subscription.provider === "apple" && <><p>退会してもAppleの定期購入は自動解約されません。先にAppleの契約管理で解約してください。退会すると、この購入による家族プランの利用も終了します。</p>{Capacitor.getPlatform() === "ios" && <button type="button" className="purchase-secondary" onClick={() => void purchase.manage()}>Appleの契約を管理</button>}</>}
             <p>あなたが登録した写真は削除します。不正な再利用を防ぐため、個人情報との関連を外した購入識別子を保持します。</p>
             {accountPreview?.subscription.provider === "stripe" && <p>退会しても定期購入は自動解約されません。契約元で別途解約してください。</p>}
             {!accountPreview?.deletionAvailable ? <p className="read-only-note">退会受付は準備中です。</p> : <>
